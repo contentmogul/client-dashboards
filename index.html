@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ad Performance Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;
+  --surface:#151820;
+  --surface2:#1c2030;
+  --border:#252a3a;
+  --accent:#4f8eff;
+  --accent2:#00d4aa;
+  --meta:#4f8eff;
+  --cm:#00d4aa;
+  --text:#e8eaf2;
+  --muted:#6b7494;
+  --red:#ff4f6a;
+  --amber:#ffb84f;
+  --green:#00d4aa;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:13px;min-height:100vh}
+code,pre,.mono{font-family:'DM Mono',monospace}
+
+/* LOADING */
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
+.spinner{width:36px;height:36px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loader-msg{color:var(--muted);font-size:12px;letter-spacing:.5px}
+#loader.hidden{display:none}
+
+/* ERROR */
+#error-state{display:none;position:fixed;inset:0;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:998}
+#error-state.show{display:flex}
+#error-state h2{color:var(--red);font-size:18px}
+#error-state p{color:var(--muted);font-size:12px}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:100}
+.header-left h1{font-size:14px;font-weight:600;letter-spacing:.3px;color:var(--text)}
+.header-left span{font-size:11px;color:var(--muted);margin-left:8px}
+.header-right{display:flex;align-items:center;gap:8px}
+.last-updated{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s}
+.refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+.refreshing{animation:spin .8s linear infinite;display:inline-block;width:12px;height:12px;border:1px solid var(--border);border-top-color:var(--accent);border-radius:50%}
+
+/* CONTROLS */
+.controls{padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--border)}
+.ctrl-group{display:flex;align-items:center;gap:6px}
+.ctrl-group label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.ctrl-group select,.ctrl-group input[type=number]{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:11px;outline:none;font-family:'DM Sans',sans-serif}
+.ctrl-group select:focus,.ctrl-group input:focus{border-color:var(--accent)}
+.date-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;transition:all .15s}
+.date-btn:hover,.date-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.ctrl-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.expand-all-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:4px;font-size:10px;cursor:pointer;transition:all .15s}
+.expand-all-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* KPI BAR */
+.kpi-section{padding:12px 20px}
+.kpi-group-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.kpi-group-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.kpi-group-label.meta-label{color:var(--meta)}
+.kpi-group-label.cm-label{color:var(--cm)}
+.kpi-group-label.general-label{color:var(--muted)}
+.kpi-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi:hover{border-color:var(--accent)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.meta::before{background:var(--meta)}
+.kpi.cm::before{background:var(--cm)}
+.kpi.general::before{background:var(--muted)}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600}
+.kpi-value{font-size:20px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* CHANNEL TABLE */
+.section{padding:0 20px 16px}
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.ch-table-wrap{overflow-x:auto}
+.ch-table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:8px;overflow:hidden;border:1px solid var(--border);font-size:11px}
+.ch-table thead th{background:var(--surface2);color:var(--muted);padding:8px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+.ch-table thead th.num{text-align:right}
+.ch-table tbody tr{border-bottom:1px solid var(--border)}
+.ch-table tbody tr:last-child{border-bottom:none}
+.ch-table tbody tr:hover td{background:var(--surface2)}
+.ch-table td{padding:8px 12px;vertical-align:middle}
+.ch-table td.num{text-align:right;font-family:'DM Mono',monospace}
+.ch-total td{background:var(--surface2);font-weight:700;border-top:1px solid var(--border)}
+.src-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace}
+.src-meta{background:rgba(79,142,255,.15);color:var(--meta);border:1px solid rgba(79,142,255,.3)}
+.src-other{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.bar-wrap{display:inline-flex;align-items:center;gap:6px;vertical-align:middle;width:80px}
+.bar-bg{background:var(--border);border-radius:2px;height:4px;flex:1}
+.bar-fill-meta{background:var(--meta);border-radius:2px;height:4px}
+.bar-fill-other{background:var(--muted);border-radius:2px;height:4px}
+
+/* MAIN TABLE */
+.table-wrap{padding:0 20px 32px;overflow-x:auto}
+table.main{width:100%;border-collapse:collapse;background:var(--surface);border-radius:10px;overflow:hidden;border:1px solid var(--border);min-width:1300px}
+thead.main-head tr.g-row th{padding:6px 8px;font-size:10px;font-weight:700;letter-spacing:.5px;text-align:center;color:#fff}
+th.g-deliv{background:#1e2535}
+th.g-meta{background:#1a2850}
+th.g-cm{background:#0f2a25}
+thead.main-head tr.h-row th{background:var(--surface2);color:var(--muted);padding:7px 8px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.4px;white-space:nowrap;cursor:pointer;user-select:none;border-bottom:1px solid var(--border)}
+thead.main-head tr.h-row th.num{text-align:right}
+thead.main-head tr.h-row th:hover{color:var(--text)}
+thead.main-head tr.h-row th.s-asc::after{content:' ↑'}
+thead.main-head tr.h-row th.s-desc::after{content:' ↓'}
+tbody tr{border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover td{background:rgba(79,142,255,.04)}
+td{padding:7px 8px;vertical-align:middle}
+td.name-cell{font-weight:600;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.expand-btn{background:none;border:none;cursor:pointer;padding:1px 4px;border-radius:3px;font-size:10px;color:var(--muted);margin-right:3px;font-weight:700;display:inline-block;width:16px;text-align:center;transition:color .15s}
+.expand-btn:hover{color:var(--accent)}
+.level-campaign td{background:var(--surface)}
+.level-adset td{background:var(--surface2)}
+.level-adset td.name-cell{padding-left:24px;font-weight:500;color:var(--text)}
+.level-ad td{background:#13161f;font-size:10.5px}
+.level-ad td.name-cell{padding-left:44px;font-weight:400;color:var(--muted)}
+.rg{color:var(--green);font-weight:700;font-family:'DM Mono',monospace}
+.ro{color:var(--amber);font-weight:700;font-family:'DM Mono',monospace}
+.rb{color:var(--red);font-weight:700;font-family:'DM Mono',monospace}
+.num{text-align:right;font-family:'DM Mono',monospace}
+.total-row td{background:#0a0c12;color:var(--text);font-weight:700;border-top:2px solid var(--border)}
+.pill{display:inline-block;background:rgba(79,142,255,.1);color:var(--meta);border-radius:6px;padding:0px 5px;font-size:9px;font-weight:700;margin-left:3px;vertical-align:middle;border:1px solid rgba(79,142,255,.2)}
+.pg{background:rgba(0,212,170,.1);color:var(--cm);border-color:rgba(0,212,170,.2)}
+.div-m{border-left:2px solid rgba(79,142,255,.3)}
+.div-c{border-left:2px solid rgba(0,212,170,.3)}
+.badge{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;vertical-align:middle;margin-left:3px}
+.b-active{background:rgba(0,212,170,.1);color:var(--cm);border:1px solid rgba(0,212,170,.2)}
+.b-inactive{background:rgba(255,184,79,.1);color:var(--amber);border:1px solid rgba(255,184,79,.2)}
+.b-archived{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.b-nd{background:rgba(255,79,106,.1);color:var(--red);border:1px solid rgba(255,79,106,.2)}
+
+/* EXPLAINER */
+.explainer{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:0 20px 16px;padding:14px 18px}
+.explainer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.exp-card{background:var(--surface2);border-radius:7px;padding:10px 12px;border-left:3px solid var(--border)}
+.exp-card.meta{border-left-color:var(--meta)}
+.exp-card.cm{border-left-color:var(--cm)}
+.exp-card.blended{border-left-color:#9b6fff}
+.exp-card h4{font-size:11px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.exp-card p{font-size:10.5px;color:var(--muted);line-height:1.5}
+.exp-toggle{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:4px 0;display:flex;align-items:center;gap:4px;margin:0 20px 8px}
+.exp-toggle:hover{color:var(--text)}
+
+/* NO DATA */
+.no-data{padding:40px;text-align:center;color:var(--muted);font-size:12px}
+
+@media(max-width:900px){
+  .kpi-bar{grid-template-columns:repeat(3,1fr)}
+  .controls{padding:8px 12px}
+  header{padding:10px 12px}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <div id="loader-msg">Loading dashboard data...</div>
+</div>
+
+<div id="error-state">
+  <h2>Unable to load dashboard</h2>
+  <p id="error-msg">Check your URL parameters and try again.</p>
+</div>
+
+<div id="app" style="display:none">
+
+<header>
+  <div class="header-left">
+    <h1 id="header-title">Ad Performance Dashboard</h1>
+    <span id="header-period"></span>
+  </div>
+  <div class="header-right">
+    <span class="last-updated" id="last-updated"></span>
+    <button class="refresh-btn" onclick="refreshData()">
+      <span id="refresh-icon">↻</span> Refresh
+    </button>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <label>Period:</label>
+    <button class="date-btn" onclick="setDays(7,this)">7D</button>
+    <button class="date-btn active" onclick="setDays(30,this)">30D</button>
+    <button class="date-btn" onclick="setDays(60,this)">60D</button>
+    <button class="date-btn" onclick="setDays(90,this)">90D</button>
+  </div>
+  <div class="ctrl-sep"></div>
+  <div class="ctrl-group">
+    <label>Sort:</label>
+    <select id="sortCol" onchange="render()">
+      <option value="spend">Spend</option>
+      <option value="impressions">Impressions</option>
+      <option value="meta_purchases">Meta Purchases</option>
+      <option value="meta_revenue">Meta Revenue</option>
+      <option value="meta_roas">Meta ROAS</option>
+      <option value="cm_purchases">CM Purchases</option>
+      <option value="cm_revenue">CM Revenue</option>
+      <option value="cm_roas">CM ROAS</option>
+    </select>
+    <select id="sortDir" onchange="render()">
+      <option value="desc">High → Low</option>
+      <option value="asc">Low → High</option>
+    </select>
+  </div>
+  <div class="ctrl-sep"></div>
+  <div class="ctrl-group">
+    <label>Campaign:</label>
+    <select id="campFilter" onchange="render()"><option value="">All</option></select>
+  </div>
+  <div class="ctrl-sep"></div>
+  <button class="expand-all-btn" onclick="toggleExpandAll()">Expand all</button>
+</div>
+
+<!-- KPI BARS -->
+<div class="kpi-section">
+  <div class="kpi-group-label general-label">Delivery</div>
+  <div class="kpi-bar" id="kpi-general"></div>
+  <div class="kpi-group-label meta-label">Meta Ads Manager — 7-day attributed</div>
+  <div class="kpi-bar" id="kpi-meta"></div>
+  <div class="kpi-group-label cm-label">ClickMagick — last-click</div>
+  <div class="kpi-bar" id="kpi-cm"></div>
+</div>
+
+<!-- EXPLAINER -->
+<button class="exp-toggle" onclick="toggleExplainer()">
+  <span id="exp-arrow">▸</span> How to read this report
+</button>
+<div class="explainer" id="explainer" style="display:none">
+  <div class="explainer-grid">
+    <div class="exp-card meta">
+      <h4>Meta Ads Manager (blue)</h4>
+      <p>Purchase and revenue data from Meta using a 7-day click + 1-day view attribution window. Meta counts a conversion if a customer clicked or viewed an ad within that window — even if they later converted via another channel. This tends to over-attribute revenue to Meta.</p>
+    </div>
+    <div class="exp-card cm">
+      <h4>ClickMagick — Meta sources only (green)</h4>
+      <p>ClickMagick tracks actual clicks and records the last paid click before purchase. CM columns show only purchases attributed to Meta placements (fb, ig, facebook, an, th). This is a more conservative, last-click view and will typically be lower than what Meta reports.</p>
+    </div>
+    <div class="exp-card blended">
+      <h4>Blended ROAS</h4>
+      <p>Total CM revenue from all sources divided by Meta ad spend. This matches what ClickMagick shows at the top of its dashboard. It reflects total business revenue generated while Meta was running — not revenue directly caused by Meta.</p>
+    </div>
+    <div class="exp-card" style="border-left-color:var(--amber)">
+      <h4>Why do Meta ROAS and CM ROAS differ?</h4>
+      <p>Meta's 7-day window claims sales that happened days after the ad interaction — including sales driven by email, organic search, or direct revisits. CM only credits the last click. Together they give upper and lower bounds on Meta's actual contribution.</p>
+    </div>
+  </div>
+</div>
+
+<!-- CHANNEL BREAKDOWN -->
+<div class="section">
+  <div class="section-title">ClickMagick — all channel breakdown</div>
+  <div class="ch-table-wrap">
+    <table class="ch-table" id="chTable"></table>
+  </div>
+</div>
+
+<!-- MAIN TABLE -->
+<div class="table-wrap">
+<table class="main">
+<thead class="main-head">
+  <tr class="g-row">
+    <th class="g-deliv" style="text-align:left" colspan="5">DELIVERY</th>
+    <th class="g-meta div-m" colspan="5">META — 7-DAY ATTRIBUTED</th>
+    <th class="g-cm div-c" colspan="5">CLICKMAGICK — LAST-CLICK</th>
+  </tr>
+  <tr class="h-row" id="thead-row">
+    <th style="min-width:200px">Name</th>
+    <th class="num" data-col="spend">Spend</th>
+    <th class="num" data-col="impressions">Impr.</th>
+    <th class="num" data-col="reach">Reach</th>
+    <th class="num">Freq.</th>
+    <th class="num div-m" data-col="meta_purchases">Purchases</th>
+    <th class="num" data-col="meta_revenue">Revenue</th>
+    <th class="num" data-col="meta_roas">ROAS</th>
+    <th class="num">CPR</th>
+    <th class="num">AOV</th>
+    <th class="num div-c" data-col="cm_purchases">Purchases</th>
+    <th class="num" data-col="cm_revenue">Revenue</th>
+    <th class="num" data-col="cm_roas">ROAS</th>
+    <th class="num">CPA</th>
+    <th class="num">AOV</th>
+  </tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+</div><!-- /app -->
+
+<script>
+const API = 'https://contentmogul-api-793745221500.asia-southeast1.run.app';
+const META_SOURCES = ['fb','ig','facebook','facebook_ads_ppm','an','th'];
+
+let ALL_DATA = [];
+let DAYS = 30;
+let expanded = {};
+let expandAll = false;
+let client = '';
+let key = '';
+
+// Parse URL params
+const params = new URLSearchParams(window.location.search);
+client = params.get('client') || '';
+key    = params.get('key')    || '';
+
+function fmt(n, type) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (type === 'currency') return n > 0 ? 'A$' + n.toLocaleString('en-AU', {minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+  if (type === 'roas')     return n > 0 ? n.toFixed(2) + 'x' : '—';
+  if (type === 'cpa')      return n > 0 ? 'A$' + n.toFixed(2) : '—';
+  if (type === 'freq')     return n > 0 ? n.toFixed(2) : '—';
+  if (type === 'num')      return n > 0 ? n.toLocaleString() : '—';
+  return n;
+}
+
+function rc(r) {
+  if (!r || r === 0) return 'rb';
+  if (r >= 2) return 'rg';
+  if (r >= 1) return 'ro';
+  return 'rb';
+}
+
+function dlv(s) {
+  const m = {active:'b-active',inactive:'b-inactive',archived:'b-archived',not_delivering:'b-nd'};
+  const label = s === 'not_delivering' ? 'not del.' : (s || '');
+  return label ? `<span class="badge ${m[s]||'b-nd'}">${label}</span>` : '';
+}
+
+function getDateRange() {
+  const end   = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - DAYS);
+  return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] };
+}
+
+function filterByDate(data) {
+  const { start, end } = getDateRange();
+  return data.filter(r => {
+    const d = r.date && r.date.value ? r.date.value : r.date;
+    return d >= start && d <= end;
+  });
+}
+
+// Build hierarchy from flat rows
+function buildHierarchy(rows) {
+  const campaigns = {};
+
+  rows.forEach(r => {
+    const cname = r.campaign_name || 'Unknown';
+    const aname = r.adset_name    || 'Unknown';
+    const adname = r.ad_name      || 'Unknown';
+
+    if (!campaigns[cname]) {
+      campaigns[cname] = {
+        name: cname, campaign_id: r.campaign_id,
+        spend:0, impressions:0, reach:0,
+        meta_purchases:0, meta_revenue:0,
+        cm_purchases:0, cm_revenue:0,
+        adsets: {}
+      };
+    }
+    const c = campaigns[cname];
+    c.spend          += r.spend          || 0;
+    c.impressions    += r.impressions    || 0;
+    c.reach          += r.reach          || 0;
+    c.meta_purchases += r.meta_purchases || 0;
+    c.meta_revenue   += r.meta_revenue   || 0;
+    c.cm_purchases   += r.cm_purchases   || 0;
+    c.cm_revenue     += r.cm_revenue     || 0;
+
+    if (!c.adsets[aname]) {
+      c.adsets[aname] = {
+        name: aname, adset_id: r.adset_id,
+        spend:0, impressions:0, reach:0,
+        meta_purchases:0, meta_revenue:0,
+        cm_purchases:0, cm_revenue:0,
+        ads: []
+      };
+    }
+    const a = c.adsets[aname];
+    a.spend          += r.spend          || 0;
+    a.impressions    += r.impressions    || 0;
+    a.reach          += r.reach          || 0;
+    a.meta_purchases += r.meta_purchases || 0;
+    a.meta_revenue   += r.meta_revenue   || 0;
+    a.cm_purchases   += r.cm_purchases   || 0;
+    a.cm_revenue     += r.cm_revenue     || 0;
+
+    a.ads.push({
+      name: adname, ad_id: r.ad_id,
+      spend:       r.spend          || 0,
+      impressions: r.impressions    || 0,
+      reach:       r.reach          || 0,
+      frequency:   r.frequency      || 0,
+      delivery:    r.delivery_status|| '',
+      meta_purchases: r.meta_purchases || 0,
+      meta_revenue:   r.meta_revenue   || 0,
+      meta_cpr:       r.meta_cpr       || 0,
+      cm_purchases:   r.cm_purchases   || 0,
+      cm_revenue:     r.cm_revenue     || 0,
+      cm_utm_source:  r.cm_utm_source  || ''
+    });
+  });
+
+  return Object.values(campaigns).map(c => ({
+    ...c, adsets: Object.values(c.adsets)
+  }));
+}
+
+function buildChannelTable(rows) {
+  const sources = {};
+  rows.forEach(r => {
+    const src = r.cm_utm_source || '';
+    if (!src) return;
+    if (!sources[src]) sources[src] = { orders:0, revenue:0 };
+    sources[src].orders  += r.cm_purchases || 0;
+    sources[src].revenue += r.cm_revenue   || 0;
+  });
+
+  const totalSpend = rows.reduce((a, r) => a + (r.spend || 0), 0);
+  const allRev     = Object.values(sources).reduce((a, s) => a + s.revenue, 0);
+  const maxRev     = Math.max(...Object.values(sources).map(s => s.revenue), 1);
+
+  const SOURCE_DESC = {
+    fb: 'Facebook Ads placements', ig: 'Instagram Ads placements',
+    facebook: 'Facebook profile / organic-looking paid',
+    facebook_ads_ppm: 'Facebook Ads PPM', an: 'Meta Audience Network',
+    th: 'Threads (Meta)', google: 'Google Ads',
+    organic: 'Direct / organic traffic', checkmate: 'Checkmate (other paid)'
+  };
+
+  let html = `<thead><tr>
+    <th>Source</th><th>Description</th>
+    <th class="num">Orders</th><th class="num">Revenue (AUD)</th>
+    <th class="num">% of total</th><th class="num">ROAS vs spend</th>
+    <th>Share</th>
+  </tr></thead><tbody>`;
+
+  let metaOrders = 0, metaRev = 0;
+
+  Object.entries(sources).sort((a,b) => b[1].revenue - a[1].revenue).forEach(([src, data]) => {
+    const isMeta = META_SOURCES.includes(src);
+    const pct    = allRev > 0 ? (data.revenue / allRev * 100).toFixed(1) : '0.0';
+    const roas   = totalSpend > 0 ? (data.revenue / totalSpend).toFixed(2) : '0.00';
+    const barW   = Math.round(data.revenue / maxRev * 100);
+    const roasColor = parseFloat(roas) >= 1 ? 'var(--green)' : parseFloat(roas) >= 0.5 ? 'var(--amber)' : 'var(--muted)';
+    if (isMeta) { metaOrders += data.orders; metaRev += data.revenue; }
+
+    html += `<tr>
+      <td><span class="src-badge ${isMeta ? 'src-meta' : 'src-other'}">${src}</span></td>
+      <td style="color:var(--muted)">${SOURCE_DESC[src] || src}${isMeta ? ' <span style="font-size:9px;color:var(--meta)">(Meta)</span>' : ''}</td>
+      <td class="num">${data.orders}</td>
+      <td class="num">${fmt(data.revenue,'currency')}</td>
+      <td class="num">${pct}%</td>
+      <td class="num" style="color:${roasColor};font-weight:700">${roas}x</td>
+      <td><div class="bar-wrap"><div class="bar-bg"><div class="${isMeta ? 'bar-fill-meta' : 'bar-fill-other'}" style="width:${barW}%"></div></div></div></td>
+    </tr>`;
+  });
+
+  const blendedRoas = totalSpend > 0 ? (allRev / totalSpend).toFixed(2) : '0.00';
+  const metaRoas    = totalSpend > 0 ? (metaRev / totalSpend).toFixed(2) : '0.00';
+
+  html += `<tr class="ch-total">
+    <td colspan="2" style="font-weight:700">TOTAL — ALL SOURCES</td>
+    <td class="num">${Object.values(sources).reduce((a,s)=>a+s.orders,0)}</td>
+    <td class="num">${fmt(allRev,'currency')}</td>
+    <td class="num">100%</td>
+    <td class="num" style="color:#9b6fff;font-weight:700">${blendedRoas}x blended</td>
+    <td></td>
+  </tr>
+  <tr class="ch-total">
+    <td colspan="2" style="color:var(--meta);font-weight:700">META SOURCES (fb · ig · facebook · an · th)</td>
+    <td class="num">${metaOrders}</td>
+    <td class="num">${fmt(metaRev,'currency')}</td>
+    <td class="num">${allRev > 0 ? (metaRev/allRev*100).toFixed(1) : '0.0'}%</td>
+    <td class="num" style="color:var(--cm);font-weight:700">${metaRoas}x</td>
+    <td></td>
+  </tr></tbody>`;
+
+  document.getElementById('chTable').innerHTML = html;
+}
+
+function buildKPIs(rows) {
+  const ts  = rows.reduce((a,r) => a + (r.spend||0), 0);
+  const ti  = rows.reduce((a,r) => a + (r.impressions||0), 0);
+  const tr  = rows.reduce((a,r) => a + (r.reach||0), 0);
+  const tmp = rows.reduce((a,r) => a + (r.meta_purchases||0), 0);
+  const tmr = rows.reduce((a,r) => a + (r.meta_revenue||0), 0);
+  const tcp = rows.reduce((a,r) => a + (r.cm_purchases||0), 0);
+  const tcr = rows.reduce((a,r) => a + (r.cm_revenue||0), 0);
+
+  document.getElementById('kpi-general').innerHTML = [
+    {l:'Total Spend',   v:'A$'+ts.toFixed(2), s:`${DAYS}-day period`},
+    {l:'Impressions',   v:ti.toLocaleString(), s:'All campaigns'},
+    {l:'Reach',         v:tr.toLocaleString(), s:'Unique accounts'},
+  ].map(k=>`<div class="kpi general"><div class="kpi-label">${k.l}</div><div class="kpi-value">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
+
+  document.getElementById('kpi-meta').innerHTML = [
+    {l:'Purchases',  v:tmp,                    s:'7-day attributed'},
+    {l:'Revenue',    v:'A$'+tmr.toFixed(2),    s:'Actual reported'},
+    {l:'ROAS',       v:(ts>0?tmr/ts:0).toFixed(2)+'x', s:'vs spend'},
+    {l:'CPR',        v:tmp>0?'A$'+(ts/tmp).toFixed(2):'—', s:'Cost per purchase'},
+    {l:'AOV',        v:tmp>0?'A$'+(tmr/tmp).toFixed(2):'—', s:'Avg order value'},
+  ].map(k=>`<div class="kpi meta"><div class="kpi-label">${k.l}</div><div class="kpi-value">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
+
+  document.getElementById('kpi-cm').innerHTML = [
+    {l:'Purchases',  v:tcp,                    s:'Last-click paid'},
+    {l:'Revenue',    v:'A$'+tcr.toFixed(2),    s:'Actual reported'},
+    {l:'ROAS',       v:(ts>0?tcr/ts:0).toFixed(2)+'x', s:'vs spend'},
+    {l:'CPA',        v:tcp>0?'A$'+(ts/tcp).toFixed(2):'—', s:'Cost per purchase'},
+    {l:'AOV',        v:tcp>0?'A$'+(tcr/tcp).toFixed(2):'—', s:'Avg order value'},
+  ].map(k=>`<div class="kpi cm"><div class="kpi-label">${k.l}</div><div class="kpi-value">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
+}
+
+function sortArr(arr, col, dir) {
+  return arr.slice().sort((a,b) => {
+    let av = 0, bv = 0;
+    if (col === 'meta_roas') { av = a.spend>0?a.meta_revenue/a.spend:0; bv = b.spend>0?b.meta_revenue/b.spend:0; }
+    else if (col === 'cm_roas') { av = a.spend>0?a.cm_revenue/a.spend:0; bv = b.spend>0?b.cm_revenue/b.spend:0; }
+    else { av = a[col]||0; bv = b[col]||0; }
+    return dir === 'desc' ? bv - av : av - bv;
+  });
+}
+
+function render() {
+  const filteredData = filterByDate(ALL_DATA);
+  const col  = document.getElementById('sortCol').value;
+  const dir  = document.getElementById('sortDir').value;
+  const cf   = document.getElementById('campFilter').value;
+
+  buildKPIs(filteredData);
+  buildChannelTable(filteredData);
+
+  const hierarchy = buildHierarchy(filteredData);
+  let data = cf ? hierarchy.filter(c => c.name === cf) : hierarchy;
+  data = sortArr(data, col, dir);
+
+  let html = '';
+  let ts=0, ti=0, tr=0, tmp=0, tmr=0, tcp=0, tcr=0;
+
+  data.forEach((c, ci) => {
+    const cid   = 'c' + ci;
+    const open  = expandAll || expanded[cid];
+    const mroas = c.spend>0&&c.meta_revenue>0 ? c.meta_revenue/c.spend : 0;
+    const croas = c.spend>0&&c.cm_revenue>0   ? c.cm_revenue/c.spend   : 0;
+    const maov  = c.meta_purchases>0 ? c.meta_revenue/c.meta_purchases : 0;
+    const caov  = c.cm_purchases>0   ? c.cm_revenue/c.cm_purchases     : 0;
+    ts+=c.spend; ti+=c.impressions; tr+=c.reach;
+    tmp+=c.meta_purchases; tmr+=c.meta_revenue;
+    tcp+=c.cm_purchases;   tcr+=c.cm_revenue;
+
+    html += `<tr class="level-campaign">
+      <td class="name-cell"><button class="expand-btn" onclick="tog('${cid}')">${open?'▾':'▸'}</button>${c.name}<span class="pill">${c.adsets.length}as</span></td>
+      <td class="num">${fmt(c.spend,'currency')}</td>
+      <td class="num">${fmt(c.impressions,'num')}</td>
+      <td class="num">${fmt(c.reach,'num')}</td>
+      <td class="num">—</td>
+      <td class="num div-m">${c.meta_purchases||'—'}</td>
+      <td class="num">${fmt(c.meta_revenue,'currency')}</td>
+      <td class="num ${rc(mroas)}">${fmt(mroas,'roas')}</td>
+      <td class="num">—</td>
+      <td class="num">${fmt(maov,'cpa')}</td>
+      <td class="num div-c">${c.cm_purchases||'—'}</td>
+      <td class="num">${fmt(c.cm_revenue,'currency')}</td>
+      <td class="num ${rc(croas)}">${fmt(croas,'roas')}</td>
+      <td class="num">—</td>
+      <td class="num">${fmt(caov,'cpa')}</td>
+    </tr>`;
+
+    if (open) {
+      sortArr(c.adsets, col, dir).forEach((a, ai) => {
+        const asid  = cid + '_' + ai;
+        const aopen = expandAll || expanded[asid];
+        const amroas = a.spend>0&&a.meta_revenue>0 ? a.meta_revenue/a.spend : 0;
+        const acroas = a.spend>0&&a.cm_revenue>0   ? a.cm_revenue/a.spend   : 0;
+        const amaov  = a.meta_purchases>0 ? a.meta_revenue/a.meta_purchases : 0;
+        const acaov  = a.cm_purchases>0   ? a.cm_revenue/a.cm_purchases     : 0;
+
+        html += `<tr class="level-adset">
+          <td class="name-cell"><button class="expand-btn" onclick="tog('${asid}')">${aopen?'▾':'▸'}</button>${a.name}<span class="pill pg">${a.ads.length}ads</span></td>
+          <td class="num">${fmt(a.spend,'currency')}</td>
+          <td class="num">${fmt(a.impressions,'num')}</td>
+          <td class="num">${fmt(a.reach,'num')}</td>
+          <td class="num">—</td>
+          <td class="num div-m">${a.meta_purchases||'—'}</td>
+          <td class="num">${fmt(a.meta_revenue,'currency')}</td>
+          <td class="num ${rc(amroas)}">${fmt(amroas,'roas')}</td>
+          <td class="num">—</td>
+          <td class="num">${fmt(amaov,'cpa')}</td>
+          <td class="num div-c">${a.cm_purchases||'—'}</td>
+          <td class="num">${fmt(a.cm_revenue,'currency')}</td>
+          <td class="num ${rc(acroas)}">${fmt(acroas,'roas')}</td>
+          <td class="num">—</td>
+          <td class="num">${fmt(acaov,'cpa')}</td>
+        </tr>`;
+
+        if (aopen) {
+          sortArr(a.ads, col, dir).forEach(ad => {
+            const adm  = ad.spend>0&&ad.meta_revenue>0 ? ad.meta_revenue/ad.spend : 0;
+            const adc  = ad.spend>0&&ad.cm_revenue>0   ? ad.cm_revenue/ad.spend   : 0;
+            const admcpa = ad.meta_purchases>0 ? ad.spend/ad.meta_purchases : 0;
+            const adccpa = ad.cm_purchases>0   ? ad.spend/ad.cm_purchases   : 0;
+            const admaov = ad.meta_purchases>0 ? ad.meta_revenue/ad.meta_purchases : 0;
+            const adcaov = ad.cm_purchases>0   ? ad.cm_revenue/ad.cm_purchases     : 0;
+
+            html += `<tr class="level-ad">
+              <td class="name-cell">${ad.name}${dlv(ad.delivery)}</td>
+              <td class="num">${fmt(ad.spend,'currency')}</td>
+              <td class="num">${fmt(ad.impressions,'num')}</td>
+              <td class="num">${fmt(ad.reach,'num')}</td>
+              <td class="num">${fmt(ad.frequency,'freq')}</td>
+              <td class="num div-m">${ad.meta_purchases||'—'}</td>
+              <td class="num">${fmt(ad.meta_revenue,'currency')}</td>
+              <td class="num ${rc(adm)}">${fmt(adm,'roas')}</td>
+              <td class="num">${fmt(ad.meta_cpr,'cpa')}</td>
+              <td class="num">${fmt(admaov,'cpa')}</td>
+              <td class="num div-c">${ad.cm_purchases||'—'}</td>
+              <td class="num">${fmt(ad.cm_revenue,'currency')}</td>
+              <td class="num ${rc(adc)}">${fmt(adc,'roas')}</td>
+              <td class="num">${fmt(adccpa,'cpa')}</td>
+              <td class="num">${fmt(adcaov,'cpa')}</td>
+            </tr>`;
+          });
+        }
+      });
+    }
+  });
+
+  const tmroas = ts>0?tmr/ts:0;
+  const tcroas = ts>0?tcr/ts:0;
+  const tmaov  = tmp>0?tmr/tmp:0;
+  const tcaov  = tcp>0?tcr/tcp:0;
+
+  html += `<tr class="total-row">
+    <td>TOTAL (filtered)</td>
+    <td class="num">${fmt(ts,'currency')}</td>
+    <td class="num">${fmt(ti,'num')}</td>
+    <td class="num">${fmt(tr,'num')}</td>
+    <td class="num">—</td>
+    <td class="num div-m">${tmp||'—'}</td>
+    <td class="num">${fmt(tmr,'currency')}</td>
+    <td class="num ${rc(tmroas)}">${fmt(tmroas,'roas')}</td>
+    <td class="num">—</td>
+    <td class="num">${fmt(tmaov,'cpa')}</td>
+    <td class="num div-c">${tcp||'—'}</td>
+    <td class="num">${fmt(tcr,'currency')}</td>
+    <td class="num ${rc(tcroas)}">${fmt(tcroas,'roas')}</td>
+    <td class="num">—</td>
+    <td class="num">${fmt(tcaov,'cpa')}</td>
+  </tr>`;
+
+  document.getElementById('tbody').innerHTML = html;
+
+  // Update sort indicators
+  document.querySelectorAll('thead.main-head tr.h-row th').forEach(th => {
+    th.classList.remove('s-asc','s-desc');
+    if (th.dataset.col === col) th.classList.add(dir === 'desc' ? 's-desc' : 's-asc');
+  });
+}
+
+function tog(id) {
+  expanded[id] = !expanded[id];
+  render();
+}
+
+function toggleExpandAll() {
+  expandAll = !expandAll;
+  document.querySelector('.expand-all-btn').textContent = expandAll ? 'Collapse all' : 'Expand all';
+  render();
+}
+
+function setDays(d, btn) {
+  DAYS = d;
+  document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function toggleExplainer() {
+  const el = document.getElementById('explainer');
+  const arrow = document.getElementById('exp-arrow');
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    arrow.textContent = '▾';
+  } else {
+    el.style.display = 'none';
+    arrow.textContent = '▸';
+  }
+}
+
+function populateCampaignFilter(data) {
+  const campaigns = [...new Set(data.map(r => r.campaign_name).filter(Boolean))].sort();
+  const sel = document.getElementById('campFilter');
+  sel.innerHTML = '<option value="">All</option>';
+  campaigns.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.text = c;
+    sel.appendChild(o);
+  });
+}
+
+async function loadData() {
+  if (!client || !key) {
+    document.getElementById('error-msg').textContent = 'Missing client or key in URL. Contact your account manager.';
+    document.getElementById('error-state').classList.add('show');
+    document.getElementById('loader').classList.add('hidden');
+    return;
+  }
+
+  document.getElementById('loader-msg').textContent = 'Connecting to data source...';
+
+  try {
+    const url = `${API}/dashboard?client=${encodeURIComponent(client)}&key=${encodeURIComponent(key)}`;
+    const res = await fetch(url);
+
+    if (res.status === 403) {
+      document.getElementById('error-msg').textContent = 'Unauthorised. Check your dashboard URL.';
+      document.getElementById('error-state').classList.add('show');
+      document.getElementById('loader').classList.add('hidden');
+      return;
+    }
+
+    document.getElementById('loader-msg').textContent = 'Processing data...';
+    const data = await res.json();
+
+    ALL_DATA = data;
+
+    // Update header
+    document.getElementById('header-title').textContent =
+      client.charAt(0).toUpperCase() + client.slice(1) + ' — Ad Performance';
+    document.getElementById('last-updated').textContent =
+      'Updated ' + new Date().toLocaleTimeString();
+
+    populateCampaignFilter(data);
+    render();
+
+    document.getElementById('loader').classList.add('hidden');
+    document.getElementById('app').style.display = 'block';
+
+  } catch (err) {
+    console.error('Load error:', err);
+    document.getElementById('error-msg').textContent = 'Failed to load data. Please try again.';
+    document.getElementById('error-state').classList.add('show');
+    document.getElementById('loader').classList.add('hidden');
+  }
+}
+
+async function refreshData() {
+  const icon = document.getElementById('refresh-icon');
+  icon.className = 'refreshing';
+  try {
+    const url = `${API}/dashboard?client=${encodeURIComponent(client)}&key=${encodeURIComponent(key)}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    ALL_DATA   = data;
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+    render();
+  } catch(e) {
+    console.error('Refresh error:', e);
+  }
+  icon.className = '';
+  icon.textContent = '↻';
+}
+
+// Column header sort click
+document.querySelectorAll('thead.main-head tr.h-row th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    const sel = document.getElementById('sortCol');
+    const dir = document.getElementById('sortDir');
+    if (sel.value === col) {
+      dir.value = dir.value === 'desc' ? 'asc' : 'desc';
+    } else {
+      sel.value = col;
+      dir.value = 'desc';
+    }
+    render();
+  });
+});
+
+// Init
+loadData();
+</script>
+</body>
+</html>
