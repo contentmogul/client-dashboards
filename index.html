@@ -10,15 +10,14 @@
 :root{
   --ch-meta:rgb(70,130,180);
   --ch-meta-soft:rgba(70,130,180,0.15);
-  --ch-meta-border:rgba(70,130,180,0.35);
+  --ch-meta-border:rgba(70,130,180,0.3);
   --ch-google:rgb(46,139,87);
   --ch-google-soft:rgba(46,139,87,0.15);
+  --ch-google-border:rgba(46,139,87,0.3);
   --ch-youtube:rgb(178,34,34);
   --ch-tiktok:rgb(186,85,211);
-  --ch-tiktok-soft:rgba(186,85,211,0.15);
   --ch-organic:rgb(255,140,0);
   --ch-organic-soft:rgba(255,140,0,0.15);
-  --ch-other:rgb(0,191,255);
   --cm-accent:#D028A6;
   --cm-accent-soft:rgba(208,40,166,0.12);
   --cm-accent-border:rgba(208,40,166,0.25);
@@ -26,7 +25,6 @@
   --roas-ok:#ffb300;
   --roas-bad:#ff3d5a;
 }
-/* Light mode */
 :root{
   --bg:#FBF7E8;
   --surface:#FFFFFF;
@@ -41,7 +39,6 @@
   --total-bg:#200D1B;
   --total-fg:#FFFFFF;
 }
-/* Dark mode */
 @media(prefers-color-scheme:dark){
   :root{
     --bg:#200D1B;
@@ -59,14 +56,12 @@
   }
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:13px;min-height:100vh}
-.mono{font-family:'DM Mono',monospace}
 /* Loader */
 #loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
 .spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--cm-accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 #loader-msg{color:var(--muted);font-size:12px}
 #loader.hidden{display:none}
-/* Error */
 #error-state{display:none;position:fixed;inset:0;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:998}
 #error-state.show{display:flex}
 #error-state h2{color:var(--roas-bad)}
@@ -99,35 +94,36 @@ header{background:var(--header-bg);color:var(--header-fg);padding:12px 20px;disp
 .ctrl-sel:focus{border-color:var(--cm-accent)}
 .eabtn{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:4px;font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif}
 .eabtn:hover{border-color:var(--cm-accent);color:var(--cm-accent)}
-/* KPI */
-.kpi-section{padding:14px 20px 8px}
-.kpi-grp{margin-bottom:10px}
-.kpi-grp-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
-.kpi-grp-lbl::after{content:'';flex:1;height:1px;background:var(--border)}
-.kpi-grp-lbl.ld{color:var(--muted)}
-.kpi-grp-lbl.lm{color:var(--ch-meta)}
-.kpi-grp-lbl.lc{color:var(--cm-accent)}
-.kpi-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+/* Hero KPI — blended */
+.hero-section{padding:14px 20px 8px}
+.hero-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;color:var(--cm-accent)}
+.hero-lbl::after{content:'';flex:1;height:1px;background:var(--border)}
+.hero-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:14px}
 .kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.kpi.kd::before{background:var(--muted)}
-.kpi.km::before{background:var(--ch-meta)}
-.kpi.kc::before{background:var(--cm-accent)}
+.kpi.kblend::before{background:var(--cm-accent)}
+.kpi.kmeta::before{background:var(--ch-meta)}
+.kpi.kgoogle::before{background:var(--ch-google)}
 .kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-weight:600}
 .kpi-val{font-size:19px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace}
 .kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
-/* Explainer */
-.exp-toggle{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:4px 20px 8px;display:flex;align-items:center;gap:4px;font-family:'DM Sans',sans-serif}
-.exp-toggle:hover{color:var(--text)}
-.explainer{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:0 20px 14px;padding:14px 18px;box-shadow:var(--shadow)}
-.exp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
-.exp-card{background:var(--surface2);border-radius:7px;padding:10px 12px;border-left:3px solid var(--border)}
-.exp-card h4{font-size:11px;font-weight:700;margin-bottom:4px}
-.exp-card p{font-size:10.5px;color:var(--muted);line-height:1.5}
-/* Channel table */
+/* Attribution comparison */
+.attr-section{padding:0 20px 14px}
+.attr-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.attr-grid{grid-template-columns:1fr}}
+.attr-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;box-shadow:var(--shadow)}
+.attr-panel-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.attr-panel.meta-panel .attr-panel-title{color:var(--ch-meta);border-bottom-color:var(--ch-meta-border)}
+.attr-panel.cm-panel .attr-panel-title{color:var(--cm-accent);border-bottom-color:var(--cm-accent-border)}
+.attr-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.attr-row:last-child{border-bottom:none}
+.attr-row-lbl{color:var(--muted)}
+.attr-row-val{font-family:'DM Mono',monospace;font-weight:600}
+/* Section */
 .section{padding:0 20px 14px}
 .section-ttl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .section-ttl::after{content:'';flex:1;height:1px;background:var(--border)}
+/* Channel table */
 .ch-wrap{overflow-x:auto}
 .ch-tbl{width:100%;border-collapse:collapse;background:var(--surface);border-radius:8px;overflow:hidden;border:1px solid var(--border);font-size:11px;box-shadow:var(--shadow)}
 .ch-tbl th{background:var(--surface2);color:var(--muted);padding:8px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.4px;border-bottom:1px solid var(--border)}
@@ -136,11 +132,24 @@ header{background:var(--header-bg);color:var(--header-fg);padding:12px 20px;disp
 .ch-tbl tr:last-child td{border-bottom:none}
 .ch-tbl tr:hover td{background:var(--surface2)}
 .ch-tbl td.num{text-align:right;font-family:'DM Mono',monospace}
-.ch-group-hdr td{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:6px 12px;border-bottom:none}
-.ch-total td{background:var(--surface2);font-weight:700;border-top:2px solid var(--border)}
+.ch-grp-hdr td{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;padding:7px 12px;border-bottom:1px solid var(--border)!important}
+.ch-grp-total td{font-weight:700;font-size:11px}
+.ch-all-total td{background:var(--surface2);font-weight:700;border-top:2px solid var(--border)}
 .src-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace}
 .bar-bg{display:inline-block;background:var(--border);border-radius:2px;height:5px;width:70px;vertical-align:middle}
 .bar-fill{display:block;border-radius:2px;height:5px}
+/* Tabs */
+.tabs-wrap{padding:0 20px 0}
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:0}
+.tab-btn{padding:10px 20px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;font-family:'DM Sans',sans-serif;letter-spacing:.3px}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active-meta{color:var(--ch-meta);border-bottom-color:var(--ch-meta)}
+.tab-btn.active-google{color:var(--ch-google);border-bottom-color:var(--ch-google)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+/* Google coming soon notice */
+.coming-soon{margin:14px 20px 8px;background:var(--ch-google-soft);border:1px solid var(--ch-google-border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--ch-google)}
+.coming-soon strong{font-weight:700}
 /* Main table */
 .tbl-wrap{padding:0 20px 32px;overflow-x:auto}
 table.main{width:100%;border-collapse:collapse;background:var(--surface);border-radius:10px;overflow:hidden;border:1px solid var(--border);min-width:1300px;box-shadow:var(--shadow)}
@@ -148,6 +157,7 @@ thead.mh tr.gr th{padding:6px 8px;font-size:10px;font-weight:700;letter-spacing:
 th.g-d{background:var(--surface2);color:var(--muted)}
 th.g-m{background:rgba(70,130,180,0.12);color:var(--ch-meta)}
 th.g-c{background:rgba(208,40,166,0.1);color:var(--cm-accent)}
+th.g-g{background:rgba(46,139,87,0.12);color:var(--ch-google)}
 thead.mh tr.hr th{background:var(--surface2);color:var(--muted);padding:7px 8px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);border-top:1px solid var(--border)}
 thead.mh tr.hr th.num{text-align:right}
 thead.mh tr.hr th:hover{color:var(--text)}
@@ -170,19 +180,29 @@ td.nc{font-weight:600;max-width:220px;white-space:nowrap;overflow:hidden;text-ov
 .rb{color:var(--roas-bad);font-weight:700;font-family:'DM Mono',monospace}
 .num{text-align:right;font-family:'DM Mono',monospace}
 .tr-tot td{background:var(--total-bg)!important;color:var(--total-fg);font-weight:700;border-top:2px solid var(--cm-accent)}
+.tr-tot-g td{background:var(--total-bg)!important;color:var(--total-fg);font-weight:700;border-top:2px solid var(--ch-google)}
 .pill{display:inline-block;background:var(--cm-accent-soft);color:var(--cm-accent);border-radius:6px;padding:0 5px;font-size:9px;font-weight:700;margin-left:3px;vertical-align:middle;border:1px solid var(--cm-accent-border)}
 .pg{background:rgba(0,196,122,0.1);color:var(--roas-good);border-color:rgba(0,196,122,0.2)}
 .dm{border-left:2px solid rgba(70,130,180,0.3)}
 .dc{border-left:2px solid rgba(208,40,166,0.3)}
+.dg{border-left:2px solid rgba(46,139,87,0.3)}
 .badge{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;vertical-align:middle;margin-left:3px}
 .ba{background:rgba(0,196,122,0.1);color:var(--roas-good);border:1px solid rgba(0,196,122,0.2)}
 .bi{background:rgba(255,179,0,0.1);color:var(--roas-ok);border:1px solid rgba(255,179,0,0.2)}
 .barch{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
 .bnd{background:rgba(255,61,90,0.1);color:var(--roas-bad);border:1px solid rgba(255,61,90,0.2)}
+/* Explainer */
+.exp-toggle{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:4px 20px 8px;display:flex;align-items:center;gap:4px;font-family:'DM Sans',sans-serif}
+.exp-toggle:hover{color:var(--text)}
+.explainer{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:0 20px 14px;padding:14px 18px;box-shadow:var(--shadow)}
+.exp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.exp-card{background:var(--surface2);border-radius:7px;padding:10px 12px;border-left:3px solid var(--border)}
+.exp-card h4{font-size:11px;font-weight:700;margin-bottom:4px}
+.exp-card p{font-size:10.5px;color:var(--muted);line-height:1.5}
 @media(max-width:700px){
-  .kpi-bar{grid-template-columns:repeat(2,1fr)}
-  .controls,.kpi-section,.section,.tbl-wrap{padding-left:12px;padding-right:12px}
+  .controls,.hero-section,.attr-section,.section,.tbl-wrap,.tabs-wrap{padding-left:12px;padding-right:12px}
   header{padding:10px 12px}
+  .hero-bar{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -249,286 +269,336 @@ td.nc{font-weight:600;max-width:220px;white-space:nowrap;overflow:hidden;text-ov
   <button class="eabtn" onclick="toggleExpAll()" id="eabtn">Expand all</button>
 </div>
 
-<div class="kpi-section">
-  <div class="kpi-grp"><div class="kpi-grp-lbl ld">Delivery</div><div class="kpi-bar" id="kd"></div></div>
-  <div class="kpi-grp"><div class="kpi-grp-lbl lm">Meta Ads Manager — 7-day attributed</div><div class="kpi-bar" id="km"></div></div>
-  <div class="kpi-grp"><div class="kpi-grp-lbl lc">ClickMagick — last-click (all sources)</div><div class="kpi-bar" id="kc"></div></div>
+<!-- HERO — blended CM all sources -->
+<div class="hero-section">
+  <div class="hero-lbl">ClickMagick — blended all channels</div>
+  <div class="hero-bar" id="hero-bar"></div>
 </div>
 
-<button class="exp-toggle" onclick="toggleExp()"><span id="exparr">▸</span> How to read this report</button>
-<div class="explainer" id="explainer" style="display:none">
-  <div class="exp-grid">
-    <div class="exp-card" style="border-left-color:var(--ch-meta)">
-      <h4 style="color:var(--ch-meta)">Meta Ads Manager (steel blue)</h4>
-      <p>Purchases and revenue from Meta using a 7-day click + 1-day view attribution window. Meta attributes a conversion if the customer clicked or viewed an ad in that window — even if they later converted via email or organic. Tends to over-attribute revenue to Meta.</p>
+<!-- ATTRIBUTION COMPARISON -->
+<div class="attr-section">
+  <div class="attr-grid">
+    <div class="attr-panel meta-panel">
+      <div class="attr-panel-title">Meta Ads Manager — 7-day attributed</div>
+      <div id="attr-meta"></div>
     </div>
-    <div class="exp-card" style="border-left-color:var(--cm-accent)">
-      <h4 style="color:var(--cm-accent)">ClickMagick — last-click (magenta)</h4>
-      <p>ClickMagick records the last paid click before each purchase across all channels. More conservative than Meta. CAC (Customer Acquisition Cost) = spend divided by purchases. Together Meta and CM give upper and lower bounds on true attribution.</p>
-    </div>
-    <div class="exp-card" style="border-left-color:var(--ch-tiktok)">
-      <h4 style="color:var(--ch-tiktok)">Blended ROAS (channel table)</h4>
-      <p>All CM revenue across every source divided by Meta ad spend. Includes organic, Google, email and other channels alongside Meta — not purely a Meta attribution figure. This matches what ClickMagick shows at dashboard level.</p>
-    </div>
-    <div class="exp-card" style="border-left-color:var(--ch-organic)">
-      <h4 style="color:var(--ch-organic)">Timezone note</h4>
-      <p>All dates use the Meta ad account timezone shown in the header pill. Today and Yesterday are calculated in that timezone to match Meta Ads Manager exactly. Today shows partial data — it updates hourly. Last update time is shown in the header.</p>
+    <div class="attr-panel cm-panel">
+      <div class="attr-panel-title">ClickMagick — last-click Meta sources only</div>
+      <div id="attr-cm"></div>
     </div>
   </div>
 </div>
 
+<!-- EXPLAINER -->
+<button class="exp-toggle" onclick="toggleExp()"><span id="exparr">▸</span> How to read this report</button>
+<div class="explainer" id="explainer" style="display:none">
+  <div class="exp-grid">
+    <div class="exp-card" style="border-left-color:var(--cm-accent)">
+      <h4 style="color:var(--cm-accent)">Blended ROAS (hero, all sources)</h4>
+      <p>Total CM revenue from every channel divided by total Meta ad spend. This is the true business return — it includes organic, Google, email, and all other sources. Matches what ClickMagick shows at the top of its dashboard.</p>
+    </div>
+    <div class="exp-card" style="border-left-color:var(--ch-meta)">
+      <h4 style="color:var(--ch-meta)">Meta Ads Manager (steel blue)</h4>
+      <p>Purchases and revenue reported by Meta using a 7-day click + 1-day view window. Meta attributes conversions that happened days after the ad interaction. Tends to over-attribute. Compare with CM Meta-only for a clearer picture.</p>
+    </div>
+    <div class="exp-card" style="border-left-color:var(--ch-google)">
+      <h4 style="color:var(--ch-google)">Google Ads (sea green)</h4>
+      <p>ClickMagick last-click data for Google-sourced conversions. Google Ads API integration is coming soon — when live, it will show spend and impression data alongside CM conversion data for direct Google ROAS comparison.</p>
+    </div>
+    <div class="exp-card" style="border-left-color:var(--ch-organic)">
+      <h4 style="color:var(--ch-organic)">Timezone note</h4>
+      <p>All dates use the Meta ad account timezone shown in the header. Today and Yesterday are calculated in that timezone to match Meta Ads Manager exactly. Data updates hourly — last update shown in the header.</p>
+    </div>
+  </div>
+</div>
+
+<!-- CHANNEL BREAKDOWN -->
 <div class="section">
   <div class="section-ttl">ClickMagick — all channel breakdown</div>
   <div class="ch-wrap"><table class="ch-tbl" id="chtbl"></table></div>
 </div>
 
-<div class="tbl-wrap">
-<table class="main">
-<thead class="mh">
-  <tr class="gr">
-    <th class="g-d" style="text-align:left" colspan="5">DELIVERY</th>
-    <th class="g-m dm" colspan="5">META — 7-DAY ATTRIBUTED</th>
-    <th class="g-c dc" colspan="5">CLICKMAGICK — LAST-CLICK</th>
-  </tr>
-  <tr class="hr">
-    <th style="min-width:200px">Name</th>
-    <th class="num" data-col="spend">Spend</th>
-    <th class="num" data-col="impressions">Impr.</th>
-    <th class="num" data-col="reach">Reach</th>
-    <th class="num">Freq.</th>
-    <th class="num dm" data-col="meta_purchases">Purchases</th>
-    <th class="num" data-col="meta_revenue">Revenue</th>
-    <th class="num" data-col="meta_roas">ROAS</th>
-    <th class="num">CAC</th>
-    <th class="num">AOV</th>
-    <th class="num dc" data-col="cm_purchases">Purchases</th>
-    <th class="num" data-col="cm_revenue">Revenue</th>
-    <th class="num" data-col="cm_roas">ROAS</th>
-    <th class="num">CAC</th>
-    <th class="num">AOV</th>
-  </tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active-meta" onclick="switchTab('meta',this)" id="tab-meta">Meta Ads</button>
+    <button class="tab-btn" onclick="switchTab('google',this)" id="tab-google">Google Ads</button>
+  </div>
 </div>
+
+<!-- META TAB -->
+<div class="tab-panel active" id="panel-meta">
+  <div class="tbl-wrap">
+  <table class="main">
+  <thead class="mh">
+    <tr class="gr">
+      <th class="g-d" style="text-align:left" colspan="5">DELIVERY</th>
+      <th class="g-m dm" colspan="5">META — 7-DAY ATTRIBUTED</th>
+      <th class="g-c dc" colspan="5">CLICKMAGICK — LAST-CLICK (META)</th>
+    </tr>
+    <tr class="hr" id="thead-meta">
+      <th style="min-width:200px">Name</th>
+      <th class="num" data-col="spend">Spend</th>
+      <th class="num" data-col="impressions">Impr.</th>
+      <th class="num" data-col="reach">Reach</th>
+      <th class="num">Freq.</th>
+      <th class="num dm" data-col="meta_purchases">Purchases</th>
+      <th class="num" data-col="meta_revenue">Revenue</th>
+      <th class="num" data-col="meta_roas">ROAS</th>
+      <th class="num">CAC</th>
+      <th class="num">AOV</th>
+      <th class="num dc" data-col="cm_purchases">Purchases</th>
+      <th class="num" data-col="cm_revenue">Revenue</th>
+      <th class="num" data-col="cm_roas">ROAS</th>
+      <th class="num">CAC</th>
+      <th class="num">AOV</th>
+    </tr>
+  </thead>
+  <tbody id="tbody-meta"></tbody>
+  </table>
+  </div>
+</div>
+
+<!-- GOOGLE TAB -->
+<div class="tab-panel" id="panel-google">
+  <div class="coming-soon">
+    <span style="font-size:18px">🔜</span>
+    <div><strong>Google Ads API integration coming soon.</strong> When live, this tab will show Google campaign spend, impressions, and clicks alongside ClickMagick last-click conversion data for direct ROAS comparison. Currently showing ClickMagick-attributed Google conversions only.</div>
+  </div>
+  <div class="tbl-wrap">
+  <table class="main">
+  <thead class="mh">
+    <tr class="gr">
+      <th class="g-d" style="text-align:left" colspan="3">SOURCE</th>
+      <th class="g-g dg" colspan="4">GOOGLE ADS API — COMING SOON</th>
+      <th class="g-c dc" colspan="5">CLICKMAGICK — LAST-CLICK (GOOGLE)</th>
+    </tr>
+    <tr class="hr">
+      <th style="min-width:200px">Campaign / Source</th>
+      <th class="num">Date</th>
+      <th class="num">Visitor ID</th>
+      <th class="num dg" style="color:var(--muted);font-style:italic">Spend</th>
+      <th class="num" style="color:var(--muted);font-style:italic">Impr.</th>
+      <th class="num" style="color:var(--muted);font-style:italic">Clicks</th>
+      <th class="num" style="color:var(--muted);font-style:italic">ROAS</th>
+      <th class="num dc" data-col="cm_purchases">Purchases</th>
+      <th class="num" data-col="cm_revenue">Revenue</th>
+      <th class="num">CAC</th>
+      <th class="num">AOV</th>
+      <th class="num">Keyword / Term</th>
+    </tr>
+  </thead>
+  <tbody id="tbody-google"></tbody>
+  </table>
+  </div>
 </div>
 
 <script>
 const API = 'https://api.getcontentmogul.com';
 
-// Channel classification from ContentMogul app CSS
 const META_SRCS    = ['fb','ig','facebook','facebook_ads_ppm','an','th','fb-sitelink'];
 const GOOGLE_SRCS  = ['google'];
 const YOUTUBE_SRCS = ['youtube'];
 const TIKTOK_SRCS  = ['tiktok'];
-// Everything else → organic colour (includes organic, email, klaviyo, loyaltylion, skedlink, checkmate etc)
 
-function getChannelGroup(src) {
-  const s = (src||'').toLowerCase();
-  if (META_SRCS.includes(s))    return 'meta';
-  if (GOOGLE_SRCS.includes(s))  return 'google';
-  if (YOUTUBE_SRCS.includes(s)) return 'youtube';
-  if (TIKTOK_SRCS.includes(s))  return 'tiktok';
-  return 'organic'; // default — organic colour for all others
+// Channel classification
+function getGroup(src) {
+  const s=(src||'').toLowerCase();
+  if(META_SRCS.includes(s))    return 'meta';
+  if(GOOGLE_SRCS.includes(s))  return 'google';
+  if(YOUTUBE_SRCS.includes(s)) return 'youtube';
+  if(TIKTOK_SRCS.includes(s))  return 'tiktok';
+  if(s==='organic'||s==='email') return 'organic';
+  return 'other';
 }
 
-function getChannelColour(src) {
-  const g = getChannelGroup(src);
-  const map = {
-    meta:    'rgba(70,130,180,1)',
-    google:  'rgba(46,139,87,1)',
-    youtube: 'rgba(178,34,34,1)',
-    tiktok:  'rgba(186,85,211,1)',
-    organic: 'rgba(255,140,0,1)'
-  };
+const GROUP_META = {
+  meta:    {label:'META ADVERTISING CHANNELS',    col:'var(--ch-meta)',    soft:'var(--ch-meta-soft)'},
+  google:  {label:'GOOGLE ADVERTISING CHANNELS',  col:'var(--ch-google)',  soft:'var(--ch-google-soft)'},
+  youtube: {label:'YOUTUBE ADVERTISING CHANNELS', col:'var(--ch-youtube)', soft:'rgba(178,34,34,0.1)'},
+  tiktok:  {label:'TIKTOK ADVERTISING CHANNELS',  col:'var(--ch-tiktok)',  soft:'rgba(186,85,211,0.1)'},
+  organic: {label:'ORGANIC CHANNELS',             col:'var(--ch-organic)', soft:'var(--ch-organic-soft)'},
+  other:   {label:'OTHER CHANNELS',               col:'var(--ch-organic)', soft:'var(--ch-organic-soft)'}
+};
+
+function getColour(src) {
+  const g=getGroup(src);
+  const map={meta:'rgba(70,130,180,1)',google:'rgba(46,139,87,1)',youtube:'rgba(178,34,34,1)',tiktok:'rgba(186,85,211,1)',organic:'rgba(255,140,0,1)',other:'rgba(255,140,0,1)'};
   return map[g];
 }
 
-const GROUP_LABELS = {
-  meta:    'META ADVERTISING CHANNELS',
-  google:  'GOOGLE ADVERTISING CHANNELS',
-  youtube: 'YOUTUBE ADVERTISING CHANNELS',
-  tiktok:  'TIKTOK ADVERTISING CHANNELS',
-  organic: 'ORGANIC & OTHER CHANNELS'
-};
-
-const GROUP_COLOURS = {
-  meta:    'var(--ch-meta)',
-  google:  'var(--ch-google)',
-  youtube: 'var(--ch-youtube)',
-  tiktok:  'var(--ch-tiktok)',
-  organic: 'var(--ch-organic)'
-};
-
-const SRC_DESC = {
-  fb:'Facebook Ads placements', ig:'Instagram Ads placements',
-  facebook:'Facebook profile / organic-looking paid',
-  'fb-sitelink':'Facebook SiteLink', facebook_ads_ppm:'Facebook Ads PPM',
-  an:'Meta Audience Network', th:'Threads (Meta)',
-  google:'Google Ads', youtube:'YouTube Ads', tiktok:'TikTok Ads',
-  organic:'Direct / organic traffic', email:'Email (organic)',
-  klaviyo:'Klaviyo email', loyaltylion:'LoyaltyLion',
-  skedlink:'Skedlink', checkmate:'Checkmate (other paid)'
+const SRC_DESC={
+  fb:'Facebook Ads',ig:'Instagram Ads',facebook:'Facebook Profile',
+  'fb-sitelink':'Facebook SiteLink',facebook_ads_ppm:'Facebook PPM',
+  an:'Audience Network',th:'Threads (Meta)',
+  google:'Google Ads',youtube:'YouTube Ads',tiktok:'TikTok Ads',
+  organic:'Organic / Direct',email:'Email (organic)',
+  klaviyo:'Klaviyo',loyaltylion:'LoyaltyLion',
+  skedlink:'Skedlink',checkmate:'Checkmate'
 };
 
 let DATA=[], TZ='UTC', MODE=30, RS=null, RE=null;
-let expanded={}, expAll=false;
-const p = new URLSearchParams(location.search);
-const client = p.get('client')||'', key = p.get('key')||'';
+let expanded={}, expAll=false, activeTab='meta';
+const p=new URLSearchParams(location.search);
+const client=p.get('client')||'', key=p.get('key')||'';
 
 // Formatters
 const $c  = v => v>0 ? 'A$'+v.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
 const $n  = v => v>0 ? v.toLocaleString() : '—';
-const $r  = v => v>0 ? v.toFixed(2)+'x' : '—';
-const $pp = v => v>0 ? 'A$'+v.toFixed(2) : '—';
 const $f  = v => v>0 ? v.toFixed(2) : '—';
-const rc  = v => !v||v===0 ? 'rb' : v>=2 ? 'rg' : v>=1 ? 'ro' : 'rb';
 const dlv = s => {
   const m={active:'ba',inactive:'bi',archived:'barch',not_delivering:'bnd'};
   const l=s==='not_delivering'?'not del.':(s||'');
   return l?`<span class="badge ${m[s]||'bnd'}">${l}</span>`:'';
 };
 
-// CAC calculated from rolled-up values
-const cac = (spend, purchases) => purchases > 0 ? $pp(spend / purchases) : '—';
-const aov = (revenue, purchases) => purchases > 0 ? $pp(revenue / purchases) : '—';
-const roas = (revenue, spend) => spend > 0 ? (revenue / spend).toFixed(2)+'x' : '—';
-const roasClass = (revenue, spend) => spend > 0 ? rc(revenue / spend) : 'rb';
+// CAC, ROAS, AOV calculated from raw values — works at any aggregation level
+const calcRoas  = (rev,spend)  => spend>0  ? (rev/spend).toFixed(2)+'x' : '—';
+const calcCac   = (spend,pur)  => pur>0    ? 'A$'+(spend/pur).toFixed(2) : '—';
+const calcAov   = (rev,pur)    => pur>0    ? 'A$'+(rev/pur).toFixed(2)  : '—';
+const roasCls   = (rev,spend)  => {
+  if(!spend||spend===0) return 'rb';
+  const r=rev/spend;
+  return r>=2?'rg':r>=1?'ro':'rb';
+};
 
-// Timezone — always Meta account timezone, never browser
+// Timezone — always Meta account TZ, never browser
 function fmtTime(tz) {
-  return new Date().toLocaleTimeString('en-AU', {
-    timeZone: tz,
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return new Date().toLocaleTimeString('en-AU',{timeZone:tz,hour:'2-digit',minute:'2-digit'});
 }
-function dateInTz(tz, offsetDays=0) {
-  const d = new Date(new Date().toLocaleString('en-US', {timeZone: tz}));
-  d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().split('T')[0];
+function dateInTz(tz,d=0) {
+  const x=new Date(new Date().toLocaleString('en-US',{timeZone:tz}));
+  x.setDate(x.getDate()+d);
+  return x.toISOString().split('T')[0];
 }
 
 function getRange() {
-  if (RS && RE) return {s:RS, e:RE};
-  if (MODE === 'today')     { const t=dateInTz(TZ);    return {s:t,e:t}; }
-  if (MODE === 'yesterday') { const y=dateInTz(TZ,-1); return {s:y,e:y}; }
-  return {s:dateInTz(TZ,-(MODE-1)), e:dateInTz(TZ)};
+  if(RS&&RE) return{s:RS,e:RE};
+  if(MODE==='today')     {const t=dateInTz(TZ);    return{s:t,e:t};}
+  if(MODE==='yesterday') {const y=dateInTz(TZ,-1); return{s:y,e:y};}
+  return{s:dateInTz(TZ,-(MODE-1)),e:dateInTz(TZ)};
 }
 
 function updateBadge() {
-  const {s,e} = getRange();
-  const today = dateInTz(TZ);
-  const incT  = e >= today;
-  let lbl = MODE==='today' ? `Today (${TZ})` :
-            MODE==='yesterday' ? `Yesterday (${TZ})` :
-            RS ? 'Custom range' : `Last ${MODE} days`;
-  const partial = (incT && MODE!=='today') ? ` <span class="partial">· includes today (partial)</span>` : '';
-  const todayNote = MODE==='today' ? ` <span class="partial">· partial, updates hourly</span>` : '';
-  document.getElementById('dinfo').innerHTML = `${lbl}: <strong>${s}</strong> → <strong>${e}</strong>${partial}${todayNote}`;
+  const {s,e}=getRange(), today=dateInTz(TZ), incT=e>=today;
+  let lbl=MODE==='today'?`Today (${TZ})`:MODE==='yesterday'?`Yesterday (${TZ})`:RS?'Custom range':`Last ${MODE} days`;
+  const partial=(incT&&MODE!=='today')?' <span class="partial">· includes today (partial)</span>':'';
+  const todayNote=MODE==='today'?' <span class="partial">· partial, updates hourly</span>':'';
+  document.getElementById('dinfo').innerHTML=`${lbl}: <strong>${s}</strong> → <strong>${e}</strong>${partial}${todayNote}`;
 }
 
 function filterDate(data) {
-  const {s,e} = getRange();
-  return data.filter(r => { const d=r.date?.value||r.date||''; return d>=s && d<=e; });
+  const {s,e}=getRange();
+  return data.filter(r=>{const d=r.date?.value||r.date||'';return d>=s&&d<=e;});
 }
 
-function setPeriod(m, btn) {
-  MODE=m; RS=null; RE=null;
+function setPeriod(m,btn) {
+  MODE=m;RS=null;RE=null;
   document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('dfrom').value='';
   document.getElementById('dto').value='';
-  updateBadge(); render();
+  updateBadge();render();
 }
-
 function applyCustom() {
-  const f=document.getElementById('dfrom').value;
-  const t=document.getElementById('dto').value;
-  if(!f||!t) return;
-  if(f>t) { alert('Start date must be before end date'); return; }
-  RS=f; RE=t; MODE=null;
+  const f=document.getElementById('dfrom').value,t=document.getElementById('dto').value;
+  if(!f||!t)return;if(f>t){alert('Start date must be before end date');return;}
+  RS=f;RE=t;MODE=null;
   document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));
-  updateBadge(); render();
+  updateBadge();render();
 }
 
+function switchTab(tab,btn) {
+  activeTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.className='tab-btn');
+  btn.classList.add('active-'+tab);
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+// Build hierarchy from Meta rows only
 function buildHier(rows) {
+  const metaRows=rows.filter(r=>r.row_source==='meta'||!r.row_source);
   const C={};
-  rows.forEach(r => {
-    const cn = r.campaign_name||'Unknown';
-    const an = r.adset_name||'Unknown';
-    if (!C[cn]) C[cn]={name:cn,spend:0,impressions:0,reach:0,meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0,adsets:{}};
+  metaRows.forEach(r=>{
+    const cn=r.campaign_name||'Unknown',an=r.adset_name||'Unknown';
+    if(!C[cn])C[cn]={name:cn,spend:0,impressions:0,reach:0,meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0,adsets:{}};
     const c=C[cn];
-    c.spend+=r.spend||0; c.impressions+=r.impressions||0; c.reach+=r.reach||0;
-    c.meta_purchases+=r.meta_purchases||0; c.meta_revenue+=r.meta_revenue||0;
-    c.cm_purchases+=r.cm_purchases||0; c.cm_revenue+=r.cm_revenue||0;
-    if (!c.adsets[an]) c.adsets[an]={name:an,spend:0,impressions:0,reach:0,meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0,ads:[]};
+    c.spend+=r.spend||0;c.impressions+=r.impressions||0;c.reach+=r.reach||0;
+    c.meta_purchases+=r.meta_purchases||0;c.meta_revenue+=r.meta_revenue||0;
+    c.cm_purchases+=r.cm_purchases||0;c.cm_revenue+=r.cm_revenue||0;
+    if(!c.adsets[an])c.adsets[an]={name:an,spend:0,impressions:0,reach:0,meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0,ads:[]};
     const a=c.adsets[an];
-    a.spend+=r.spend||0; a.impressions+=r.impressions||0; a.reach+=r.reach||0;
-    a.meta_purchases+=r.meta_purchases||0; a.meta_revenue+=r.meta_revenue||0;
-    a.cm_purchases+=r.cm_purchases||0; a.cm_revenue+=r.cm_revenue||0;
+    a.spend+=r.spend||0;a.impressions+=r.impressions||0;a.reach+=r.reach||0;
+    a.meta_purchases+=r.meta_purchases||0;a.meta_revenue+=r.meta_revenue||0;
+    a.cm_purchases+=r.cm_purchases||0;a.cm_revenue+=r.cm_revenue||0;
     a.ads.push({
-      name:r.ad_name||'Unknown', ad_id:r.ad_id||'',
-      spend:r.spend||0, impressions:r.impressions||0, reach:r.reach||0,
-      frequency:r.frequency||0, delivery:r.delivery_status||'',
-      meta_purchases:r.meta_purchases||0, meta_revenue:r.meta_revenue||0,
-      cm_purchases:r.cm_purchases||0, cm_revenue:r.cm_revenue||0,
-      cm_utm_source:r.cm_utm_source||''
+      name:r.ad_name||'Unknown',spend:r.spend||0,impressions:r.impressions||0,reach:r.reach||0,
+      frequency:r.frequency||0,delivery:r.delivery_status||'',
+      meta_purchases:r.meta_purchases||0,meta_revenue:r.meta_revenue||0,
+      cm_purchases:r.cm_purchases||0,cm_revenue:r.cm_revenue||0,cm_utm_source:r.cm_utm_source||''
     });
   });
-  return Object.values(C).map(c=>({...c, adsets:Object.values(c.adsets)}));
+  return Object.values(C).map(c=>({...c,adsets:Object.values(c.adsets)}));
 }
 
-function buildKPIs(rows) {
+// Build hero — blended CM all sources
+function buildHero(rows) {
   const ts=rows.reduce((a,r)=>a+(r.spend||0),0);
-  const ti=rows.reduce((a,r)=>a+(r.impressions||0),0);
-  const tr=rows.reduce((a,r)=>a+(r.reach||0),0);
-  const tmp=rows.reduce((a,r)=>a+(r.meta_purchases||0),0);
-  const tmr=rows.reduce((a,r)=>a+(r.meta_revenue||0),0);
   const tcp=rows.reduce((a,r)=>a+(r.cm_purchases||0),0);
   const tcr=rows.reduce((a,r)=>a+(r.cm_revenue||0),0);
-  document.getElementById('kd').innerHTML=[
-    {l:'Total Spend',v:'A$'+ts.toFixed(2),s:'Selected period'},
-    {l:'Impressions',v:$n(ti),s:'All campaigns'},
-    {l:'Reach',v:$n(tr),s:'Unique accounts'},
-  ].map(k=>`<div class="kpi kd"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
-  document.getElementById('km').innerHTML=[
-    {l:'Purchases',v:tmp||'—',s:'7-day attributed'},
-    {l:'Revenue',v:$c(tmr),s:'Actual reported'},
-    {l:'ROAS',v:roas(tmr,ts),s:'vs spend'},
-    {l:'CAC',v:cac(ts,tmp),s:'Cost per purchase'},
-    {l:'AOV',v:aov(tmr,tmp),s:'Avg order value'},
-  ].map(k=>`<div class="kpi km"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
-  document.getElementById('kc').innerHTML=[
-    {l:'Purchases',v:tcp||'—',s:'Last-click all sources'},
-    {l:'Revenue',v:$c(tcr),s:'Actual reported'},
-    {l:'ROAS',v:roas(tcr,ts),s:'vs Meta spend'},
-    {l:'CAC',v:cac(ts,tcp),s:'Cost per purchase'},
-    {l:'AOV',v:aov(tcr,tcp),s:'Avg order value'},
-  ].map(k=>`<div class="kpi kc"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
+  document.getElementById('hero-bar').innerHTML=[
+    {l:'Total Spend',       v:'A$'+ts.toFixed(2), s:'Meta ad spend'},
+    {l:'CM Purchases',      v:tcp||'—',            s:'All channels'},
+    {l:'CM Revenue',        v:$c(tcr),             s:'All channels'},
+    {l:'Blended ROAS',      v:calcRoas(tcr,ts),    s:'All CM revenue / spend'},
+    {l:'CAC',               v:calcCac(ts,tcp),     s:'Spend / CM purchases'},
+    {l:'AOV',               v:calcAov(tcr,tcp),    s:'Avg order value'},
+  ].map(k=>`<div class="kpi kblend"><div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
 }
 
+// Build attribution comparison panels
+function buildAttr(rows) {
+  const ts=rows.reduce((a,r)=>a+(r.spend||0),0);
+  const tmp=rows.reduce((a,r)=>a+(r.meta_purchases||0),0);
+  const tmr=rows.reduce((a,r)=>a+(r.meta_revenue||0),0);
+  // CM Meta sources only
+  const metaSrcs=new Set(META_SRCS);
+  const cmMetaRows=rows.filter(r=>metaSrcs.has((r.cm_utm_source||'').toLowerCase()));
+  const tcp=cmMetaRows.reduce((a,r)=>a+(r.cm_purchases||0),0);
+  const tcr=cmMetaRows.reduce((a,r)=>a+(r.cm_revenue||0),0);
+
+  const row=(l,v)=>`<div class="attr-row"><span class="attr-row-lbl">${l}</span><span class="attr-row-val">${v}</span></div>`;
+  document.getElementById('attr-meta').innerHTML=
+    row('Purchases',tmp||'—')+
+    row('Revenue',$c(tmr))+
+    row('ROAS',calcRoas(tmr,ts))+
+    row('CAC',calcCac(ts,tmp))+
+    row('AOV',calcAov(tmr,tmp));
+  document.getElementById('attr-cm').innerHTML=
+    row('Purchases',tcp||'—')+
+    row('Revenue',$c(tcr))+
+    row('ROAS',calcRoas(tcr,ts))+
+    row('CAC',calcCac(ts,tcp))+
+    row('AOV',calcAov(tcr,tcp));
+}
+
+// Build channel breakdown table with grouped sections
 function buildChTable(rows) {
-  // Aggregate by source
   const S={};
   rows.forEach(r=>{
-    const s=r.cm_utm_source||'';
-    if(!s) return;
-    if(!S[s]) S[s]={o:0,r:0};
-    S[s].o+=r.cm_purchases||0;
-    S[s].r+=r.cm_revenue||0;
+    const s=r.cm_utm_source||'';if(!s)return;
+    if(!S[s])S[s]={o:0,r:0};
+    S[s].o+=r.cm_purchases||0;S[s].r+=r.cm_revenue||0;
   });
   const tSpend=rows.reduce((a,r)=>a+(r.spend||0),0);
   const allR=Object.values(S).reduce((a,s)=>a+s.r,0);
   const maxR=Math.max(...Object.values(S).map(s=>s.r),1);
 
-  // Group by channel category
-  const groups={meta:[],google:[],youtube:[],tiktok:[],organic:[]};
-  Object.entries(S).forEach(([src,d])=>{
-    groups[getChannelGroup(src)].push({src,d});
-  });
+  // Group sources
+  const groups={meta:[],google:[],youtube:[],tiktok:[],organic:[],other:[]};
+  Object.entries(S).forEach(([src,d])=>groups[getGroup(src)].push({src,d}));
 
-  let metaO=0, metaR=0;
   let html=`<thead><tr>
     <th>Source</th><th>Description</th>
     <th class="num">Orders</th><th class="num">Revenue</th>
@@ -536,44 +606,59 @@ function buildChTable(rows) {
     <th>Share</th>
   </tr></thead><tbody>`;
 
-  const groupOrder = ['meta','google','youtube','tiktok','organic'];
+  let metaO=0,metaR=0;
+  const groupOrder=['meta','google','youtube','tiktok','organic','other'];
+
   groupOrder.forEach(grp=>{
-    const items = groups[grp];
-    if (!items || items.length===0) return;
-    const grpCol = GROUP_COLOURS[grp];
-    html+=`<tr class="ch-group-hdr"><td colspan="7" style="color:${grpCol};background:var(--surface2)">${GROUP_LABELS[grp]}</td></tr>`;
-    items.sort((a,b)=>b.d.r-a.d.r).forEach(({src,d})=>{
-      const col=getChannelColour(src);
-      const softCol=col.replace(/[\d.]+\)$/,'0.15)');
-      const bordCol=col.replace(/[\d.]+\)$/,'0.35)');
-      const barCol=col.replace(/[\d.]+\)$/,'0.5)');
+    const items=groups[grp];if(!items||!items.length)return;
+    const gm=GROUP_META[grp];
+    items.sort((a,b)=>b.d.r-a.d.r);
+    const grpO=items.reduce((a,i)=>a+i.d.o,0);
+    const grpR=items.reduce((a,i)=>a+i.d.r,0);
+    if(grp==='meta'){metaO=grpO;metaR=grpR;}
+
+    html+=`<tr class="ch-grp-hdr"><td colspan="7" style="color:${gm.col};background:${gm.soft}">${gm.label}</td></tr>`;
+    items.forEach(({src,d})=>{
+      const col=getColour(src);
+      const soft=col.replace(/[\d.]+\)$/,'0.15)');
+      const bord=col.replace(/[\d.]+\)$/,'0.35)');
+      const barC=col.replace(/[\d.]+\)$/,'0.5)');
       const pct=allR>0?(d.r/allR*100).toFixed(1):'0.0';
       const r=tSpend>0?(d.r/tSpend).toFixed(2):'0.00';
       const bw=Math.round(d.r/maxR*100);
       const rc2=parseFloat(r)>=1?'var(--roas-good)':parseFloat(r)>=0.5?'var(--roas-ok)':'var(--muted)';
-      if(grp==='meta'){metaO+=d.o;metaR+=d.r;}
       html+=`<tr>
-        <td><span class="src-badge" style="background:${softCol};color:${col};border:1px solid ${bordCol}">${src}</span></td>
+        <td><span class="src-badge" style="background:${soft};color:${col};border:1px solid ${bord}">${src}</span></td>
         <td style="color:var(--muted)">${SRC_DESC[src]||src}</td>
-        <td class="num">${d.o||'—'}</td>
-        <td class="num">${$c(d.r)}</td>
+        <td class="num">${d.o||'—'}</td><td class="num">${$c(d.r)}</td>
         <td class="num">${pct}%</td>
         <td class="num" style="color:${rc2};font-weight:700">${r}x</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:${bw}%;background:${barCol}"></div></div></td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:${bw}%;background:${barC}"></div></div></td>
       </tr>`;
     });
+    // Group subtotal if more than one source in group
+    if(items.length>1){
+      const grpPct=allR>0?(grpR/allR*100).toFixed(1):'0.0';
+      const grpRoas=tSpend>0?(grpR/tSpend).toFixed(2):'0.00';
+      html+=`<tr class="ch-grp-total" style="background:${gm.soft}">
+        <td colspan="2" style="color:${gm.col};font-style:italic;padding-left:20px">Total ${gm.label.toLowerCase()}</td>
+        <td class="num">${grpO||'—'}</td><td class="num">${$c(grpR)}</td>
+        <td class="num">${grpPct}%</td>
+        <td class="num" style="color:${gm.col};font-weight:700">${grpRoas}x</td><td></td>
+      </tr>`;
+    }
   });
 
   const allO=Object.values(S).reduce((a,s)=>a+s.o,0);
   const bRoas=tSpend>0?(allR/tSpend).toFixed(2):'0.00';
   const mRoas=tSpend>0?(metaR/tSpend).toFixed(2):'0.00';
-  html+=`<tr class="ch-total">
-    <td colspan="2">TOTAL — ALL SOURCES</td>
+  html+=`<tr class="ch-all-total">
+    <td colspan="2" style="font-weight:700">TOTAL — ALL SOURCES</td>
     <td class="num">${allO||'—'}</td><td class="num">${$c(allR)}</td>
     <td class="num">100%</td>
     <td class="num" style="color:var(--ch-tiktok);font-weight:700">${bRoas}x blended</td><td></td>
-  </tr><tr class="ch-total">
-    <td colspan="2" style="color:var(--ch-meta);font-weight:700">META SOURCES ONLY (fb · ig · facebook · an · th)</td>
+  </tr><tr class="ch-all-total">
+    <td colspan="2" style="color:var(--ch-meta);font-weight:700">META SOURCES ONLY</td>
     <td class="num">${metaO||'—'}</td><td class="num">${$c(metaR)}</td>
     <td class="num">${allR>0?(metaR/allR*100).toFixed(1):'0.0'}%</td>
     <td class="num" style="color:var(--cm-accent);font-weight:700">${mRoas}x</td><td></td>
@@ -592,46 +677,44 @@ function srt(arr,col,dir) {
   });
 }
 
-function render() {
-  const filt=filterDate(DATA);
-  const col=document.getElementById('sortCol').value;
-  const dir=document.getElementById('sortDir').value;
-  const cf=document.getElementById('campF').value;
-  buildKPIs(filt); buildChTable(filt); updateBadge();
-  let hier=buildHier(filt);
+// Render Meta tab
+function renderMeta(rows,col,dir,cf) {
+  const hier=buildHier(rows);
   let data=cf?hier.filter(c=>c.name===cf):hier;
   data=srt(data,col,dir);
   let html='',ts=0,ti=0,tr=0,tmp=0,tmr=0,tcp=0,tcr=0;
 
   data.forEach((c,ci)=>{
-    const cid='c'+ci, open=expAll||expanded[cid];
-    ts+=c.spend; ti+=c.impressions; tr+=c.reach;
-    tmp+=c.meta_purchases; tmr+=c.meta_revenue;
-    tcp+=c.cm_purchases; tcr+=c.cm_revenue;
-
+    const cid='c'+ci,open=expAll||expanded[cid];
+    ts+=c.spend;ti+=c.impressions;tr+=c.reach;
+    tmp+=c.meta_purchases;tmr+=c.meta_revenue;
+    tcp+=c.cm_purchases;tcr+=c.cm_revenue;
     html+=`<tr class="lc">
       <td class="nc"><button class="xb" onclick="tog('${cid}')">${open?'▾':'▸'}</button>${c.name}<span class="pill">${c.adsets.length}as</span></td>
       <td class="num">${$c(c.spend)}</td><td class="num">${$n(c.impressions)}</td><td class="num">${$n(c.reach)}</td><td class="num">—</td>
       <td class="num dm">${c.meta_purchases||'—'}</td><td class="num">${$c(c.meta_revenue)}</td>
-      <td class="num ${roasClass(c.meta_revenue,c.spend)}">${roas(c.meta_revenue,c.spend)}</td>
-      <td class="num">${cac(c.spend,c.meta_purchases)}</td><td class="num">${aov(c.meta_revenue,c.meta_purchases)}</td>
+      <td class="num ${roasCls(c.meta_revenue,c.spend)}">${calcRoas(c.meta_revenue,c.spend)}</td>
+      <td class="num">${calcCac(c.spend,c.meta_purchases)}</td>
+      <td class="num">${calcAov(c.meta_revenue,c.meta_purchases)}</td>
       <td class="num dc">${c.cm_purchases||'—'}</td><td class="num">${$c(c.cm_revenue)}</td>
-      <td class="num ${roasClass(c.cm_revenue,c.spend)}">${roas(c.cm_revenue,c.spend)}</td>
-      <td class="num">${cac(c.spend,c.cm_purchases)}</td><td class="num">${aov(c.cm_revenue,c.cm_purchases)}</td>
+      <td class="num ${roasCls(c.cm_revenue,c.spend)}">${calcRoas(c.cm_revenue,c.spend)}</td>
+      <td class="num">${calcCac(c.spend,c.cm_purchases)}</td>
+      <td class="num">${calcAov(c.cm_revenue,c.cm_purchases)}</td>
     </tr>`;
-
     if(open){
       srt(c.adsets,col,dir).forEach((a,ai)=>{
-        const asid=cid+'_'+ai, aopen=expAll||expanded[asid];
+        const asid=cid+'_'+ai,aopen=expAll||expanded[asid];
         html+=`<tr class="la">
           <td class="nc"><button class="xb" onclick="tog('${asid}')">${aopen?'▾':'▸'}</button>${a.name}<span class="pill pg">${a.ads.length}ads</span></td>
           <td class="num">${$c(a.spend)}</td><td class="num">${$n(a.impressions)}</td><td class="num">${$n(a.reach)}</td><td class="num">—</td>
           <td class="num dm">${a.meta_purchases||'—'}</td><td class="num">${$c(a.meta_revenue)}</td>
-          <td class="num ${roasClass(a.meta_revenue,a.spend)}">${roas(a.meta_revenue,a.spend)}</td>
-          <td class="num">${cac(a.spend,a.meta_purchases)}</td><td class="num">${aov(a.meta_revenue,a.meta_purchases)}</td>
+          <td class="num ${roasCls(a.meta_revenue,a.spend)}">${calcRoas(a.meta_revenue,a.spend)}</td>
+          <td class="num">${calcCac(a.spend,a.meta_purchases)}</td>
+          <td class="num">${calcAov(a.meta_revenue,a.meta_purchases)}</td>
           <td class="num dc">${a.cm_purchases||'—'}</td><td class="num">${$c(a.cm_revenue)}</td>
-          <td class="num ${roasClass(a.cm_revenue,a.spend)}">${roas(a.cm_revenue,a.spend)}</td>
-          <td class="num">${cac(a.spend,a.cm_purchases)}</td><td class="num">${aov(a.cm_revenue,a.cm_purchases)}</td>
+          <td class="num ${roasCls(a.cm_revenue,a.spend)}">${calcRoas(a.cm_revenue,a.spend)}</td>
+          <td class="num">${calcCac(a.spend,a.cm_purchases)}</td>
+          <td class="num">${calcAov(a.cm_revenue,a.cm_purchases)}</td>
         </tr>`;
         if(aopen){
           srt(a.ads,col,dir).forEach(ad=>{
@@ -639,11 +722,13 @@ function render() {
               <td class="nc">${ad.name}${dlv(ad.delivery)}</td>
               <td class="num">${$c(ad.spend)}</td><td class="num">${$n(ad.impressions)}</td><td class="num">${$n(ad.reach)}</td><td class="num">${$f(ad.frequency)}</td>
               <td class="num dm">${ad.meta_purchases||'—'}</td><td class="num">${$c(ad.meta_revenue)}</td>
-              <td class="num ${roasClass(ad.meta_revenue,ad.spend)}">${roas(ad.meta_revenue,ad.spend)}</td>
-              <td class="num">${cac(ad.spend,ad.meta_purchases)}</td><td class="num">${aov(ad.meta_revenue,ad.meta_purchases)}</td>
+              <td class="num ${roasCls(ad.meta_revenue,ad.spend)}">${calcRoas(ad.meta_revenue,ad.spend)}</td>
+              <td class="num">${calcCac(ad.spend,ad.meta_purchases)}</td>
+              <td class="num">${calcAov(ad.meta_revenue,ad.meta_purchases)}</td>
               <td class="num dc">${ad.cm_purchases||'—'}</td><td class="num">${$c(ad.cm_revenue)}</td>
-              <td class="num ${roasClass(ad.cm_revenue,ad.spend)}">${roas(ad.cm_revenue,ad.spend)}</td>
-              <td class="num">${cac(ad.spend,ad.cm_purchases)}</td><td class="num">${aov(ad.cm_revenue,ad.cm_purchases)}</td>
+              <td class="num ${roasCls(ad.cm_revenue,ad.spend)}">${calcRoas(ad.cm_revenue,ad.spend)}</td>
+              <td class="num">${calcCac(ad.spend,ad.cm_purchases)}</td>
+              <td class="num">${calcAov(ad.cm_revenue,ad.cm_purchases)}</td>
             </tr>`;
           });
         }
@@ -655,18 +740,94 @@ function render() {
     <td>TOTAL (filtered)</td>
     <td class="num">${$c(ts)}</td><td class="num">${$n(ti)}</td><td class="num">${$n(tr)}</td><td class="num">—</td>
     <td class="num dm">${tmp||'—'}</td><td class="num">${$c(tmr)}</td>
-    <td class="num ${roasClass(tmr,ts)}">${roas(tmr,ts)}</td>
-    <td class="num">${cac(ts,tmp)}</td><td class="num">${aov(tmr,tmp)}</td>
+    <td class="num ${roasCls(tmr,ts)}">${calcRoas(tmr,ts)}</td>
+    <td class="num">${calcCac(ts,tmp)}</td><td class="num">${calcAov(tmr,tmp)}</td>
     <td class="num dc">${tcp||'—'}</td><td class="num">${$c(tcr)}</td>
-    <td class="num ${roasClass(tcr,ts)}">${roas(tcr,ts)}</td>
-    <td class="num">${cac(ts,tcp)}</td><td class="num">${aov(tcr,tcp)}</td>
+    <td class="num ${roasCls(tcr,ts)}">${calcRoas(tcr,ts)}</td>
+    <td class="num">${calcCac(ts,tcp)}</td><td class="num">${calcAov(tcr,tcp)}</td>
   </tr>`;
 
-  document.getElementById('tbody').innerHTML=html;
-  document.querySelectorAll('thead.mh tr.hr th').forEach(th=>{
+  document.getElementById('tbody-meta').innerHTML=html;
+
+  // Sort indicators
+  document.querySelectorAll('#thead-meta th').forEach(th=>{
     th.classList.remove('sa','sd');
-    if(th.dataset.col===col) th.classList.add(dir==='desc'?'sd':'sa');
+    if(th.dataset.col===col)th.classList.add(dir==='desc'?'sd':'sa');
   });
+}
+
+// Render Google tab
+function renderGoogle(rows) {
+  const googleRows=rows.filter(r=>(r.cm_utm_source||'').toLowerCase()==='google');
+  let html='';
+  if(!googleRows.length){
+    html=`<tr><td colspan="12" style="padding:30px;text-align:center;color:var(--muted)">No Google-attributed conversions in this period</td></tr>`;
+  } else {
+    // Group by campaign (utm_campaign) from clickmagick data
+    const camps={};
+    googleRows.forEach(r=>{
+      const cp=r.utm_campaign||r.campaign_name||'Unknown';
+      if(!camps[cp])camps[cp]={name:cp,orders:0,revenue:0,rows:[]};
+      camps[cp].orders+=r.cm_purchases||0;
+      camps[cp].revenue+=r.cm_revenue||0;
+      camps[cp].rows.push(r);
+    });
+    let tcp=0,tcr=0;
+    Object.values(camps).sort((a,b)=>b.revenue-a.revenue).forEach((c,ci)=>{
+      const cid='g'+ci,open=expAll||expanded[cid];
+      tcp+=c.orders;tcr+=c.revenue;
+      html+=`<tr class="lc">
+        <td class="nc"><button class="xb" onclick="tog('${cid}')">${open?'▾':'▸'}</button>${c.name}</td>
+        <td class="num">—</td><td class="num">—</td>
+        <td class="num dg" style="color:var(--muted);font-style:italic">—</td>
+        <td class="num" style="color:var(--muted);font-style:italic">—</td>
+        <td class="num" style="color:var(--muted);font-style:italic">—</td>
+        <td class="num" style="color:var(--muted);font-style:italic">—</td>
+        <td class="num dc">${c.orders||'—'}</td>
+        <td class="num">${$c(c.revenue)}</td>
+        <td class="num">—</td>
+        <td class="num">${calcAov(c.revenue,c.orders)}</td>
+        <td class="num">—</td>
+      </tr>`;
+      if(open){
+        c.rows.forEach(r=>{
+          const d=r.date?.value||r.date||'—';
+          html+=`<tr class="lad">
+            <td class="nc" style="padding-left:24px">${r.ad_name||r.cm_utm_source||'google'}</td>
+            <td class="num">${d}</td><td class="num" style="font-family:'DM Mono',monospace;font-size:10px">${r.cmc_vid||'—'}</td>
+            <td class="num dg" style="color:var(--muted);font-style:italic">—</td>
+            <td class="num" style="color:var(--muted);font-style:italic">—</td>
+            <td class="num" style="color:var(--muted);font-style:italic">—</td>
+            <td class="num" style="color:var(--muted);font-style:italic">—</td>
+            <td class="num dc">${r.cm_purchases||'—'}</td>
+            <td class="num">${$c(r.cm_revenue)}</td>
+            <td class="num">—</td>
+            <td class="num">${calcAov(r.cm_revenue,r.cm_purchases)}</td>
+            <td class="num" style="color:var(--muted);font-size:10px">${r.utm_term||'—'}</td>
+          </tr>`;
+        });
+      }
+    });
+    html+=`<tr class="tr-tot-g">
+      <td colspan="7">TOTAL GOOGLE (CM last-click)</td>
+      <td class="num dc">${tcp||'—'}</td><td class="num">${$c(tcr)}</td>
+      <td class="num">—</td><td class="num">${calcAov(tcr,tcp)}</td><td class="num">—</td>
+    </tr>`;
+  }
+  document.getElementById('tbody-google').innerHTML=html;
+}
+
+function render() {
+  const filt=filterDate(DATA);
+  const col=document.getElementById('sortCol').value;
+  const dir=document.getElementById('sortDir').value;
+  const cf=document.getElementById('campF').value;
+  buildHero(filt);
+  buildAttr(filt);
+  buildChTable(filt);
+  updateBadge();
+  renderMeta(filt,col,dir,cf);
+  renderGoogle(filt);
 }
 
 function tog(id){expanded[id]=!expanded[id];render();}
@@ -695,7 +856,7 @@ async function loadData() {
     }
     DATA=await res.json();
 
-    // Fetch timezone from Meta — always use account TZ, never browser TZ
+    // Fetch timezone — always Meta account TZ
     try{
       const tz=await fetch(`${API}/timezone?client=${encodeURIComponent(client)}&key=${encodeURIComponent(key)}`);
       if(tz.ok){const td=await tz.json();TZ=td.timezone||'UTC';}
@@ -710,7 +871,7 @@ async function loadData() {
     sel.innerHTML='<option value="">All</option>';
     camps.forEach(c=>{const o=document.createElement('option');o.value=c;o.text=c;sel.appendChild(o);});
 
-    updateBadge(); render();
+    updateBadge();render();
     document.getElementById('loader').classList.add('hidden');
     document.getElementById('app').style.display='block';
   }catch(err){
@@ -721,42 +882,36 @@ async function loadData() {
   }
 }
 
-// Reload display — re-fetches BigQuery, instant
 async function doReload(){
   const btn=document.getElementById('rbtn');
-  btn.textContent='↻ Reloading...'; btn.disabled=true;
+  btn.textContent='↻ Reloading...';btn.disabled=true;
   try{
     const res=await fetch(`${API}/dashboard?client=${encodeURIComponent(client)}&key=${encodeURIComponent(key)}`);
     DATA=await res.json();
     document.getElementById('last-upd').textContent='Updated '+fmtTime(TZ)+' '+TZ;
     render();
   }catch(e){console.error(e);}
-  btn.textContent='↻ Reload display'; btn.disabled=false;
+  btn.textContent='↻ Reload display';btn.disabled=false;
 }
 
-// Sync Meta — triggers fresh Meta pull then reloads (30-60 seconds)
 async function doSyncMeta(){
-  const btn=document.getElementById('sbtn');
-  const rbtn=document.getElementById('rbtn');
-  btn.textContent='⬇ Syncing Meta...'; btn.disabled=true; rbtn.disabled=true;
+  const btn=document.getElementById('sbtn'),rbtn=document.getElementById('rbtn');
+  btn.textContent='⬇ Syncing...';btn.disabled=true;rbtn.disabled=true;
   try{
-    // Trigger Meta pull
-    await fetch(`${API}/meta/pull?client=${encodeURIComponent(client)}&key=${encodeURIComponent(key)}&preset=today`, {method:'POST'});
-    // Wait 35 seconds for pull to complete
+    await fetch(`${API}/meta/pull?client=${encodeURIComponent(client)}&key=${encodeURIComponent(key)}&preset=today`,{method:'POST'});
     btn.textContent='⬇ Pulling from Meta...';
     await new Promise(r=>setTimeout(r,35000));
-    // Reload data
-    btn.textContent='⬇ Loading fresh data...';
+    btn.textContent='⬇ Loading...';
     const res=await fetch(`${API}/dashboard?client=${encodeURIComponent(client)}&key=${encodeURIComponent(key)}`);
     DATA=await res.json();
     document.getElementById('last-upd').textContent='Updated '+fmtTime(TZ)+' '+TZ;
     render();
   }catch(e){console.error(e);}
-  btn.textContent='⬇ Sync Meta'; btn.disabled=false; rbtn.disabled=false;
+  btn.textContent='⬇ Sync Meta';btn.disabled=false;rbtn.disabled=false;
 }
 
-// Column sort click
-document.querySelectorAll('thead.mh tr.hr th[data-col]').forEach(th=>{
+// Column sort — Meta tab only
+document.querySelectorAll('#thead-meta th[data-col]').forEach(th=>{
   th.addEventListener('click',()=>{
     const col=th.dataset.col,sel=document.getElementById('sortCol'),dir=document.getElementById('sortDir');
     if(sel.value===col){dir.value=dir.value==='desc'?'asc':'desc';}
