@@ -127,6 +127,11 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
 .la td.nc{padding-left:24px;font-weight:500}
 .lad td{background:var(--bg)}
 .lad td.nc{padding-left:44px;font-weight:400;color:var(--mu)}
+.ad-cell{display:flex;align-items:flex-start;gap:10px}
+.ad-meta{flex:1;min-width:0}
+.thumb{width:48px;height:48px;object-fit:cover;border-radius:4px;flex-shrink:0;background:var(--sf2);border:1px solid var(--bd)}
+.thumb-empty{display:inline-block;background:var(--sf2);border:1px solid var(--bd)}
+.ctype{display:inline-block;margin-left:8px;padding:1px 6px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;background:var(--sf2);color:var(--mu);border:1px solid var(--bd);border-radius:3px;vertical-align:middle}
 .rg{color:var(--rg);font-weight:700;font-family:'DM Mono',monospace}
 .ro{color:var(--ro);font-weight:700;font-family:'DM Mono',monospace}
 .rb{color:var(--rb);font-weight:700;font-family:'DM Mono',monospace}
@@ -475,12 +480,15 @@ function buildHier(rows){
     a.spend+=r.spend||0;a.impressions+=r.impressions||0;a.reach+=r.reach||0;a.clicks+=r.clicks||0;a.freqW+=((r.frequency||0)*(r.impressions||0));
     a.meta_purchases+=r.meta_purchases||0;a.meta_revenue+=r.meta_revenue||0;a.cm_purchases+=r.cm_purchases||0;a.cm_revenue+=r.cm_revenue||0;
     const adKey=r.ad_id||r.ad_name||'Unknown';
-    if(!a.ads[adKey])a.ads[adKey]={name:r.ad_name||'Unknown',spend:0,impressions:0,reach:0,clicks:0,freqW:0,delivery:r.delivery_status||'',meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0};
+    if(!a.ads[adKey])a.ads[adKey]={name:r.ad_name||'Unknown',spend:0,impressions:0,reach:0,clicks:0,freqW:0,delivery:r.delivery_status||'',meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0,thumbnail_url:r.thumbnail_url||'',creative_label:r.creative_label||'',creative_type:r.creative_type||''};
     const ad=a.ads[adKey];
     ad.spend+=r.spend||0;ad.impressions+=r.impressions||0;ad.reach+=r.reach||0;ad.clicks+=r.clicks||0;
     ad.freqW+=((r.frequency||0)*(r.impressions||0));
     ad.meta_purchases+=r.meta_purchases||0;ad.meta_revenue+=r.meta_revenue||0;
     ad.cm_purchases+=r.cm_purchases||0;ad.cm_revenue+=r.cm_revenue||0;
+    if(!ad.thumbnail_url&&r.thumbnail_url)ad.thumbnail_url=r.thumbnail_url;
+    if(!ad.creative_label&&r.creative_label)ad.creative_label=r.creative_label;
+    if(!ad.creative_type&&r.creative_type)ad.creative_type=r.creative_type;
   });
   return Object.values(C).map(c=>({...c,freq:c.impressions>0?c.freqW/c.impressions:0,adsets:Object.values(c.adsets).map(a=>({...a,freq:a.impressions>0?a.freqW/a.impressions:0,ads:Object.values(a.ads).map(ad=>({...ad,frequency:ad.impressions>0?ad.freqW/ad.impressions:0}))}))}));
 }
@@ -530,8 +538,10 @@ function renderMeta(rows,col,dir,cf){
         </tr>`;
         if(aopen){
           srt(a.ads,col,dir).forEach(ad=>{
+            const thumb=ad.thumbnail_url?`<img class="thumb" src="${ad.thumbnail_url}" alt="" loading="lazy" onerror="this.style.display='none'">`:'<div class="thumb thumb-empty"></div>';
+            const ctype=ad.creative_label?`<span class="ctype">${ad.creative_label}</span>`:'';
             html+=`<tr class="lad">
-              <td class="nc">${ad.name}${dlv(ad.delivery)}</td>
+              <td class="nc"><div class="ad-cell">${thumb}<div class="ad-meta">${ad.name}${dlv(ad.delivery)}${ctype}</div></div></td>
               <td class="n">${$c(ad.spend)}</td><td class="n">${$n(ad.impressions)}</td><td class="n">${$n(ad.reach)}</td>
               <td class="n">${$f(ad.frequency)}</td><td class="n">${$n(ad.clicks)}</td><td class="n">${ctr(ad.clicks,ad.impressions)}</td>
               <td class="n dm">${ad.meta_purchases||'—'}</td><td class="n">${$c(ad.meta_revenue)}</td>
