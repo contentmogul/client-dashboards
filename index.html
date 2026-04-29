@@ -470,13 +470,19 @@ function buildHier(rows){
     c.spend+=r.spend||0;c.impressions+=r.impressions||0;c.reach+=r.reach||0;c.clicks+=r.clicks||0;
     c.freqW+=((r.frequency||0)*(r.impressions||0));
     c.meta_purchases+=r.meta_purchases||0;c.meta_revenue+=r.meta_revenue||0;c.cm_purchases+=r.cm_purchases||0;c.cm_revenue+=r.cm_revenue||0;
-    if(!c.adsets[an])c.adsets[an]={name:an,spend:0,impressions:0,reach:0,clicks:0,freqW:0,meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0,ads:[]};
+    if(!c.adsets[an])c.adsets[an]={name:an,spend:0,impressions:0,reach:0,clicks:0,freqW:0,meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0,ads:{}};
     const a=c.adsets[an];
     a.spend+=r.spend||0;a.impressions+=r.impressions||0;a.reach+=r.reach||0;a.clicks+=r.clicks||0;a.freqW+=((r.frequency||0)*(r.impressions||0));
     a.meta_purchases+=r.meta_purchases||0;a.meta_revenue+=r.meta_revenue||0;a.cm_purchases+=r.cm_purchases||0;a.cm_revenue+=r.cm_revenue||0;
-    a.ads.push({name:r.ad_name||'Unknown',spend:r.spend||0,impressions:r.impressions||0,reach:r.reach||0,clicks:r.clicks||0,frequency:r.frequency||0,delivery:r.delivery_status||'',meta_purchases:r.meta_purchases||0,meta_revenue:r.meta_revenue||0,cm_purchases:r.cm_purchases||0,cm_revenue:r.cm_revenue||0});
+    const adKey=r.ad_id||r.ad_name||'Unknown';
+    if(!a.ads[adKey])a.ads[adKey]={name:r.ad_name||'Unknown',spend:0,impressions:0,reach:0,clicks:0,freqW:0,delivery:r.delivery_status||'',meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0};
+    const ad=a.ads[adKey];
+    ad.spend+=r.spend||0;ad.impressions+=r.impressions||0;ad.reach+=r.reach||0;ad.clicks+=r.clicks||0;
+    ad.freqW+=((r.frequency||0)*(r.impressions||0));
+    ad.meta_purchases+=r.meta_purchases||0;ad.meta_revenue+=r.meta_revenue||0;
+    ad.cm_purchases+=r.cm_purchases||0;ad.cm_revenue+=r.cm_revenue||0;
   });
-  return Object.values(C).map(c=>({...c,freq:c.impressions>0?c.freqW/c.impressions:0,adsets:Object.values(c.adsets).map(a=>({...a,freq:a.impressions>0?a.freqW/a.impressions:0}))}));
+  return Object.values(C).map(c=>({...c,freq:c.impressions>0?c.freqW/c.impressions:0,adsets:Object.values(c.adsets).map(a=>({...a,freq:a.impressions>0?a.freqW/a.impressions:0,ads:Object.values(a.ads).map(ad=>({...ad,frequency:ad.impressions>0?ad.freqW/ad.impressions:0}))}))}));
 }
 
 function srt(arr,col,dir){
