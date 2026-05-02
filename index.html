@@ -55,11 +55,11 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
 .eab{background:none;border:1px solid var(--bd);color:var(--mu);padding:4px 8px;border-radius:4px;font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif}
 .eab:hover{border-color:var(--cm);color:var(--cm)}
 .tabs-outer{padding:0 20px}
-.tabs{display:flex;border-bottom:2px solid var(--bd)}
-.tab{padding:10px 22px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--mu);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;font-family:'DM Sans',sans-serif;letter-spacing:.3px}
+.tabs{display:flex;border-bottom:2px solid var(--bd);gap:4px}
+.tab{padding:11px 26px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--mu);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;font-family:'DM Sans',sans-serif;letter-spacing:.3px}
 .tab:hover{color:var(--tx)}
-.tab.t-meta{color:var(--meta);border-bottom-color:var(--meta)}
-.tab.t-google{color:var(--google);border-bottom-color:var(--google)}
+.tab.t-meta{color:var(--meta);border-bottom-color:var(--meta);background:var(--meta-s);font-weight:700}
+.tab.t-google{color:var(--google);border-bottom-color:var(--google);background:var(--google-s);font-weight:700}
 .panel{display:none}
 .panel.active{display:block}
 .sec{padding:14px 20px 0}
@@ -99,6 +99,14 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
 .cht tr.dr:hover td{background:var(--sf2)}
 .cht td.n{text-align:right;font-family:'DM Mono',monospace}
 .acp-wrap{padding:0 20px 18px}
+.kpi-wrap{padding:14px 20px 8px}
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi-card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px 14px;box-shadow:var(--sh)}
+.kpi-lbl{font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.kpi-val{font-size:18px;font-weight:700;color:var(--tx);font-family:'DM Mono',monospace}
+.kpi-val.muted{color:var(--mu);font-size:14px}
 .acp-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);padding:14px 0 8px}
 .acp-tbl-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:8px;background:var(--sf);box-shadow:var(--sh)}
 .acp-tbl{width:100%;border-collapse:collapse;font-size:11px}
@@ -109,12 +117,11 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
 .acp-tbl tr:last-child td{border-bottom:none}
 .acp-tbl tr.acp-cat-hdr td{font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.5px;padding:6px 12px}
 .acp-tbl tr.acp-cat-tot td{font-weight:700;background:var(--sf2)}
-.acp-tbl tr.acp-row td{padding-left:20px}
-.acp-tbl tr.acp-row td:first-child{padding-left:24px}
+.acp-tbl tr.acp-row td{padding:9px 12px}
 .acp-tbl tr.acp-row td.n.muted{color:var(--mu)}
 .acp-tbl tr.acp-grand td{font-weight:700;background:var(--sf2);border-top:2px solid var(--bd);font-size:12px}
 .acp-cat-meta td{background:rgba(24,119,242,.06);color:var(--meta)}
-.acp-cat-google td{background:rgba(66,133,244,.06);color:var(--google,#4285f4)}
+.acp-cat-google td{background:var(--google-s);color:var(--google)}
 .acp-cat-google-free td{background:rgba(52,168,83,.06);color:#34a853}
 .acp-cat-email td{background:rgba(255,136,0,.06);color:#ff8800}
 .acp-cat-organic td{background:rgba(255,193,7,.08);color:#cc9900}
@@ -214,6 +221,35 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
   <div class="cg"><span class="cl">Campaign:</span><select class="cs" id="campF" onchange="render()"><option value="">All</option></select></div>
   <div class="csep"></div>
   <button class="eab" onclick="toggleExpAll()" id="eab">Expand all</button>
+</div>
+
+<div class="kpi-wrap">
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-lbl">Costs</div>
+      <div class="kpi-val" id="kpi-costs">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Revenue</div>
+      <div class="kpi-val" id="kpi-rev">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">ROAS</div>
+      <div class="kpi-val" id="kpi-roas">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Total Customers</div>
+      <div class="kpi-val" id="kpi-cust">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">CAC</div>
+      <div class="kpi-val" id="kpi-cac">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">AOV</div>
+      <div class="kpi-val" id="kpi-aov">—</div>
+    </div>
+  </div>
 </div>
 
 <div class="acp-wrap">
@@ -325,17 +361,17 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
     <table class="attr-tbl">
       <thead><tr>
         <th style="background:var(--sf2);min-width:120px">Campaign Type</th>
-        <th class="n" style="background:rgba(66,133,244,.08);color:#4285f4">Spend</th>
-        <th class="n" style="background:rgba(66,133,244,.08);color:#4285f4">Impr.</th>
-        <th class="n" style="background:rgba(66,133,244,.08);color:#4285f4">Clicks</th>
-        <th class="n" style="background:rgba(66,133,244,.08);color:#4285f4">CTR</th>
-        <th class="n" style="background:rgba(66,133,244,.08);color:#4285f4">CPC</th>
-        <th class="n" style="background:rgba(66,133,244,.12);color:#4285f4">Google Conv.</th>
-        <th class="n" style="background:rgba(66,133,244,.12);color:#4285f4">Google Rev.</th>
-        <th class="n" style="background:rgba(66,133,244,.12);color:#4285f4">Google ROAS</th>
-        <th class="n" style="background:var(--cm-s,rgba(255,193,7,.08));color:#cc9900">CM Conv.</th>
-        <th class="n" style="background:var(--cm-s,rgba(255,193,7,.08));color:#cc9900">CM Rev.</th>
-        <th class="n" style="background:var(--cm-s,rgba(255,193,7,.08));color:#cc9900">CM ROAS</th>
+        <th class="n" style="background:var(--google-s);color:var(--google)">Spend</th>
+        <th class="n" style="background:var(--google-s);color:var(--google)">Impr.</th>
+        <th class="n" style="background:var(--google-s);color:var(--google)">Clicks</th>
+        <th class="n" style="background:var(--google-s);color:var(--google)">CTR</th>
+        <th class="n" style="background:var(--google-s);color:var(--google)">CPC</th>
+        <th class="n" style="background:rgba(46,139,87,0.18);color:var(--google)">Google Conv.</th>
+        <th class="n" style="background:rgba(46,139,87,0.18);color:var(--google)">Google Rev.</th>
+        <th class="n" style="background:rgba(46,139,87,0.18);color:var(--google)">Google ROAS</th>
+        <th class="n" style="background:var(--cm-s);color:var(--cm)">CM Conv.</th>
+        <th class="n" style="background:var(--cm-s);color:var(--cm)">CM Rev.</th>
+        <th class="n" style="background:var(--cm-s);color:var(--cm)">CM ROAS</th>
       </tr></thead>
       <tbody id="g-attr-tb"></tbody>
     </table>
@@ -344,15 +380,15 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
   <div class="top10-wrap">
     <div class="top10-grid">
       <div class="top10-card">
-        <div class="top10-hdr" style="color:#4285f4;background:rgba(66,133,244,.08)">Top 10 Google campaigns</div>
+        <div class="top10-hdr" style="color:var(--google);background:var(--google-s)">Top 10 Google campaigns</div>
         <table class="t10t"><thead><tr><th>Campaign</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="g-top-camp"></tbody></table>
       </div>
       <div class="top10-card">
-        <div class="top10-hdr" style="color:#4285f4;background:rgba(66,133,244,.08)">Top 10 ad groups / asset groups</div>
+        <div class="top10-hdr" style="color:var(--google);background:var(--google-s)">Top 10 ad groups / asset groups</div>
         <table class="t10t"><thead><tr><th>Ad Group</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="g-top-adgroup"></tbody></table>
       </div>
       <div class="top10-card">
-        <div class="top10-hdr" style="color:#4285f4;background:rgba(66,133,244,.08)">Top 10 ads</div>
+        <div class="top10-hdr" style="color:var(--google);background:var(--google-s)">Top 10 ads</div>
         <table class="t10t"><thead><tr><th>Ad</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="g-top-ad"></tbody></table>
       </div>
     </div>
@@ -364,7 +400,7 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
   <thead class="mh">
     <tr class="gr">
       <th class="gd" style="text-align:left" colspan="6">CAMPAIGN HIERARCHY</th>
-      <th class="gm dm" colspan="5" style="background:rgba(66,133,244,.08);color:#4285f4">GOOGLE ADS — REPORTED</th>
+      <th class="gm dm" colspan="5" style="background:var(--google-s);color:var(--google)">GOOGLE ADS — REPORTED</th>
       <th class="gc dc" colspan="5">CLICKMAGICK — LAST-CLICK (GOOGLE)</th>
     </tr>
     <tr class="hr" id="th-google">
@@ -406,12 +442,11 @@ const GROUPS={
 const ACP_GROUPS={
   meta:{l:'Meta Advertising',cls:'acp-cat-meta'},
   google:{l:'Google Advertising',cls:'acp-cat-google'},
-  google_free:{l:'Google Free / Surfaces',cls:'acp-cat-google-free'},
   email:{l:'Email Channels',cls:'acp-cat-email'},
   organic:{l:'Organic Channels',cls:'acp-cat-organic'},
   other:{l:'Other Channels',cls:'acp-cat-other'}
 };
-const ACP_ORDER=['meta','google','google_free','email','organic','other'];
+const ACP_ORDER=['meta','google','email','organic','other'];
 const SRC_DESC={fb:'Facebook Ads',ig:'Instagram Ads',facebook:'Facebook Profile','fb-sitelink':'Facebook SiteLink',facebook_ads_ppm:'Facebook PPM',an:'Audience Network',th:'Threads (Meta)',google:'Google Ads',youtube:'YouTube Ads',tiktok:'TikTok Ads',organic:'Organic / Direct',email:'Email',klaviyo:'Klaviyo',loyaltylion:'LoyaltyLion',skedlink:'Skedlink',checkmate:'Checkmate','google-free':'Google Free / Surfaces',mailchimp:'Mailchimp',shopify_email:'Shopify Email','(direct)':'Direct'};
 function grp(s){const v=(s||'').toLowerCase();if(META_SRCS.includes(v))return 'meta';if(v==='google')return 'google';if(v==='youtube')return 'youtube';if(v==='tiktok')return 'tiktok';if(v==='organic'||v==='email')return 'organic';return 'other';}
 function gcol(s){const m={meta:'rgba(70,130,180,1)',google:'rgba(46,139,87,1)',youtube:'rgba(178,34,34,1)',tiktok:'rgba(186,85,211,1)',organic:'rgba(255,140,0,1)',other:'rgba(0,191,255,1)'};return m[grp(s)];}
@@ -543,11 +578,10 @@ function acpCategory(r){
   // Platform=google means a Google Ads insights row (always paid Google)
   if(platform==='google')return 'google';
   // Everything else is cm_only (clicks that didn't match Meta/Google paid)
-  // Sub-categorise
-  if(src==='google'){
-    // Google in CM-only = organic (no cmid) or partial paid that didn't match
-    return 'google_free';
-  }
+  // Group by source - Meta-attributed clicks go to meta even without spend match
+  if(META_SRCS.includes(src))return 'meta';
+  // All Google CM-only rows go to google (free SAG, organic Google etc.)
+  if(src==='google')return 'google';
   if(['klaviyo','email','mailchimp','shopify_email'].includes(src)||med==='email')return 'email';
   if(['organic','(direct)',''].includes(src))return 'organic';
   return 'other';
@@ -555,81 +589,83 @@ function acpCategory(r){
 
 // Get source label (name shown in Source column)
 function acpSrcLabel(r){
+  // For platform rows where cm_utm_source is missing, derive from row context
+  const cmSrc=(r.cm_utm_source||'').toLowerCase();
   if(r.platform==='meta'){
-    const src=(r.cm_utm_source||'').toLowerCase();
-    if(src&&META_SRCS.includes(src))return src;
-    // Fallback: use account_id-based source if cm_utm_source missing
-    return 'meta';
+    // Use cm_utm_source if available and Meta-y, otherwise fallback to fb (most common Meta source)
+    if(cmSrc&&META_SRCS.includes(cmSrc))return cmSrc;
+    return null; // Caller will skip this row in source breakdown but include in totals
   }
   if(r.platform==='google'){
-    return r.campaign_type||'google';
+    return 'google';
   }
-  return (r.cm_utm_source||'unknown').toLowerCase();
+  return cmSrc||'unknown';
+}
+
+function buildKpi(rows){
+  let costs=0,revenue=0,customers=0;
+  rows.forEach(r=>{
+    costs+=r.spend||0;
+    revenue+=r.cm_revenue||0;
+    customers+=r.cm_purchases||0;
+  });
+  document.getElementById('kpi-costs').textContent=costs>0?$c(costs):'—';
+  document.getElementById('kpi-rev').textContent=revenue>0?$c(revenue):'—';
+  document.getElementById('kpi-roas').textContent=costs>0?(revenue/costs).toFixed(2)+'x':(revenue>0?'∞':'—');
+  document.getElementById('kpi-cust').textContent=customers>0?customers.toLocaleString():'—';
+  document.getElementById('kpi-cac').textContent=customers>0&&costs>0?$c(costs/customers):'—';
+  document.getElementById('kpi-aov').textContent=customers>0?$c(revenue/customers):'—';
 }
 
 function buildAcp(rows){
-  // Aggregate by (category, source)
+  // Aggregate to single row per category
   const cats={};
-  ACP_ORDER.forEach(c=>cats[c]={sources:{},spend:0,orders:0,revenue:0});
+  ACP_ORDER.forEach(c=>cats[c]={spend:0,orders:0,revenue:0});
 
   rows.forEach(r=>{
     const cat=acpCategory(r);
-    if(!cats[cat])cats[cat]={sources:{},spend:0,orders:0,revenue:0};
-    const srcKey=acpSrcLabel(r);
-    if(!cats[cat].sources[srcKey])cats[cat].sources[srcKey]={spend:0,orders:0,revenue:0};
-    const s=cats[cat].sources[srcKey];
-    const spend=r.spend||0;
-    const orders=r.cm_purchases||0;
-    const revenue=r.cm_revenue||0;
-    s.spend+=spend;s.orders+=orders;s.revenue+=revenue;
-    cats[cat].spend+=spend;cats[cat].orders+=orders;cats[cat].revenue+=revenue;
+    if(!cats[cat])cats[cat]={spend:0,orders:0,revenue:0};
+    cats[cat].spend+=r.spend||0;
+    cats[cat].orders+=r.cm_purchases||0;
+    cats[cat].revenue+=r.cm_revenue||0;
   });
 
   let grandSpend=0,grandOrders=0,grandRevenue=0;
   Object.values(cats).forEach(c=>{grandSpend+=c.spend;grandOrders+=c.orders;grandRevenue+=c.revenue;});
 
   let html=`<thead><tr>
-    <th style="min-width:160px">Source</th>
+    <th style="min-width:200px">Channel</th>
     <th>Description</th>
     <th class="n">Spend</th>
     <th class="n">Orders</th>
     <th class="n">Revenue</th>
+    <th class="n">% Revenue</th>
     <th class="n">ROAS</th>
     <th class="n">CAC</th>
   </tr></thead><tbody>`;
 
   ACP_ORDER.forEach(catKey=>{
     const cat=cats[catKey];
-    const srcs=Object.entries(cat.sources);
-    if(!srcs.length)return;
+    if(cat.spend===0&&cat.orders===0&&cat.revenue===0)return; // skip empty categories
     const cm=ACP_GROUPS[catKey];
-    // Category header row
-    html+=`<tr class="acp-cat-hdr ${cm.cls}"><td colspan="7">${cm.l}</td></tr>`;
-    // Category total row (when more than one source in category)
-    if(srcs.length>1){
-      html+=`<tr class="acp-cat-tot ${cm.cls}">
-        <td colspan="2" style="font-style:italic;padding-left:24px">Total ${cm.l}</td>
-        <td class="n">${$c(cat.spend)}</td>
-        <td class="n">${cat.orders||'—'}</td>
-        <td class="n">${$c(cat.revenue)}</td>
-        <td class="n ${rc(cat.revenue,cat.spend)}">${roas(cat.revenue,cat.spend)}</td>
-        <td class="n">${cac(cat.spend,cat.orders)}</td>
-      </tr>`;
-    }
-    // Individual source rows (sorted by spend desc, then revenue)
-    srcs.sort((a,b)=>(b[1].spend-a[1].spend)||(b[1].revenue-a[1].revenue))
-      .forEach(([src,d])=>{
-        const desc=SRC_DESC[src.toLowerCase()]||src;
-        html+=`<tr class="acp-row">
-          <td>${src}</td>
-          <td style="color:var(--mu)">${desc}</td>
-          <td class="n${d.spend===0?' muted':''}">${d.spend>0?$c(d.spend):'—'}</td>
-          <td class="n">${d.orders||'—'}</td>
-          <td class="n">${$c(d.revenue)}</td>
-          <td class="n ${rc(d.revenue,d.spend)}">${d.spend>0?roas(d.revenue,d.spend):'—'}</td>
-          <td class="n">${d.spend>0?cac(d.spend,d.orders):'—'}</td>
-        </tr>`;
-      });
+    const desc={
+      meta:'Facebook + Instagram (paid + attributed)',
+      google:'Search + PMax + Shopping (paid + attributed)',
+      email:'Klaviyo, Mailchimp, Shopify Email',
+      organic:'Direct, organic search, referral',
+      other:'Checkmate, partners, uncategorised'
+    }[catKey]||'';
+    const pctRev=grandRevenue>0?(cat.revenue/grandRevenue*100).toFixed(1):'0.0';
+    html+=`<tr class="acp-row ${cm.cls}">
+      <td style="font-weight:700">${cm.l}</td>
+      <td style="color:var(--mu)">${desc}</td>
+      <td class="n${cat.spend===0?' muted':''}">${cat.spend>0?$c(cat.spend):'—'}</td>
+      <td class="n">${cat.orders||'—'}</td>
+      <td class="n">${$c(cat.revenue)}</td>
+      <td class="n">${pctRev}%</td>
+      <td class="n ${rc(cat.revenue,cat.spend)}">${cat.spend>0?roas(cat.revenue,cat.spend):'—'}</td>
+      <td class="n">${cat.spend>0?cac(cat.spend,cat.orders):'—'}</td>
+    </tr>`;
   });
 
   // Grand total
@@ -638,6 +674,7 @@ function buildAcp(rows){
     <td class="n">${$c(grandSpend)}</td>
     <td class="n">${grandOrders||'—'}</td>
     <td class="n">${$c(grandRevenue)}</td>
+    <td class="n">100%</td>
     <td class="n ${rc(grandRevenue,grandSpend)}">${roas(grandRevenue,grandSpend)} blended</td>
     <td class="n">${cac(grandSpend,grandOrders)}</td>
   </tr></tbody>`;
@@ -857,7 +894,7 @@ function buildGoogle(rows,col,dir,cf){
     const ctrC=c.impressions>0?(c.clicks/c.impressions*100).toFixed(2)+'%':'—';
     const cpcC=c.clicks>0?$c(c.spend/c.clicks):'—';
     html+=`<tr class="lc"><td class="nc"><button class="xb" onclick="tog('${cid}')">${isExp?'▾':'▸'}</button>${c.name}<span class="pill">${c.type||'—'}</span></td>
-      <td><span class="cpill" style="background:rgba(66,133,244,.1);color:#4285f4">${c.type||'—'}</span></td>
+      <td><span class="cpill" style="background:var(--google-s);color:var(--google)">${c.type||'—'}</span></td>
       <td class="n">${$c(c.spend)}</td>
       <td class="n">${(c.impressions||0).toLocaleString()}</td>
       <td class="n">${(c.clicks||0).toLocaleString()}</td>
@@ -994,6 +1031,8 @@ function renderMeta(rows,col,dir,cf){
 
 function render(){
   const rows=filt();const col=document.getElementById('sCol').value;const dir=document.getElementById('sDir').value;const cf=document.getElementById('campF').value;
+  // KPI summary cards use every row
+  buildKpi(rows);
   // All-channels panel uses every row
   buildAcp(rows);
   // Meta tab uses meta rows only
