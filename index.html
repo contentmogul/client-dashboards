@@ -98,6 +98,27 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
 .cht tr:last-child td{border-bottom:none}
 .cht tr.dr:hover td{background:var(--sf2)}
 .cht td.n{text-align:right;font-family:'DM Mono',monospace}
+.acp-wrap{padding:0 20px 18px}
+.acp-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);padding:14px 0 8px}
+.acp-tbl-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:8px;background:var(--sf);box-shadow:var(--sh)}
+.acp-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.acp-tbl th{background:var(--sf2);color:var(--mu);padding:8px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.4px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.acp-tbl th.n{text-align:right}
+.acp-tbl td{padding:7px 12px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.acp-tbl td.n{text-align:right;font-family:'DM Mono',monospace;white-space:nowrap}
+.acp-tbl tr:last-child td{border-bottom:none}
+.acp-tbl tr.acp-cat-hdr td{font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.5px;padding:6px 12px}
+.acp-tbl tr.acp-cat-tot td{font-weight:700;background:var(--sf2)}
+.acp-tbl tr.acp-row td{padding-left:20px}
+.acp-tbl tr.acp-row td:first-child{padding-left:24px}
+.acp-tbl tr.acp-row td.n.muted{color:var(--mu)}
+.acp-tbl tr.acp-grand td{font-weight:700;background:var(--sf2);border-top:2px solid var(--bd);font-size:12px}
+.acp-cat-meta td{background:rgba(24,119,242,.06);color:var(--meta)}
+.acp-cat-google td{background:rgba(66,133,244,.06);color:var(--google,#4285f4)}
+.acp-cat-google-free td{background:rgba(52,168,83,.06);color:#34a853}
+.acp-cat-email td{background:rgba(255,136,0,.06);color:#ff8800}
+.acp-cat-organic td{background:rgba(255,193,7,.08);color:#cc9900}
+.acp-cat-other td{background:rgba(120,120,120,.06);color:var(--mu)}
 .grphdr td{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;padding:7px 12px;border-bottom:1px solid var(--bd)!important}
 .grpsub td{font-style:italic;font-size:10.5px;font-weight:600}
 .chtot td{background:var(--sf2);font-weight:700;border-top:2px solid var(--bd)}
@@ -183,7 +204,7 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
   <div class="cg"><span class="cl">Sort:</span>
     <select class="cs" id="sCol" onchange="render()">
       <option value="spend">Spend</option><option value="impressions">Impressions</option>
-      <option value="meta_purchases">Meta Purchases</option><option value="meta_revenue">Meta Revenue</option>
+      <option value="platform_conversions">Meta Purchases</option><option value="platform_revenue">Meta Revenue</option>
       <option value="meta_roas">Meta ROAS</option><option value="cm_purchases">CM Purchases</option>
       <option value="cm_revenue">CM Revenue</option><option value="cm_roas">CM ROAS</option>
     </select>
@@ -193,6 +214,13 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
   <div class="cg"><span class="cl">Campaign:</span><select class="cs" id="campF" onchange="render()"><option value="">All</option></select></div>
   <div class="csep"></div>
   <button class="eab" onclick="toggleExpAll()" id="eab">Expand all</button>
+</div>
+
+<div class="acp-wrap">
+  <div class="acp-hdr">All Channels Performance — period total</div>
+  <div class="acp-tbl-wrap">
+    <table class="acp-tbl" id="acp-tbl"></table>
+  </div>
 </div>
 
 <div class="tabs-outer">
@@ -244,22 +272,17 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
     <div class="top10-grid">
       <div class="top10-card">
         <div class="top10-hdr">Top 10 campaigns <span style="font-size:9px;font-weight:400;opacity:.7">(utm_campaign)</span></div>
-        <table class="t10t"><thead><tr><th>Campaign</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">Spend</th><th class="n">ROAS</th></tr></thead><tbody id="top-camp"></tbody></table>
+        <table class="t10t"><thead><tr><th>Campaign</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="top-camp"></tbody></table>
       </div>
       <div class="top10-card">
         <div class="top10-hdr">Top 10 adsets <span style="font-size:9px;font-weight:400;opacity:.7">(utm_term)</span></div>
-        <table class="t10t"><thead><tr><th>Adset</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">Spend</th><th class="n">ROAS</th></tr></thead><tbody id="top-adset"></tbody></table>
+        <table class="t10t"><thead><tr><th>Adset</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="top-adset"></tbody></table>
       </div>
       <div class="top10-card">
         <div class="top10-hdr">Top 10 ads <span style="font-size:9px;font-weight:400;opacity:.7">(utm_content)</span></div>
-        <table class="t10t"><thead><tr><th>Ad</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">Spend</th><th class="n">ROAS</th></tr></thead><tbody id="top-ad"></tbody></table>
+        <table class="t10t"><thead><tr><th>Ad</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="top-ad"></tbody></table>
       </div>
     </div>
-  </div>
-
-  <div class="ch-sec">
-    <div class="slbl" style="color:var(--mu)">ClickMagick — all channel breakdown</div>
-    <div class="cht-wrap"><table class="cht" id="chtbl"></table></div>
   </div>
 
   <div class="sec"><div class="slbl sm">Meta campaign breakdown</div></div>
@@ -279,8 +302,8 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
       <th class="n">Freq.</th>
       <th class="n" data-col="clicks">Clicks</th>
       <th class="n">CTR</th>
-      <th class="n dm" data-col="meta_purchases">Purchases</th>
-      <th class="n" data-col="meta_revenue">Revenue</th>
+      <th class="n dm" data-col="platform_conversions">Purchases</th>
+      <th class="n" data-col="platform_revenue">Revenue</th>
       <th class="n" data-col="meta_roas">ROAS</th>
       <th class="n">CAC</th>
       <th class="n">AOV</th>
@@ -297,9 +320,74 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
 </div>
 
 <div class="panel" id="panel-google">
-  <div class="cs-notice">
-    <span style="font-size:18px;margin-top:1px">🔜</span>
-    <div><strong>Google Ads API integration coming soon.</strong> Basic access approval is pending. Once live, this tab will show campaign spend, impressions, and clicks alongside ClickMagick last-click Google conversion data for full ROAS comparison.</div>
+  <div class="sec"><div class="slbl sm">Google attribution comparison — period total</div></div>
+  <div class="attr-wrap">
+    <table class="attr-tbl">
+      <thead><tr>
+        <th style="background:var(--sf2);min-width:120px">Campaign Type</th>
+        <th class="n" style="background:rgba(66,133,244,.08);color:#4285f4">Spend</th>
+        <th class="n" style="background:rgba(66,133,244,.08);color:#4285f4">Impr.</th>
+        <th class="n" style="background:rgba(66,133,244,.08);color:#4285f4">Clicks</th>
+        <th class="n" style="background:rgba(66,133,244,.08);color:#4285f4">CTR</th>
+        <th class="n" style="background:rgba(66,133,244,.08);color:#4285f4">CPC</th>
+        <th class="n" style="background:rgba(66,133,244,.12);color:#4285f4">Google Conv.</th>
+        <th class="n" style="background:rgba(66,133,244,.12);color:#4285f4">Google Rev.</th>
+        <th class="n" style="background:rgba(66,133,244,.12);color:#4285f4">Google ROAS</th>
+        <th class="n" style="background:var(--cm-s,rgba(255,193,7,.08));color:#cc9900">CM Conv.</th>
+        <th class="n" style="background:var(--cm-s,rgba(255,193,7,.08));color:#cc9900">CM Rev.</th>
+        <th class="n" style="background:var(--cm-s,rgba(255,193,7,.08));color:#cc9900">CM ROAS</th>
+      </tr></thead>
+      <tbody id="g-attr-tb"></tbody>
+    </table>
+  </div>
+
+  <div class="top10-wrap">
+    <div class="top10-grid">
+      <div class="top10-card">
+        <div class="top10-hdr" style="color:#4285f4;background:rgba(66,133,244,.08)">Top 10 Google campaigns</div>
+        <table class="t10t"><thead><tr><th>Campaign</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="g-top-camp"></tbody></table>
+      </div>
+      <div class="top10-card">
+        <div class="top10-hdr" style="color:#4285f4;background:rgba(66,133,244,.08)">Top 10 ad groups / asset groups</div>
+        <table class="t10t"><thead><tr><th>Ad Group</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="g-top-adgroup"></tbody></table>
+      </div>
+      <div class="top10-card">
+        <div class="top10-hdr" style="color:#4285f4;background:rgba(66,133,244,.08)">Top 10 ads</div>
+        <table class="t10t"><thead><tr><th>Ad</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="g-top-ad"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec"><div class="slbl sm">Google campaign breakdown</div></div>
+  <div class="tw">
+  <table class="mt">
+  <thead class="mh">
+    <tr class="gr">
+      <th class="gd" style="text-align:left" colspan="6">CAMPAIGN HIERARCHY</th>
+      <th class="gm dm" colspan="5" style="background:rgba(66,133,244,.08);color:#4285f4">GOOGLE ADS — REPORTED</th>
+      <th class="gc dc" colspan="5">CLICKMAGICK — LAST-CLICK (GOOGLE)</th>
+    </tr>
+    <tr class="hr" id="th-google">
+      <th style="min-width:220px">Name</th>
+      <th>Type</th>
+      <th class="n">Spend</th>
+      <th class="n">Impr.</th>
+      <th class="n">Clicks</th>
+      <th class="n">CTR</th>
+      <th class="n dm">Conv.</th>
+      <th class="n">Revenue</th>
+      <th class="n">CPC</th>
+      <th class="n">ROAS</th>
+      <th class="n">CAC</th>
+      <th class="n dc">Orders</th>
+      <th class="n">Revenue</th>
+      <th class="n">ROAS</th>
+      <th class="n">CAC</th>
+      <th class="n">AOV</th>
+    </tr>
+  </thead>
+  <tbody id="tb-google"></tbody>
+  </table>
   </div>
 </div>
 
@@ -315,7 +403,16 @@ const GROUPS={
   organic:{l:'ORGANIC CHANNELS',c:'var(--org)',s:'var(--org-s)'},
   other:{l:'OTHER CHANNELS',c:'var(--other)',s:'var(--other-s)'}
 };
-const SRC_DESC={fb:'Facebook Ads',ig:'Instagram Ads',facebook:'Facebook Profile','fb-sitelink':'Facebook SiteLink',facebook_ads_ppm:'Facebook PPM',an:'Audience Network',th:'Threads (Meta)',google:'Google Ads',youtube:'YouTube Ads',tiktok:'TikTok Ads',organic:'Organic / Direct',email:'Email',klaviyo:'Klaviyo',loyaltylion:'LoyaltyLion',skedlink:'Skedlink',checkmate:'Checkmate'};
+const ACP_GROUPS={
+  meta:{l:'Meta Advertising',cls:'acp-cat-meta'},
+  google:{l:'Google Advertising',cls:'acp-cat-google'},
+  google_free:{l:'Google Free / Surfaces',cls:'acp-cat-google-free'},
+  email:{l:'Email Channels',cls:'acp-cat-email'},
+  organic:{l:'Organic Channels',cls:'acp-cat-organic'},
+  other:{l:'Other Channels',cls:'acp-cat-other'}
+};
+const ACP_ORDER=['meta','google','google_free','email','organic','other'];
+const SRC_DESC={fb:'Facebook Ads',ig:'Instagram Ads',facebook:'Facebook Profile','fb-sitelink':'Facebook SiteLink',facebook_ads_ppm:'Facebook PPM',an:'Audience Network',th:'Threads (Meta)',google:'Google Ads',youtube:'YouTube Ads',tiktok:'TikTok Ads',organic:'Organic / Direct',email:'Email',klaviyo:'Klaviyo',loyaltylion:'LoyaltyLion',skedlink:'Skedlink',checkmate:'Checkmate','google-free':'Google Free / Surfaces',mailchimp:'Mailchimp',shopify_email:'Shopify Email','(direct)':'Direct'};
 function grp(s){const v=(s||'').toLowerCase();if(META_SRCS.includes(v))return 'meta';if(v==='google')return 'google';if(v==='youtube')return 'youtube';if(v==='tiktok')return 'tiktok';if(v==='organic'||v==='email')return 'organic';return 'other';}
 function gcol(s){const m={meta:'rgba(70,130,180,1)',google:'rgba(46,139,87,1)',youtube:'rgba(178,34,34,1)',tiktok:'rgba(186,85,211,1)',organic:'rgba(255,140,0,1)',other:'rgba(0,191,255,1)'};return m[grp(s)];}
 function dec(s){return(s||'').replace(/\+/g,' ').replace(/%20/g,' ');}
@@ -347,8 +444,8 @@ function buildAttr(rows){
   const tcl=rows.reduce((a,r)=>a+(r.clicks||0),0);
   const tfRaw=rows.reduce((a,r)=>a+(r.frequency||0)*(r.impressions||0),0);
   const tf=ti>0?tfRaw/ti:0;
-  const tmp=rows.reduce((a,r)=>a+(r.meta_purchases||0),0);
-  const tmr=rows.reduce((a,r)=>a+(r.meta_revenue||0),0);
+  const tmp=rows.reduce((a,r)=>a+(r.platform_conversions||0),0);
+  const tmr=rows.reduce((a,r)=>a+(r.platform_revenue||0),0);
   const ms=new Set(META_SRCS);
   const cmR=rows.filter(r=>ms.has((r.cm_utm_source||'').toLowerCase()));
   const tcp=cmR.reduce((a,r)=>a+(r.cm_purchases||0),0);
@@ -395,7 +492,7 @@ function buildTop10(rows){
     const k=dec(r.utm_content||'');if(!k||k==='[utm_content]')return;
     if(!adD[k])adD[k]={key:k,orders:0,revenue:0,spend:0,adsets:new Set()};
     adD[k].orders+=r.cm_purchases||0;adD[k].revenue+=r.cm_revenue||0;adD[k].spend+=r.spend||0;
-    if(r.adset_name)adD[k].adsets.add(r.adset_name);
+    if(r.ad_group_name)adD[k].adsets.add(r.ad_group_name);
   });
 
   const camps=Object.values(campD).sort((a,b)=>b.orders-a.orders).slice(0,10);
@@ -407,9 +504,10 @@ function buildTop10(rows){
     const sub=cnt===1?`<div class="nsub">${[...c.names][0]}</div>`
       :cnt>1?`<div class="nsub"><span class="cpill">${cnt} Meta campaigns</span></div>`:'';
     return `<tr><td class="nm"><div class="nmain">${c.key}</div>${sub}</td>
-      <td class="n">${c.orders||'—'}</td><td class="n">${$c(c.revenue)}</td>
       <td class="n">${$c(c.spend)}</td>
-      <td class="n ${rc(c.revenue,c.spend)}">${roas(c.revenue,c.spend)}</td></tr>`;
+      <td class="n">${c.orders||'—'}</td><td class="n">${$c(c.revenue)}</td>
+      <td class="n ${rc(c.revenue,c.spend)}">${roas(c.revenue,c.spend)}</td>
+      <td class="n">${cac(c.spend,c.orders)}</td></tr>`;
   }).join('');
 
   document.getElementById('top-adset').innerHTML=adsets.map(a=>{
@@ -417,9 +515,10 @@ function buildTop10(rows){
     const sub=cnt===1?`<div class="nsub">${[...a.camps][0]}</div>`
       :cnt>1?`<div class="nsub"><span class="cpill">${cnt} campaigns</span></div>`:'';
     return `<tr><td class="nm"><div class="nmain">${a.key}</div>${sub}</td>
-      <td class="n">${a.orders||'—'}</td><td class="n">${$c(a.revenue)}</td>
       <td class="n">${$c(a.spend)}</td>
-      <td class="n ${rc(a.revenue,a.spend)}">${roas(a.revenue,a.spend)}</td></tr>`;
+      <td class="n">${a.orders||'—'}</td><td class="n">${$c(a.revenue)}</td>
+      <td class="n ${rc(a.revenue,a.spend)}">${roas(a.revenue,a.spend)}</td>
+      <td class="n">${cac(a.spend,a.orders)}</td></tr>`;
   }).join('');
 
   document.getElementById('top-ad').innerHTML=ads.map(a=>{
@@ -427,10 +526,123 @@ function buildTop10(rows){
     const sub=cnt===1?`<div class="nsub">${[...a.adsets][0]}</div>`
       :cnt>1?`<div class="nsub"><span class="cpill">${cnt} adsets</span></div>`:'';
     return `<tr><td class="nm"><div class="nmain">${a.key}</div>${sub}</td>
-      <td class="n">${a.orders||'—'}</td><td class="n">${$c(a.revenue)}</td>
       <td class="n">${$c(a.spend)}</td>
-      <td class="n ${rc(a.revenue,a.spend)}">${roas(a.revenue,a.spend)}</td></tr>`;
+      <td class="n">${a.orders||'—'}</td><td class="n">${$c(a.revenue)}</td>
+      <td class="n ${rc(a.revenue,a.spend)}">${roas(a.revenue,a.spend)}</td>
+      <td class="n">${cac(a.spend,a.orders)}</td></tr>`;
   }).join('');
+}
+
+// Classify a single row into an ACP category
+function acpCategory(r){
+  const platform=r.platform||'';
+  const src=(r.cm_utm_source||'').toLowerCase();
+  const med=(r.utm_medium||'').toLowerCase();
+  // Platform=meta means a Meta Ads insights row (always paid Meta)
+  if(platform==='meta')return 'meta';
+  // Platform=google means a Google Ads insights row (always paid Google)
+  if(platform==='google')return 'google';
+  // Everything else is cm_only (clicks that didn't match Meta/Google paid)
+  // Sub-categorise
+  if(src==='google'){
+    // Google in CM-only = organic (no cmid) or partial paid that didn't match
+    return 'google_free';
+  }
+  if(['klaviyo','email','mailchimp','shopify_email'].includes(src)||med==='email')return 'email';
+  if(['organic','(direct)',''].includes(src))return 'organic';
+  return 'other';
+}
+
+// Get source label (name shown in Source column)
+function acpSrcLabel(r){
+  if(r.platform==='meta'){
+    const src=(r.cm_utm_source||'').toLowerCase();
+    if(src&&META_SRCS.includes(src))return src;
+    // Fallback: use account_id-based source if cm_utm_source missing
+    return 'meta';
+  }
+  if(r.platform==='google'){
+    return r.campaign_type||'google';
+  }
+  return (r.cm_utm_source||'unknown').toLowerCase();
+}
+
+function buildAcp(rows){
+  // Aggregate by (category, source)
+  const cats={};
+  ACP_ORDER.forEach(c=>cats[c]={sources:{},spend:0,orders:0,revenue:0});
+
+  rows.forEach(r=>{
+    const cat=acpCategory(r);
+    if(!cats[cat])cats[cat]={sources:{},spend:0,orders:0,revenue:0};
+    const srcKey=acpSrcLabel(r);
+    if(!cats[cat].sources[srcKey])cats[cat].sources[srcKey]={spend:0,orders:0,revenue:0};
+    const s=cats[cat].sources[srcKey];
+    const spend=r.spend||0;
+    const orders=r.cm_purchases||0;
+    const revenue=r.cm_revenue||0;
+    s.spend+=spend;s.orders+=orders;s.revenue+=revenue;
+    cats[cat].spend+=spend;cats[cat].orders+=orders;cats[cat].revenue+=revenue;
+  });
+
+  let grandSpend=0,grandOrders=0,grandRevenue=0;
+  Object.values(cats).forEach(c=>{grandSpend+=c.spend;grandOrders+=c.orders;grandRevenue+=c.revenue;});
+
+  let html=`<thead><tr>
+    <th style="min-width:160px">Source</th>
+    <th>Description</th>
+    <th class="n">Spend</th>
+    <th class="n">Orders</th>
+    <th class="n">Revenue</th>
+    <th class="n">ROAS</th>
+    <th class="n">CAC</th>
+  </tr></thead><tbody>`;
+
+  ACP_ORDER.forEach(catKey=>{
+    const cat=cats[catKey];
+    const srcs=Object.entries(cat.sources);
+    if(!srcs.length)return;
+    const cm=ACP_GROUPS[catKey];
+    // Category header row
+    html+=`<tr class="acp-cat-hdr ${cm.cls}"><td colspan="7">${cm.l}</td></tr>`;
+    // Category total row (when more than one source in category)
+    if(srcs.length>1){
+      html+=`<tr class="acp-cat-tot ${cm.cls}">
+        <td colspan="2" style="font-style:italic;padding-left:24px">Total ${cm.l}</td>
+        <td class="n">${$c(cat.spend)}</td>
+        <td class="n">${cat.orders||'—'}</td>
+        <td class="n">${$c(cat.revenue)}</td>
+        <td class="n ${rc(cat.revenue,cat.spend)}">${roas(cat.revenue,cat.spend)}</td>
+        <td class="n">${cac(cat.spend,cat.orders)}</td>
+      </tr>`;
+    }
+    // Individual source rows (sorted by spend desc, then revenue)
+    srcs.sort((a,b)=>(b[1].spend-a[1].spend)||(b[1].revenue-a[1].revenue))
+      .forEach(([src,d])=>{
+        const desc=SRC_DESC[src.toLowerCase()]||src;
+        html+=`<tr class="acp-row">
+          <td>${src}</td>
+          <td style="color:var(--mu)">${desc}</td>
+          <td class="n${d.spend===0?' muted':''}">${d.spend>0?$c(d.spend):'—'}</td>
+          <td class="n">${d.orders||'—'}</td>
+          <td class="n">${$c(d.revenue)}</td>
+          <td class="n ${rc(d.revenue,d.spend)}">${d.spend>0?roas(d.revenue,d.spend):'—'}</td>
+          <td class="n">${d.spend>0?cac(d.spend,d.orders):'—'}</td>
+        </tr>`;
+      });
+  });
+
+  // Grand total
+  html+=`<tr class="acp-grand">
+    <td colspan="2">TOTAL — ALL CHANNELS</td>
+    <td class="n">${$c(grandSpend)}</td>
+    <td class="n">${grandOrders||'—'}</td>
+    <td class="n">${$c(grandRevenue)}</td>
+    <td class="n ${rc(grandRevenue,grandSpend)}">${roas(grandRevenue,grandSpend)} blended</td>
+    <td class="n">${cac(grandSpend,grandOrders)}</td>
+  </tr></tbody>`;
+
+  document.getElementById('acp-tbl').innerHTML=html;
 }
 
 function buildCh(rows){
@@ -469,22 +681,22 @@ function buildHier(rows){
   const metaRows=rows.filter(r=>!r.row_source||r.row_source==='meta');
   const C={};
   metaRows.forEach(r=>{
-    const cn=r.campaign_name||'Unknown',an=r.adset_name||'Unknown';
-    if(!C[cn])C[cn]={name:cn,spend:0,impressions:0,reach:0,clicks:0,freqW:0,meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0,adsets:{}};
+    const cn=r.campaign_name||'Unknown',an=r.ad_group_name||'Unknown';
+    if(!C[cn])C[cn]={name:cn,spend:0,impressions:0,reach:0,clicks:0,freqW:0,platform_conversions:0,platform_revenue:0,cm_purchases:0,cm_revenue:0,adsets:{}};
     const c=C[cn];
     c.spend+=r.spend||0;c.impressions+=r.impressions||0;c.reach+=r.reach||0;c.clicks+=r.clicks||0;
     c.freqW+=((r.frequency||0)*(r.impressions||0));
-    c.meta_purchases+=r.meta_purchases||0;c.meta_revenue+=r.meta_revenue||0;c.cm_purchases+=r.cm_purchases||0;c.cm_revenue+=r.cm_revenue||0;
-    if(!c.adsets[an])c.adsets[an]={name:an,spend:0,impressions:0,reach:0,clicks:0,freqW:0,meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0,ads:{}};
+    c.platform_conversions+=r.platform_conversions||0;c.platform_revenue+=r.platform_revenue||0;c.cm_purchases+=r.cm_purchases||0;c.cm_revenue+=r.cm_revenue||0;
+    if(!c.adsets[an])c.adsets[an]={name:an,spend:0,impressions:0,reach:0,clicks:0,freqW:0,platform_conversions:0,platform_revenue:0,cm_purchases:0,cm_revenue:0,ads:{}};
     const a=c.adsets[an];
     a.spend+=r.spend||0;a.impressions+=r.impressions||0;a.reach+=r.reach||0;a.clicks+=r.clicks||0;a.freqW+=((r.frequency||0)*(r.impressions||0));
-    a.meta_purchases+=r.meta_purchases||0;a.meta_revenue+=r.meta_revenue||0;a.cm_purchases+=r.cm_purchases||0;a.cm_revenue+=r.cm_revenue||0;
+    a.platform_conversions+=r.platform_conversions||0;a.platform_revenue+=r.platform_revenue||0;a.cm_purchases+=r.cm_purchases||0;a.cm_revenue+=r.cm_revenue||0;
     const adKey=r.ad_id||r.ad_name||'Unknown';
-    if(!a.ads[adKey])a.ads[adKey]={name:r.ad_name||'Unknown',spend:0,impressions:0,reach:0,clicks:0,freqW:0,delivery:r.delivery_status||'',meta_purchases:0,meta_revenue:0,cm_purchases:0,cm_revenue:0,thumbnail_url:r.thumbnail_url||'',creative_label:r.creative_label||'',creative_type:r.creative_type||''};
+    if(!a.ads[adKey])a.ads[adKey]={name:r.ad_name||'Unknown',spend:0,impressions:0,reach:0,clicks:0,freqW:0,delivery:r.delivery_status||'',platform_conversions:0,platform_revenue:0,cm_purchases:0,cm_revenue:0,thumbnail_url:r.thumbnail_url||'',creative_label:r.creative_label||'',creative_type:r.creative_type||''};
     const ad=a.ads[adKey];
     ad.spend+=r.spend||0;ad.impressions+=r.impressions||0;ad.reach+=r.reach||0;ad.clicks+=r.clicks||0;
     ad.freqW+=((r.frequency||0)*(r.impressions||0));
-    ad.meta_purchases+=r.meta_purchases||0;ad.meta_revenue+=r.meta_revenue||0;
+    ad.platform_conversions+=r.platform_conversions||0;ad.platform_revenue+=r.platform_revenue||0;
     ad.cm_purchases+=r.cm_purchases||0;ad.cm_revenue+=r.cm_revenue||0;
     if(!ad.thumbnail_url&&r.thumbnail_url)ad.thumbnail_url=r.thumbnail_url;
     if(!ad.creative_label&&r.creative_label)ad.creative_label=r.creative_label;
@@ -496,11 +708,222 @@ function buildHier(rows){
 function srt(arr,col,dir){
   return arr.slice().sort((a,b)=>{
     let av=0,bv=0;
-    if(col==='meta_roas'){av=a.spend>0?a.meta_revenue/a.spend:0;bv=b.spend>0?b.meta_revenue/b.spend:0;}
+    if(col==='meta_roas'){av=a.spend>0?a.platform_revenue/a.spend:0;bv=b.spend>0?b.platform_revenue/b.spend:0;}
     else if(col==='cm_roas'){av=a.spend>0?a.cm_revenue/a.spend:0;bv=b.spend>0?b.cm_revenue/b.spend:0;}
     else{av=a[col]||0;bv=b[col]||0;}
     return dir==='desc'?bv-av:av-bv;
   });
+}
+
+// =====================================================================
+// Google Ads tab: attribution comparison, top 10s, hierarchical breakdown
+// =====================================================================
+
+// Format ad group / ad label with PMax synthetic placeholders
+function gAdGroupLabel(r){
+  if(r.ad_group_name)return r.ad_group_name;
+  if(r.campaign_type==='PERFORMANCE_MAX')return 'Performance Max';
+  if(r.campaign_type==='SHOPPING')return 'Shopping (no ad groups)';
+  if(r.campaign_type==='DEMAND_GEN')return 'Demand Gen';
+  if(r.campaign_type==='SMART')return 'Smart Campaign';
+  return '—';
+}
+function gAdLabel(r){
+  if(r.ad_name)return r.ad_name;
+  if(r.ad_id)return 'Ad '+r.ad_id;
+  if(r.campaign_type==='PERFORMANCE_MAX')return 'Performance Max';
+  if(r.campaign_type==='SHOPPING')return 'Shopping (no ads)';
+  if(r.campaign_type==='DEMAND_GEN')return 'Demand Gen';
+  return '—';
+}
+
+function buildGoogle(rows,col,dir,cf){
+  // 1. Attribution comparison by campaign type
+  const byType={};
+  rows.forEach(r=>{
+    const t=r.campaign_type||'OTHER';
+    if(!byType[t])byType[t]={spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0};
+    const b=byType[t];
+    b.spend+=r.spend||0;b.impressions+=r.impressions||0;b.clicks+=r.clicks||0;
+    b.gconv+=r.platform_conversions||0;b.grev+=r.platform_revenue||0;
+    b.cmconv+=r.cm_purchases||0;b.cmrev+=r.cm_revenue||0;
+  });
+  let attrHtml='';
+  Object.entries(byType).sort((a,b)=>b[1].spend-a[1].spend).forEach(([t,d])=>{
+    const ctr=d.impressions>0?(d.clicks/d.impressions*100).toFixed(2)+'%':'—';
+    const cpc=d.clicks>0?$c(d.spend/d.clicks):'—';
+    attrHtml+=`<tr>
+      <td><strong>${t}</strong></td>
+      <td class="n">${$c(d.spend)}</td>
+      <td class="n">${(d.impressions||0).toLocaleString()}</td>
+      <td class="n">${(d.clicks||0).toLocaleString()}</td>
+      <td class="n">${ctr}</td>
+      <td class="n">${cpc}</td>
+      <td class="n">${d.gconv?d.gconv.toFixed(1):'—'}</td>
+      <td class="n">${$c(d.grev)}</td>
+      <td class="n ${rc(d.grev,d.spend)}">${roas(d.grev,d.spend)}</td>
+      <td class="n">${d.cmconv||'—'}</td>
+      <td class="n">${$c(d.cmrev)}</td>
+      <td class="n ${rc(d.cmrev,d.spend)}">${roas(d.cmrev,d.spend)}</td>
+    </tr>`;
+  });
+  // Total row
+  let tot={spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0};
+  Object.values(byType).forEach(d=>{tot.spend+=d.spend;tot.impressions+=d.impressions;tot.clicks+=d.clicks;tot.gconv+=d.gconv;tot.grev+=d.grev;tot.cmconv+=d.cmconv;tot.cmrev+=d.cmrev;});
+  if(Object.keys(byType).length>0){
+    const ctrT=tot.impressions>0?(tot.clicks/tot.impressions*100).toFixed(2)+'%':'—';
+    const cpcT=tot.clicks>0?$c(tot.spend/tot.clicks):'—';
+    attrHtml+=`<tr style="border-top:2px solid var(--bd);font-weight:700;background:var(--sf2)">
+      <td>TOTAL</td>
+      <td class="n">${$c(tot.spend)}</td>
+      <td class="n">${(tot.impressions||0).toLocaleString()}</td>
+      <td class="n">${(tot.clicks||0).toLocaleString()}</td>
+      <td class="n">${ctrT}</td>
+      <td class="n">${cpcT}</td>
+      <td class="n">${tot.gconv?tot.gconv.toFixed(1):'—'}</td>
+      <td class="n">${$c(tot.grev)}</td>
+      <td class="n ${rc(tot.grev,tot.spend)}">${roas(tot.grev,tot.spend)}</td>
+      <td class="n">${tot.cmconv||'—'}</td>
+      <td class="n">${$c(tot.cmrev)}</td>
+      <td class="n ${rc(tot.cmrev,tot.spend)}">${roas(tot.cmrev,tot.spend)}</td>
+    </tr>`;
+  }
+  document.getElementById('g-attr-tb').innerHTML=attrHtml||'<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--mu)">No Google Ads data for this period</td></tr>';
+
+  // 2. Build hierarchy for top 10s and breakdown
+  const C={};
+  rows.forEach(r=>{
+    const cn=r.campaign_name||'Unknown';
+    if(!C[cn])C[cn]={name:cn,type:r.campaign_type||'',spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0,adgroups:{}};
+    const c=C[cn];
+    c.spend+=r.spend||0;c.impressions+=r.impressions||0;c.clicks+=r.clicks||0;
+    c.gconv+=r.platform_conversions||0;c.grev+=r.platform_revenue||0;
+    c.cmconv+=r.cm_purchases||0;c.cmrev+=r.cm_revenue||0;
+    const agn=gAdGroupLabel(r);
+    if(!c.adgroups[agn])c.adgroups[agn]={name:agn,type:r.campaign_type||'',spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0,ads:{}};
+    const ag=c.adgroups[agn];
+    ag.spend+=r.spend||0;ag.impressions+=r.impressions||0;ag.clicks+=r.clicks||0;
+    ag.gconv+=r.platform_conversions||0;ag.grev+=r.platform_revenue||0;
+    ag.cmconv+=r.cm_purchases||0;ag.cmrev+=r.cm_revenue||0;
+    const adn=gAdLabel(r);
+    if(!ag.ads[adn])ag.ads[adn]={name:adn,type:r.campaign_type||'',spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0};
+    const a=ag.ads[adn];
+    a.spend+=r.spend||0;a.impressions+=r.impressions||0;a.clicks+=r.clicks||0;
+    a.gconv+=r.platform_conversions||0;a.grev+=r.platform_revenue||0;
+    a.cmconv+=r.cm_purchases||0;a.cmrev+=r.cm_revenue||0;
+  });
+
+  // 3. Top 10s
+  const camps=Object.values(C).map(c=>({key:c.name,spend:c.spend,orders:c.cmconv,revenue:c.cmrev})).sort((a,b)=>b.spend-a.spend).slice(0,10);
+  document.getElementById('g-top-camp').innerHTML=camps.map(c=>`
+    <tr><td class="nm"><div class="nmain">${c.key}</div></td>
+      <td class="n">${$c(c.spend)}</td>
+      <td class="n">${c.orders||'—'}</td>
+      <td class="n">${$c(c.revenue)}</td>
+      <td class="n ${rc(c.revenue,c.spend)}">${roas(c.revenue,c.spend)}</td>
+      <td class="n">${cac(c.spend,c.orders)}</td>
+    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:12px;color:var(--mu)">No data</td></tr>';
+
+  const adgroups=[];
+  Object.values(C).forEach(c=>Object.values(c.adgroups).forEach(ag=>adgroups.push({key:ag.name,camp:c.name,spend:ag.spend,orders:ag.cmconv,revenue:ag.cmrev})));
+  const topAg=adgroups.sort((a,b)=>b.spend-a.spend).slice(0,10);
+  document.getElementById('g-top-adgroup').innerHTML=topAg.map(a=>`
+    <tr><td class="nm"><div class="nmain">${a.key}</div><div class="nsub">${a.camp}</div></td>
+      <td class="n">${$c(a.spend)}</td>
+      <td class="n">${a.orders||'—'}</td>
+      <td class="n">${$c(a.revenue)}</td>
+      <td class="n ${rc(a.revenue,a.spend)}">${roas(a.revenue,a.spend)}</td>
+      <td class="n">${cac(a.spend,a.orders)}</td>
+    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:12px;color:var(--mu)">No data</td></tr>';
+
+  const ads=[];
+  Object.values(C).forEach(c=>Object.values(c.adgroups).forEach(ag=>Object.values(ag.ads).forEach(ad=>ads.push({key:ad.name,camp:c.name,spend:ad.spend,orders:ad.cmconv,revenue:ad.cmrev}))));
+  const topAds=ads.sort((a,b)=>b.spend-a.spend).slice(0,10);
+  document.getElementById('g-top-ad').innerHTML=topAds.map(a=>`
+    <tr><td class="nm"><div class="nmain">${a.key}</div><div class="nsub">${a.camp}</div></td>
+      <td class="n">${$c(a.spend)}</td>
+      <td class="n">${a.orders||'—'}</td>
+      <td class="n">${$c(a.revenue)}</td>
+      <td class="n ${rc(a.revenue,a.spend)}">${roas(a.revenue,a.spend)}</td>
+      <td class="n">${cac(a.spend,a.orders)}</td>
+    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:12px;color:var(--mu)">No data</td></tr>';
+
+  // 4. Big nested table
+  const sortedCamps=Object.values(C).sort((a,b)=>b.spend-a.spend);
+  let html='';
+  sortedCamps.forEach((c,ci)=>{
+    const cid='gc-'+ci;
+    const isExp=expanded[cid]||expAll;
+    const ctrC=c.impressions>0?(c.clicks/c.impressions*100).toFixed(2)+'%':'—';
+    const cpcC=c.clicks>0?$c(c.spend/c.clicks):'—';
+    html+=`<tr class="lc"><td class="nc"><button class="xb" onclick="tog('${cid}')">${isExp?'▾':'▸'}</button>${c.name}<span class="pill">${c.type||'—'}</span></td>
+      <td><span class="cpill" style="background:rgba(66,133,244,.1);color:#4285f4">${c.type||'—'}</span></td>
+      <td class="n">${$c(c.spend)}</td>
+      <td class="n">${(c.impressions||0).toLocaleString()}</td>
+      <td class="n">${(c.clicks||0).toLocaleString()}</td>
+      <td class="n">${ctrC}</td>
+      <td class="n dm">${c.gconv?c.gconv.toFixed(1):'—'}</td>
+      <td class="n">${$c(c.grev)}</td>
+      <td class="n">${cpcC}</td>
+      <td class="n ${rc(c.grev,c.spend)}">${roas(c.grev,c.spend)}</td>
+      <td class="n">${cac(c.spend,c.gconv)}</td>
+      <td class="n dc">${c.cmconv||'—'}</td>
+      <td class="n">${$c(c.cmrev)}</td>
+      <td class="n ${rc(c.cmrev,c.spend)}">${roas(c.cmrev,c.spend)}</td>
+      <td class="n">${cac(c.spend,c.cmconv)}</td>
+      <td class="n">${aov(c.cmrev,c.cmconv)}</td>
+    </tr>`;
+    if(isExp){
+      Object.values(c.adgroups).sort((a,b)=>b.spend-a.spend).forEach((ag,agi)=>{
+        const agid=cid+'-ag-'+agi;
+        const isAgExp=expanded[agid]||expAll;
+        const showAds=Object.keys(ag.ads).length>0&&!(Object.keys(ag.ads).length===1&&Object.keys(ag.ads)[0]===ag.name);
+        const ctrAg=ag.impressions>0?(ag.clicks/ag.impressions*100).toFixed(2)+'%':'—';
+        const cpcAg=ag.clicks>0?$c(ag.spend/ag.clicks):'—';
+        html+=`<tr class="la"><td class="nc">${showAds?`<button class="xb" onclick="tog('${agid}')">${isAgExp?'▾':'▸'}</button>`:'<span class="xb" style="visibility:hidden">▸</span>'}${ag.name}</td>
+          <td></td>
+          <td class="n">${$c(ag.spend)}</td>
+          <td class="n">${(ag.impressions||0).toLocaleString()}</td>
+          <td class="n">${(ag.clicks||0).toLocaleString()}</td>
+          <td class="n">${ctrAg}</td>
+          <td class="n dm">${ag.gconv?ag.gconv.toFixed(1):'—'}</td>
+          <td class="n">${$c(ag.grev)}</td>
+          <td class="n">${cpcAg}</td>
+          <td class="n ${rc(ag.grev,ag.spend)}">${roas(ag.grev,ag.spend)}</td>
+          <td class="n">${cac(ag.spend,ag.gconv)}</td>
+          <td class="n dc">${ag.cmconv||'—'}</td>
+          <td class="n">${$c(ag.cmrev)}</td>
+          <td class="n ${rc(ag.cmrev,ag.spend)}">${roas(ag.cmrev,ag.spend)}</td>
+          <td class="n">${cac(ag.spend,ag.cmconv)}</td>
+          <td class="n">${aov(ag.cmrev,ag.cmconv)}</td>
+        </tr>`;
+        if(isAgExp&&showAds){
+          Object.values(ag.ads).sort((a,b)=>b.spend-a.spend).forEach(ad=>{
+            const ctrAd=ad.impressions>0?(ad.clicks/ad.impressions*100).toFixed(2)+'%':'—';
+            const cpcAd=ad.clicks>0?$c(ad.spend/ad.clicks):'—';
+            html+=`<tr class="lad"><td class="nc">${ad.name}</td>
+              <td></td>
+              <td class="n">${$c(ad.spend)}</td>
+              <td class="n">${(ad.impressions||0).toLocaleString()}</td>
+              <td class="n">${(ad.clicks||0).toLocaleString()}</td>
+              <td class="n">${ctrAd}</td>
+              <td class="n dm">${ad.gconv?ad.gconv.toFixed(1):'—'}</td>
+              <td class="n">${$c(ad.grev)}</td>
+              <td class="n">${cpcAd}</td>
+              <td class="n ${rc(ad.grev,ad.spend)}">${roas(ad.grev,ad.spend)}</td>
+              <td class="n">${cac(ad.spend,ad.gconv)}</td>
+              <td class="n dc">${ad.cmconv||'—'}</td>
+              <td class="n">${$c(ad.cmrev)}</td>
+              <td class="n ${rc(ad.cmrev,ad.spend)}">${roas(ad.cmrev,ad.spend)}</td>
+              <td class="n">${cac(ad.spend,ad.cmconv)}</td>
+              <td class="n">${aov(ad.cmrev,ad.cmconv)}</td>
+            </tr>`;
+          });
+        }
+      });
+    }
+  });
+  document.getElementById('tb-google').innerHTML=html||'<tr><td colspan="16" style="text-align:center;padding:20px;color:var(--mu)">No Google Ads data for this period</td></tr>';
 }
 
 function renderMeta(rows,col,dir,cf){
@@ -510,14 +933,14 @@ function renderMeta(rows,col,dir,cf){
   let html='',ts=0,ti=0,tr=0,tcl=0,tmp=0,tmr=0,tcp=0,tcr=0;
   data.forEach((c,ci)=>{
     const cid='c'+ci,open=expAll||expanded[cid];
-    ts+=c.spend;ti+=c.impressions;tr+=c.reach;tcl+=c.clicks;tmp+=c.meta_purchases;tmr+=c.meta_revenue;tcp+=c.cm_purchases;tcr+=c.cm_revenue;
+    ts+=c.spend;ti+=c.impressions;tr+=c.reach;tcl+=c.clicks;tmp+=c.platform_conversions;tmr+=c.platform_revenue;tcp+=c.cm_purchases;tcr+=c.cm_revenue;
     html+=`<tr class="lc">
       <td class="nc"><button class="xb" onclick="tog('${cid}')">${open?'▾':'▸'}</button>${c.name}<span class="pill">${c.adsets.length}as</span></td>
       <td class="n">${$c(c.spend)}</td><td class="n">${$n(c.impressions)}</td><td class="n">${$n(c.reach)}</td>
       <td class="n">${c.freq>0?c.freq.toFixed(2):'—'}</td><td class="n">${$n(c.clicks)}</td><td class="n">${ctr(c.clicks,c.impressions)}</td>
-      <td class="n dm">${c.meta_purchases||'—'}</td><td class="n">${$c(c.meta_revenue)}</td>
-      <td class="n ${rc(c.meta_revenue,c.spend)}">${roas(c.meta_revenue,c.spend)}</td>
-      <td class="n">${cac(c.spend,c.meta_purchases)}</td><td class="n">${aov(c.meta_revenue,c.meta_purchases)}</td>
+      <td class="n dm">${c.platform_conversions||'—'}</td><td class="n">${$c(c.platform_revenue)}</td>
+      <td class="n ${rc(c.platform_revenue,c.spend)}">${roas(c.platform_revenue,c.spend)}</td>
+      <td class="n">${cac(c.spend,c.platform_conversions)}</td><td class="n">${aov(c.platform_revenue,c.platform_conversions)}</td>
       <td class="n dc">${c.cm_purchases||'—'}</td><td class="n">${$c(c.cm_revenue)}</td>
       <td class="n ${rc(c.cm_revenue,c.spend)}">${roas(c.cm_revenue,c.spend)}</td>
       <td class="n">${cac(c.spend,c.cm_purchases)}</td><td class="n">${aov(c.cm_revenue,c.cm_purchases)}</td>
@@ -529,9 +952,9 @@ function renderMeta(rows,col,dir,cf){
           <td class="nc"><button class="xb" onclick="tog('${asid}')">${aopen?'▾':'▸'}</button>${a.name}<span class="pill pg">${a.ads.length}ads</span></td>
           <td class="n">${$c(a.spend)}</td><td class="n">${$n(a.impressions)}</td><td class="n">${$n(a.reach)}</td>
           <td class="n">${a.freq>0?a.freq.toFixed(2):'—'}</td><td class="n">${$n(a.clicks)}</td><td class="n">${ctr(a.clicks,a.impressions)}</td>
-          <td class="n dm">${a.meta_purchases||'—'}</td><td class="n">${$c(a.meta_revenue)}</td>
-          <td class="n ${rc(a.meta_revenue,a.spend)}">${roas(a.meta_revenue,a.spend)}</td>
-          <td class="n">${cac(a.spend,a.meta_purchases)}</td><td class="n">${aov(a.meta_revenue,a.meta_purchases)}</td>
+          <td class="n dm">${a.platform_conversions||'—'}</td><td class="n">${$c(a.platform_revenue)}</td>
+          <td class="n ${rc(a.platform_revenue,a.spend)}">${roas(a.platform_revenue,a.spend)}</td>
+          <td class="n">${cac(a.spend,a.platform_conversions)}</td><td class="n">${aov(a.platform_revenue,a.platform_conversions)}</td>
           <td class="n dc">${a.cm_purchases||'—'}</td><td class="n">${$c(a.cm_revenue)}</td>
           <td class="n ${rc(a.cm_revenue,a.spend)}">${roas(a.cm_revenue,a.spend)}</td>
           <td class="n">${cac(a.spend,a.cm_purchases)}</td><td class="n">${aov(a.cm_revenue,a.cm_purchases)}</td>
@@ -544,9 +967,9 @@ function renderMeta(rows,col,dir,cf){
               <td class="nc"><div class="ad-cell">${thumb}<div class="ad-meta">${ad.name}${dlv(ad.delivery)}${ctype}</div></div></td>
               <td class="n">${$c(ad.spend)}</td><td class="n">${$n(ad.impressions)}</td><td class="n">${$n(ad.reach)}</td>
               <td class="n">${$f(ad.frequency)}</td><td class="n">${$n(ad.clicks)}</td><td class="n">${ctr(ad.clicks,ad.impressions)}</td>
-              <td class="n dm">${ad.meta_purchases||'—'}</td><td class="n">${$c(ad.meta_revenue)}</td>
-              <td class="n ${rc(ad.meta_revenue,ad.spend)}">${roas(ad.meta_revenue,ad.spend)}</td>
-              <td class="n">${cac(ad.spend,ad.meta_purchases)}</td><td class="n">${aov(ad.meta_revenue,ad.meta_purchases)}</td>
+              <td class="n dm">${ad.platform_conversions||'—'}</td><td class="n">${$c(ad.platform_revenue)}</td>
+              <td class="n ${rc(ad.platform_revenue,ad.spend)}">${roas(ad.platform_revenue,ad.spend)}</td>
+              <td class="n">${cac(ad.spend,ad.platform_conversions)}</td><td class="n">${aov(ad.platform_revenue,ad.platform_conversions)}</td>
               <td class="n dc">${ad.cm_purchases||'—'}</td><td class="n">${$c(ad.cm_revenue)}</td>
               <td class="n ${rc(ad.cm_revenue,ad.spend)}">${roas(ad.cm_revenue,ad.spend)}</td>
               <td class="n">${cac(ad.spend,ad.cm_purchases)}</td><td class="n">${aov(ad.cm_revenue,ad.cm_purchases)}</td>
@@ -571,7 +994,15 @@ function renderMeta(rows,col,dir,cf){
 
 function render(){
   const rows=filt();const col=document.getElementById('sCol').value;const dir=document.getElementById('sDir').value;const cf=document.getElementById('campF').value;
-  buildAttr(rows);buildTop10(rows);buildCh(rows);updBadge();renderMeta(rows,col,dir,cf);
+  // All-channels panel uses every row
+  buildAcp(rows);
+  // Meta tab uses meta rows only
+  const metaRows=rows.filter(r=>r.platform==='meta');
+  buildAttr(metaRows);buildTop10(metaRows);renderMeta(metaRows,col,dir,cf);
+  // Google tab uses google rows only
+  const googleRows=rows.filter(r=>r.platform==='google');
+  buildGoogle(googleRows,col,dir,cf);
+  updBadge();
 }
 function tog(id){expanded[id]=!expanded[id];render();}
 function toggleExpAll(){expAll=!expAll;document.getElementById('eab').textContent=expAll?'Collapse all':'Expand all';render();}
