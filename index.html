@@ -298,7 +298,7 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
     <div class="exp-grid">
       <div class="ec" style="border-left-color:var(--meta)"><h4 style="color:var(--meta)">Meta Ads Manager (steel blue)</h4><p>Purchases and revenue from Meta using 7-day click + 1-day view window. Tends to over-attribute. Compare with CM Meta for a conservative lower bound.</p></div>
       <div class="ec" style="border-left-color:var(--cm)"><h4 style="color:var(--cm)">ClickMagick Meta (magenta)</h4><p>Last-click attribution for Meta sources only (fb, ig, facebook, an, th). More conservative than Meta. CAC = spend divided by CM purchases.</p></div>
-      <div class="ec" style="border-left-color:var(--google)"><h4 style="color:var(--google)">Top performers tables</h4><p>Rolled up from ClickMagick UTM data for Meta sources. utm_campaign = campaign, utm_term = adset, utm_content = ad. Multiple rows with the same value are aggregated.</p></div>
+      <div class="ec" style="border-left-color:var(--google)"><h4 style="color:var(--google)">Top performers tables</h4><p>Top 10 by spend. Aggregates by Meta IDs (campaign_id, adset_id, ad_id) so numbers reconcile with the campaign breakdown table below. Display names are the latest seen for each ID.</p></div>
       <div class="ec" style="border-left-color:var(--org)"><h4 style="color:var(--org)">Timezone note</h4><p>All dates use the Meta ad account timezone shown in the header. Today shows partial data — updates hourly.</p></div>
     </div>
   </div>
@@ -307,15 +307,15 @@ td.nc{font-weight:600;white-space:normal;word-break:break-word;min-width:200px;m
   <div class="top10-wrap">
     <div class="top10-grid">
       <div class="top10-card">
-        <div class="top10-hdr">Top 10 campaigns <span style="font-size:9px;font-weight:400;opacity:.7">(utm_campaign)</span></div>
+        <div class="top10-hdr">Top 10 campaigns <span style="font-size:9px;font-weight:400;opacity:.7">(by spend)</span></div>
         <table class="t10t"><thead><tr><th>Campaign</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="top-camp"></tbody></table>
       </div>
       <div class="top10-card">
-        <div class="top10-hdr">Top 10 adsets <span style="font-size:9px;font-weight:400;opacity:.7">(utm_term)</span></div>
+        <div class="top10-hdr">Top 10 adsets <span style="font-size:9px;font-weight:400;opacity:.7">(by spend)</span></div>
         <table class="t10t"><thead><tr><th>Adset</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="top-adset"></tbody></table>
       </div>
       <div class="top10-card">
-        <div class="top10-hdr">Top 10 ads <span style="font-size:9px;font-weight:400;opacity:.7">(utm_content)</span></div>
+        <div class="top10-hdr">Top 10 ads <span style="font-size:9px;font-weight:400;opacity:.7">(by spend)</span></div>
         <table class="t10t"><thead><tr><th>Ad</th><th class="n">Spend</th><th class="n">Orders</th><th class="n">Revenue</th><th class="n">ROAS</th><th class="n">CAC</th></tr></thead><tbody id="top-ad"></tbody></table>
       </div>
     </div>
@@ -503,42 +503,43 @@ function buildAttr(rows){
 }
 
 function buildTop10(rows){
-  const ms=new Set(META_SRCS);
-  const metaRows=rows.filter(r=>ms.has((r.cm_utm_source||'').toLowerCase()));
-
+  // Group by stable Meta IDs (campaign_id, ad_group_id, ad_id) and display name
+  // Aggregate ALL rows (not just CM-attributed) so spend totals reconcile with the table below
   const campD={};
-  metaRows.forEach(r=>{
-    const k=dec(r.utm_campaign||'');if(!k||k==='none'||k==='[utm_campaign]')return;
-    if(!campD[k])campD[k]={key:k,orders:0,revenue:0,spend:0,names:new Set()};
-    campD[k].orders+=r.cm_purchases||0;campD[k].revenue+=r.cm_revenue||0;campD[k].spend+=r.spend||0;
-    if(r.campaign_name)campD[k].names.add(r.campaign_name);
-  });
-
   const adsetD={};
-  metaRows.forEach(r=>{
-    const k=dec(r.utm_term||'');if(!k||k==='[utm_term]')return;
-    if(!adsetD[k])adsetD[k]={key:k,orders:0,revenue:0,spend:0,camps:new Set()};
-    adsetD[k].orders+=r.cm_purchases||0;adsetD[k].revenue+=r.cm_revenue||0;adsetD[k].spend+=r.spend||0;
-    if(r.campaign_name)adsetD[k].camps.add(r.campaign_name);
-  });
-
   const adD={};
-  metaRows.forEach(r=>{
-    const k=dec(r.utm_content||'');if(!k||k==='[utm_content]')return;
-    if(!adD[k])adD[k]={key:k,orders:0,revenue:0,spend:0,adsets:new Set()};
-    adD[k].orders+=r.cm_purchases||0;adD[k].revenue+=r.cm_revenue||0;adD[k].spend+=r.spend||0;
-    if(r.ad_group_name)adD[k].adsets.add(r.ad_group_name);
+
+  rows.forEach(r=>{
+    const cid=r.campaign_id;
+    if(cid){
+      if(!campD[cid])campD[cid]={id:cid,name:r.campaign_name||'(unnamed)',orders:0,revenue:0,spend:0};
+      campD[cid].spend+=r.spend||0;
+      campD[cid].orders+=r.cm_purchases||0;
+      campD[cid].revenue+=r.cm_revenue||0;
+    }
+    const aid=r.ad_group_id;
+    if(aid){
+      if(!adsetD[aid])adsetD[aid]={id:aid,name:r.ad_group_name||'(unnamed)',camp:r.campaign_name||'',orders:0,revenue:0,spend:0};
+      adsetD[aid].spend+=r.spend||0;
+      adsetD[aid].orders+=r.cm_purchases||0;
+      adsetD[aid].revenue+=r.cm_revenue||0;
+    }
+    const adid=r.ad_id;
+    if(adid){
+      if(!adD[adid])adD[adid]={id:adid,name:r.ad_name||'(unnamed)',adset:r.ad_group_name||'',orders:0,revenue:0,spend:0};
+      adD[adid].spend+=r.spend||0;
+      adD[adid].orders+=r.cm_purchases||0;
+      adD[adid].revenue+=r.cm_revenue||0;
+    }
   });
 
-  const camps=Object.values(campD).sort((a,b)=>b.orders-a.orders).slice(0,10);
-  const adsets=Object.values(adsetD).sort((a,b)=>b.orders-a.orders).slice(0,10);
-  const ads=Object.values(adD).sort((a,b)=>b.orders-a.orders).slice(0,10);
+  // Sort by spend desc (most-spent campaigns/ads at the top)
+  const camps=Object.values(campD).sort((a,b)=>b.spend-a.spend).slice(0,10);
+  const adsets=Object.values(adsetD).sort((a,b)=>b.spend-a.spend).slice(0,10);
+  const ads=Object.values(adD).sort((a,b)=>b.spend-a.spend).slice(0,10);
 
   document.getElementById('top-camp').innerHTML=camps.map(c=>{
-    const cnt=c.names.size;
-    const sub=cnt===1?`<div class="nsub">${[...c.names][0]}</div>`
-      :cnt>1?`<div class="nsub"><span class="cpill">${cnt} Meta campaigns</span></div>`:'';
-    return `<tr><td class="nm"><div class="nmain">${c.key}</div>${sub}</td>
+    return `<tr><td class="nm"><div class="nmain">${c.name}</div></td>
       <td class="n">${$c(c.spend)}</td>
       <td class="n">${c.orders||'—'}</td><td class="n">${$c(c.revenue)}</td>
       <td class="n ${rc(c.revenue,c.spend)}">${roas(c.revenue,c.spend)}</td>
@@ -546,10 +547,8 @@ function buildTop10(rows){
   }).join('');
 
   document.getElementById('top-adset').innerHTML=adsets.map(a=>{
-    const cnt=a.camps.size;
-    const sub=cnt===1?`<div class="nsub">${[...a.camps][0]}</div>`
-      :cnt>1?`<div class="nsub"><span class="cpill">${cnt} campaigns</span></div>`:'';
-    return `<tr><td class="nm"><div class="nmain">${a.key}</div>${sub}</td>
+    const sub=a.camp?`<div class="nsub">${a.camp}</div>`:'';
+    return `<tr><td class="nm"><div class="nmain">${a.name}</div>${sub}</td>
       <td class="n">${$c(a.spend)}</td>
       <td class="n">${a.orders||'—'}</td><td class="n">${$c(a.revenue)}</td>
       <td class="n ${rc(a.revenue,a.spend)}">${roas(a.revenue,a.spend)}</td>
@@ -557,10 +556,8 @@ function buildTop10(rows){
   }).join('');
 
   document.getElementById('top-ad').innerHTML=ads.map(a=>{
-    const cnt=a.adsets.size;
-    const sub=cnt===1?`<div class="nsub">${[...a.adsets][0]}</div>`
-      :cnt>1?`<div class="nsub"><span class="cpill">${cnt} adsets</span></div>`:'';
-    return `<tr><td class="nm"><div class="nmain">${a.key}</div>${sub}</td>
+    const sub=a.adset?`<div class="nsub">${a.adset}</div>`:'';
+    return `<tr><td class="nm"><div class="nmain">${a.name}</div>${sub}</td>
       <td class="n">${$c(a.spend)}</td>
       <td class="n">${a.orders||'—'}</td><td class="n">${$c(a.revenue)}</td>
       <td class="n ${rc(a.revenue,a.spend)}">${roas(a.revenue,a.spend)}</td>
@@ -827,24 +824,28 @@ function buildGoogle(rows,col,dir,cf){
   }
   document.getElementById('g-attr-tb').innerHTML=attrHtml||'<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--mu)">No Google Ads data for this period</td></tr>';
 
-  // 2. Build hierarchy for top 10s and breakdown
+  // 2. Build hierarchy for top 10s and breakdown — group by IDs, display by names
   const C={};
   rows.forEach(r=>{
-    const cn=r.campaign_name||'Unknown';
-    if(!C[cn])C[cn]={name:cn,type:r.campaign_type||'',spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0,adgroups:{}};
-    const c=C[cn];
+    const cid=r.campaign_id||'unknown';
+    if(!C[cid])C[cid]={id:cid,name:r.campaign_name||'(unnamed)',type:r.campaign_type||'',spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0,adgroups:{}};
+    const c=C[cid];
     c.spend+=r.spend||0;c.impressions+=r.impressions||0;c.clicks+=r.clicks||0;
     c.gconv+=r.platform_conversions||0;c.grev+=r.platform_revenue||0;
     c.cmconv+=r.cm_purchases||0;c.cmrev+=r.cm_revenue||0;
-    const agn=gAdGroupLabel(r);
-    if(!c.adgroups[agn])c.adgroups[agn]={name:agn,type:r.campaign_type||'',spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0,ads:{}};
-    const ag=c.adgroups[agn];
+    // Ad group level - group by ad_group_id (or synthetic key for PMax which has no ad_group_id)
+    const agid=r.ad_group_id||(`__synth_ag_${cid}_${r.campaign_type||'X'}`);
+    const agName=gAdGroupLabel(r);
+    if(!c.adgroups[agid])c.adgroups[agid]={id:agid,name:agName,type:r.campaign_type||'',spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0,ads:{}};
+    const ag=c.adgroups[agid];
     ag.spend+=r.spend||0;ag.impressions+=r.impressions||0;ag.clicks+=r.clicks||0;
     ag.gconv+=r.platform_conversions||0;ag.grev+=r.platform_revenue||0;
     ag.cmconv+=r.cm_purchases||0;ag.cmrev+=r.cm_revenue||0;
-    const adn=gAdLabel(r);
-    if(!ag.ads[adn])ag.ads[adn]={name:adn,type:r.campaign_type||'',spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0};
-    const a=ag.ads[adn];
+    // Ad level - group by ad_id (or synthetic key for PMax which has no ad_id)
+    const adid=r.ad_id||(`__synth_ad_${agid}`);
+    const adName=gAdLabel(r);
+    if(!ag.ads[adid])ag.ads[adid]={id:adid,name:adName,type:r.campaign_type||'',spend:0,impressions:0,clicks:0,gconv:0,grev:0,cmconv:0,cmrev:0};
+    const a=ag.ads[adid];
     a.spend+=r.spend||0;a.impressions+=r.impressions||0;a.clicks+=r.clicks||0;
     a.gconv+=r.platform_conversions||0;a.grev+=r.platform_revenue||0;
     a.cmconv+=r.cm_purchases||0;a.cmrev+=r.cm_revenue||0;
@@ -914,7 +915,10 @@ function buildGoogle(rows,col,dir,cf){
       Object.values(c.adgroups).sort((a,b)=>b.spend-a.spend).forEach((ag,agi)=>{
         const agid=cid+'-ag-'+agi;
         const isAgExp=expanded[agid]||expAll;
-        const showAds=Object.keys(ag.ads).length>0&&!(Object.keys(ag.ads).length===1&&Object.keys(ag.ads)[0]===ag.name);
+        // Don't show ad-level breakdown if the only "ad" is a synthetic placeholder for PMax/Shopping
+        const adKeys=Object.keys(ag.ads);
+        const isSynthetic=adKeys.length===1&&adKeys[0].startsWith('__synth_ad_');
+        const showAds=adKeys.length>0&&!isSynthetic;
         const ctrAg=ag.impressions>0?(ag.clicks/ag.impressions*100).toFixed(2)+'%':'—';
         const cpcAg=ag.clicks>0?$c(ag.spend/ag.clicks):'—';
         html+=`<tr class="la"><td class="nc">${showAds?`<button class="xb" onclick="tog('${agid}')">${isAgExp?'▾':'▸'}</button>`:'<span class="xb" style="visibility:hidden">▸</span>'}${ag.name}</td>
