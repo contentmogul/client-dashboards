@@ -185,8 +185,7 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
   <!-- LEFT: job list + execute panel -->
   <div class="panel-left">
     <div id="syncNotice" class="sync-notice" style="display:none">
-      <span id="syncMsg">Product catalogue not yet synced.</span>
-      <button class="btn btn-secondary" style="font-size:10px;padding:4px 10px;white-space:nowrap" onclick="triggerSync()">Sync now</button>
+      <span id="syncMsg">Product catalogue not synced yet. Click Sync Products in the header to enable product filtering.</span>
     </div>
 
     <div class="exec-panel" id="pendingPanel" style="display:none">
@@ -887,10 +886,39 @@ function deleteJobConfirm(jobId) {
 }
 
 // ---- PRODUCT SYNC ----
+let syncInProgress = false;
+
+function showSyncBanner(state, msg) {
+  let banner = document.getElementById('syncBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'syncBanner';
+    const parent = document.querySelector('.panel-left');
+    parent.insertBefore(banner, parent.firstChild);
+  }
+  if (state === 'hide') { banner.style.display = 'none'; return; }
+  const styles = {
+    running: 'background:var(--cm-s);border:1px solid var(--cm-b);color:var(--cm)',
+    ok: 'background:rgba(0,196,122,0.1);border:1px solid rgba(0,196,122,0.3);color:var(--rg)',
+    err: 'background:rgba(255,61,90,0.1);border:1px solid rgba(255,61,90,0.3);color:var(--rb)'
+  };
+  const spinner = state === 'running'
+    ? '<span style="width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;display:inline-block;animation:sp .8s linear infinite;flex-shrink:0"></span>'
+    : state === 'ok' ? '<span style="flex-shrink:0">✓</span>' : '<span style="flex-shrink:0">✕</span>';
+  banner.style.cssText = `display:flex;align-items:center;gap:10px;margin:12px 20px 0;padding:11px 14px;border-radius:8px;font-size:12px;font-weight:600;${styles[state]}`;
+  banner.innerHTML = `${spinner}<span>${msg}</span>`;
+}
+
 async function triggerSync() {
-  const btn = document.getElementById('syncBtn');
-  btn.disabled = true; btn.textContent = 'Syncing...';
-  toast('Syncing products from Shopify...', 'ok');
+  if (syncInProgress) { toast('A sync is already running. Please wait.', 'err'); return; }
+  syncInProgress = true;
+
+  const headerBtn = document.getElementById('syncBtn');
+  headerBtn.disabled = true; headerBtn.textContent = 'Syncing...';
+  document.getElementById('syncNotice').style.display = 'none';
+  showSyncBanner('running', 'Syncing products from Shopify. This usually takes 10 to 30 seconds, please wait...');
+
+  const startTime = Date.now();
   try {
     const res = await fetch(`${API}/price-jobs/products/sync`, {
       method: 'POST',
@@ -899,13 +927,15 @@ async function triggerSync() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Sync failed');
-    toast(`Synced ${data.synced} variants across ${data.products} products.`, 'ok');
-    document.getElementById('syncNotice').style.display = 'none';
+    const secs = Math.round((Date.now() - startTime) / 1000);
+    showSyncBanner('ok', `Synced ${data.synced} variants across ${data.products} products in ${secs}s. Filters are now ready.`);
     await loadFilters();
+    setTimeout(() => showSyncBanner('hide'), 8000);
   } catch(e) {
-    toast('Sync error: ' + e.message, 'err');
+    showSyncBanner('err', 'Sync failed: ' + e.message + '. Try again, or check the connection.');
   }
-  btn.disabled = false; btn.textContent = '↻ Sync Products';
+  syncInProgress = false;
+  headerBtn.disabled = false; headerBtn.textContent = '↻ Sync Products';
 }
 
 // ---- UTILS ----
