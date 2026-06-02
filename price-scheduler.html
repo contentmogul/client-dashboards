@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price Scheduler</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cm:#D028A6;--cm-s:rgba(208,40,166,0.12);--cm-b:rgba(208,40,166,0.25);
+  --shopify:#96BF48;--shopify-s:rgba(150,191,72,0.12);--shopify-b:rgba(150,191,72,0.3);
+  --rg:#00c47a;--ro:#ffb300;--rb:#ff3d5a;
+  --warn:#ff8800;--warn-s:rgba(255,136,0,0.12);
+}
+:root{--bg:#FBF7E8;--sf:#fff;--sf2:#f5f0e8;--bd:#e0d8cc;--tx:#111827;--mu:#6b7280;--hd:#200D1B;--hfg:#fff;--hv:rgba(208,40,166,0.05);--sh:0 1px 4px rgba(0,0,0,0.07);--tot:#200D1B;--totfg:#fff;}
+@media(prefers-color-scheme:dark){:root{--bg:#200D1B;--sf:#2a1523;--sf2:#362445;--bd:#472a3c;--tx:#f3e8f0;--mu:#9b7a8f;--hd:#150910;--hfg:#f3e8f0;--hv:rgba(208,40,166,0.08);--sh:0 1px 4px rgba(0,0,0,0.4);--tot:#150910;--totfg:#f3e8f0;}}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-size:13px;min-height:100vh}
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
+.spin{width:32px;height:32px;border:2px solid var(--bd);border-top-color:var(--cm);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#lmsg{color:var(--mu);font-size:12px}
+#loader.gone{display:none}
+#err{display:none;position:fixed;inset:0;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:998}
+#err.show{display:flex}
+#err h2{color:var(--rb)}
+#err p{color:var(--mu);font-size:12px}
+
+/* header */
+header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:100;border-bottom:2px solid var(--cm)}
+.hl h1{font-size:14px;font-weight:700}
+.tzp{font-size:10px;font-family:'DM Mono',monospace;background:rgba(208,40,166,0.2);color:#ff7bdb;border:1px solid rgba(208,40,166,0.4);padding:2px 8px;border-radius:10px;margin-left:8px}
+.hbtns{display:flex;align-items:center;gap:6px}
+.hb{border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.7);padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;transition:all .2s;background:transparent;font-family:'DM Sans',sans-serif}
+.hb:hover{border-color:var(--cm);color:var(--cm)}
+.hb.hb-green{border-color:rgba(0,196,122,0.4);color:rgba(0,196,122,0.85)}
+.hb.hb-green:hover{border-color:var(--rg);color:var(--rg)}
+.hb:disabled{opacity:.5;cursor:not-allowed}
+
+/* layout */
+.app-body{display:grid;grid-template-columns:1fr 400px;gap:0;height:calc(100vh - 49px);overflow:hidden}
+@media(max-width:900px){.app-body{grid-template-columns:1fr;height:auto;overflow:visible}}
+.panel-left{overflow-y:auto;border-right:1px solid var(--bd)}
+.panel-right{overflow-y:auto;background:var(--sf);border-left:1px solid var(--bd)}
+
+/* section labels */
+.slbl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;color:var(--mu);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.slbl::after{content:'';flex:1;height:1px;background:var(--bd)}
+.slbl.sc{color:var(--cm)}
+.slbl.ss{color:var(--shopify)}
+
+/* tabs */
+.tabs-wrap{padding:0 20px;background:var(--sf);border-bottom:1px solid var(--bd)}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--bd)}
+.tab{padding:10px 20px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--mu);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;font-family:'DM Sans',sans-serif}
+.tab:hover{color:var(--tx)}
+.tab.active{color:var(--cm);border-bottom-color:var(--cm);background:var(--cm-s);font-weight:700}
+
+/* jobs list */
+.sec{padding:14px 20px 0}
+.jobs-list{padding:12px 20px 20px}
+.job-card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
+.job-card:hover{border-color:var(--cm);background:var(--hv)}
+.job-card.selected{border-color:var(--cm);background:var(--cm-s)}
+.job-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.job-name{font-size:12px;font-weight:600;line-height:1.4}
+.job-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}
+.jm{font-size:10px;color:var(--mu);font-family:'DM Mono',monospace}
+.status-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}
+.sp-pending{background:var(--warn-s);color:var(--warn);border:1px solid rgba(255,136,0,0.3)}
+.sp-running{background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b)}
+.sp-done{background:rgba(0,196,122,0.1);color:var(--rg);border:1px solid rgba(0,196,122,0.25)}
+.sp-failed{background:rgba(255,61,90,0.1);color:var(--rb);border:1px solid rgba(255,61,90,0.25)}
+.rule-pill{display:inline-block;padding:1px 7px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;background:var(--shopify-s);color:var(--shopify);border:1px solid var(--shopify-b)}
+.job-sched{font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;margin-top:3px}
+.no-jobs{padding:32px 20px;text-align:center;color:var(--mu);font-size:12px}
+
+/* right panel: job builder */
+.rp-header{padding:14px 20px;border-bottom:1px solid var(--bd);background:var(--sf2);display:flex;align-items:center;justify-content:space-between}
+.rp-title{font-size:13px;font-weight:700}
+.rp-body{padding:16px 20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--cm)}
+.field textarea{resize:vertical;min-height:60px;font-family:'DM Mono',monospace;font-size:11px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.hint{font-size:10px;color:var(--mu);margin-top:4px;line-height:1.5}
+
+/* filter pills */
+.filter-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.ftag{display:inline-flex;align-items:center;gap:4px;background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;cursor:pointer}
+.ftag:hover{background:var(--cm);color:#fff}
+.ftag .fx{font-size:11px;opacity:.7}
+.filter-select-wrap{position:relative}
+.filter-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:50;max-height:200px;overflow-y:auto;margin-top:3px;display:none}
+.filter-dropdown.open{display:block}
+.fdd-item{padding:7px 10px;font-size:11px;cursor:pointer;transition:background .1s}
+.fdd-item:hover{background:var(--hv)}
+.fdd-item.selected{color:var(--cm);font-weight:600}
+.fdd-search{padding:6px 10px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--sf)}
+.fdd-search input{width:100%;background:none;border:none;outline:none;font-size:11px;color:var(--tx);font-family:'DM Sans',sans-serif}
+
+/* product preview */
+.preview-wrap{margin-top:10px;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:var(--sf)}
+.preview-hdr{padding:6px 10px;background:var(--sf2);border-bottom:1px solid var(--bd);font-size:10px;font-weight:700;color:var(--mu);display:flex;align-items:center;justify-content:space-between}
+.preview-count{background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b);border-radius:10px;padding:1px 8px;font-family:'DM Mono',monospace;font-size:10px}
+.preview-table{width:100%;border-collapse:collapse;font-size:10px}
+.preview-table th{padding:5px 8px;text-align:left;color:var(--mu);font-size:9px;font-weight:700;letter-spacing:.3px;border-bottom:1px solid var(--bd);background:var(--sf2)}
+.preview-table th.n{text-align:right}
+.preview-table td{padding:5px 8px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.preview-table tr:last-child td{border-bottom:none}
+.preview-table td.n{text-align:right;font-family:'DM Mono',monospace}
+.preview-table td.new-price{text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:var(--rg)}
+.preview-table td.new-price.warn{color:var(--ro)}
+.preview-more{padding:6px 10px;font-size:10px;color:var(--mu);text-align:center;background:var(--sf2);border-top:1px solid var(--bd)}
+
+/* price rule toggle */
+.rule-tabs{display:flex;gap:0;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:var(--sf2)}
+.rule-tab{flex:1;padding:7px 8px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--mu);transition:all .15s;font-family:'DM Sans',sans-serif;text-align:center}
+.rule-tab:not(:last-child){border-right:1px solid var(--bd)}
+.rule-tab.active{background:var(--cm);color:#fff}
+.rule-fields{margin-top:10px}
+
+/* schedule */
+.sched-linked{background:var(--shopify-s);border:1px solid var(--shopify-b);border-radius:6px;padding:10px 12px;margin-top:8px;font-size:11px;color:var(--shopify)}
+.sched-linked strong{display:block;margin-bottom:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+
+/* action buttons */
+.btn{padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--cm);color:#fff}
+.btn-primary:hover{background:#b01f8e}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{background:var(--sf2);border:1px solid var(--bd);color:var(--tx)}
+.btn-secondary:hover{border-color:var(--cm);color:var(--cm)}
+.btn-danger{background:rgba(255,61,90,0.1);border:1px solid rgba(255,61,90,0.3);color:var(--rb)}
+.btn-danger:hover{background:var(--rb);color:#fff}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)}
+
+/* execute panel */
+.exec-panel{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:14px;margin:12px 20px}
+.exec-panel-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);margin-bottom:10px}
+.exec-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)}
+.exec-row:last-child{border-bottom:none}
+.exec-job-name{font-size:12px;font-weight:600}
+.exec-job-time{font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;margin-top:2px}
+.exec-btn{padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:all .2s;font-family:'DM Sans',sans-serif;background:none}
+.exec-btn-go{border-color:rgba(0,196,122,0.4);color:var(--rg)}
+.exec-btn-go:hover{background:var(--rg);color:#fff;border-color:var(--rg)}
+.exec-btn-go:disabled{opacity:.4;cursor:not-allowed}
+
+/* toast */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--hd);color:var(--hfg);padding:10px 16px;border-radius:8px;font-size:12px;border-left:3px solid var(--cm);box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:9999;transition:opacity .3s;opacity:0;pointer-events:none}
+#toast.show{opacity:1}
+#toast.toast-ok{border-left-color:var(--rg)}
+#toast.toast-err{border-left-color:var(--rb)}
+
+/* variant detail in job card */
+.affected-wrap{margin-top:8px;background:var(--sf2);border-radius:5px;padding:8px 10px;border:1px solid var(--bd)}
+.affected-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--mu);margin-bottom:5px}
+.affected-item{font-size:10px;font-family:'DM Mono',monospace;color:var(--mu);padding:1px 0}
+
+/* sync button notice */
+.sync-notice{margin:12px 20px 0;background:var(--shopify-s);border:1px solid var(--shopify-b);border-radius:6px;padding:9px 12px;font-size:11px;color:var(--shopify);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sync-notice span{line-height:1.5}
+
+@media(max-width:700px){.rp-body{padding:12px 14px}.field-row,.field-row3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="loader"><div class="spin"></div><div id="lmsg">Connecting...</div></div>
+<div id="err"><h2>Unable to load</h2><p id="emsg">Check your URL and try again.</p></div>
+
+<div id="app" style="display:none">
+<header>
+  <div class="hl"><h1 id="htitle">Price Scheduler</h1><span class="tzp" id="tzp">...</span></div>
+  <div class="hbtns">
+    <button class="hb hb-green" onclick="triggerSync()" id="syncBtn">↻ Sync Products</button>
+    <button class="hb" onclick="openNewJob()" id="newJobBtn">+ New Job</button>
+  </div>
+</header>
+
+<div class="app-body">
+  <!-- LEFT: job list + execute panel -->
+  <div class="panel-left">
+    <div id="syncNotice" class="sync-notice" style="display:none">
+      <span id="syncMsg">Product catalogue not yet synced.</span>
+      <button class="btn btn-secondary" style="font-size:10px;padding:4px 10px;white-space:nowrap" onclick="triggerSync()">Sync now</button>
+    </div>
+
+    <div class="exec-panel" id="pendingPanel" style="display:none">
+      <div class="exec-panel-title">Ready to execute</div>
+      <div id="pendingList"></div>
+    </div>
+
+    <div class="sec"><div class="slbl sc">Scheduled jobs</div></div>
+    <div class="tabs-wrap" style="padding:0 20px 0">
+      <div class="tabs">
+        <button class="tab active" onclick="setTab('all',this)">All</button>
+        <button class="tab" onclick="setTab('pending',this)">Pending</button>
+        <button class="tab" onclick="setTab('done',this)">Done</button>
+        <button class="tab" onclick="setTab('failed',this)">Failed</button>
+      </div>
+    </div>
+    <div class="jobs-list" id="jobsList"></div>
+  </div>
+
+  <!-- RIGHT: job builder / detail -->
+  <div class="panel-right" id="rightPanel">
+    <div class="rp-header">
+      <span class="rp-title" id="rpTitle">Select a job or create new</span>
+      <button class="btn btn-secondary" style="font-size:10px;padding:4px 10px" onclick="closePanel()" id="rpCloseBtn" style="display:none">✕ Close</button>
+    </div>
+    <div class="rp-body" id="rpBody">
+      <p style="color:var(--mu);font-size:12px;line-height:1.6">Use <strong>+ New Job</strong> to schedule a price change, or click an existing job to view its details.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const CLIENT = params.get('client') || '';
+const KEY = params.get('key') || '';
+const API = 'https://api.getcontentmogul.com';
+
+let TZ = 'Australia/Sydney';
+let allJobs = [];
+let collections = [];
+let tags = [];
+let selectedCollections = [];
+let selectedTags = [];
+let previewProducts = [];
+let currentTab = 'all';
+let editingJobId = null;
+let currentRule = 'percent_discount';
+
+// ---- INIT ----
+async function init() {
+  if (!CLIENT || !KEY) {
+    document.getElementById('emsg').textContent = 'Missing client or key in URL.';
+    document.getElementById('err').classList.add('show');
+    document.getElementById('loader').classList.add('gone');
+    return;
+  }
+  try {
+    document.getElementById('lmsg').textContent = 'Loading...';
+    // Load timezone
+    try {
+      const tzRes = await fetch(`${API}/timezone?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`);
+      if (tzRes.ok) { const td = await tzRes.json(); TZ = td.timezone || 'Australia/Sydney'; }
+    } catch(e) { TZ = 'Australia/Sydney'; }
+    document.getElementById('tzp').textContent = TZ;
+    document.getElementById('htitle').textContent = CLIENT.charAt(0).toUpperCase() + CLIENT.slice(1) + ' — Price Scheduler';
+    // Load jobs
+    await loadJobs();
+    // Load collections and tags in background
+    loadFilters();
+    document.getElementById('loader').classList.add('gone');
+    document.getElementById('app').style.display = 'block';
+  } catch(e) {
+    document.getElementById('emsg').textContent = 'Failed to load. Check your URL and try again.';
+    document.getElementById('err').classList.add('show');
+    document.getElementById('loader').classList.add('gone');
+  }
+}
+
+async function loadJobs() {
+  const res = await fetch(`${API}/price-jobs?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`);
+  if (res.status === 403) throw new Error('auth');
+  allJobs = await res.json();
+  renderJobs();
+  renderPendingPanel();
+}
+
+async function loadFilters() {
+  try {
+    const [cRes, tRes] = await Promise.all([
+      fetch(`${API}/price-jobs/products/collections?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`),
+      fetch(`${API}/price-jobs/products/tags?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`)
+    ]);
+    if (cRes.ok) collections = await cRes.json();
+    if (tRes.ok) tags = await tRes.json();
+    if (collections.length === 0 && tags.length === 0) {
+      document.getElementById('syncNotice').style.display = 'flex';
+      document.getElementById('syncMsg').textContent = 'Product catalogue not synced yet. Sync to enable product filtering.';
+    }
+  } catch(e) {}
+}
+
+// ---- JOBS LIST ----
+function setTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderJobs();
+}
+
+function renderJobs() {
+  const filtered = currentTab === 'all' ? allJobs : allJobs.filter(j => j.status === currentTab);
+  const el = document.getElementById('jobsList');
+  if (!filtered.length) {
+    el.innerHTML = `<div class="no-jobs">No ${currentTab === 'all' ? '' : currentTab + ' '}jobs found.</div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(j => {
+    const sc = statusClass(j.status);
+    const schedDt = j.scheduled_at ? fmtDt(j.scheduled_at) : '';
+    const ruleLabel = {fixed:'Fixed price',percent_discount:'% Discount',compare_only:'Compare only'}[j.price_rule] || j.price_rule;
+    return `<div class="job-card" onclick="viewJob('${j.job_id}')">
+      <div class="job-card-top">
+        <div class="job-name">${esc(j.job_name)}</div>
+        <span class="status-pill ${sc}">${j.status}</span>
+      </div>
+      <div class="job-meta">
+        <span class="rule-pill">${ruleLabel}</span>
+        <span class="jm">${j.target_type === 'collection' ? 'Collection' : 'Products'}</span>
+      </div>
+      <div class="job-sched">${schedDt ? 'Scheduled: ' + schedDt : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderPendingPanel() {
+  const pending = allJobs.filter(j => j.status === 'pending');
+  const panel = document.getElementById('pendingPanel');
+  if (!pending.length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  document.getElementById('pendingList').innerHTML = pending.map(j => `
+    <div class="exec-row">
+      <div>
+        <div class="exec-job-name">${esc(j.job_name)}</div>
+        <div class="exec-job-time">${fmtDt(j.scheduled_at)}</div>
+      </div>
+      <button class="exec-btn exec-btn-go" onclick="executeJob('${j.job_id}',this)">Execute</button>
+    </div>`).join('');
+}
+
+// ---- VIEW JOB ----
+function viewJob(jobId) {
+  const j = allJobs.find(j => j.job_id === jobId);
+  if (!j) return;
+  editingJobId = jobId;
+  document.getElementById('rpTitle').textContent = 'Job details';
+  document.getElementById('rpCloseBtn').style.display = 'inline-flex';
+
+  const ruleLabel = {fixed:'Fixed price',percent_discount:'% Discount',compare_only:'Compare only'}[j.price_rule] || j.price_rule;
+  const sc = statusClass(j.status);
+
+  let priceDetail = '';
+  if (j.price_rule === 'percent_discount') priceDetail = `${j.discount_percent}% off`;
+  else if (j.price_rule === 'fixed') priceDetail = `Price: $${j.new_price}`;
+  else if (j.price_rule === 'compare_only') priceDetail = `Compare at: $${j.new_compare_at_price}`;
+  if (j.new_compare_at_price && j.price_rule !== 'compare_only') priceDetail += `, compare at: $${j.new_compare_at_price}`;
+  if (j.clear_compare_at_price) priceDetail += ', clear compare';
+
+  let affectedHtml = '';
+  if (j.affected_variants) {
+    try {
+      const variants = typeof j.affected_variants === 'string' ? JSON.parse(j.affected_variants) : j.affected_variants;
+      if (variants.length) {
+        affectedHtml = `<div class="affected-wrap">
+          <div class="affected-title">${variants.length} variant${variants.length!==1?'s':''} affected</div>
+          ${variants.slice(0,5).map(v=>`<div class="affected-item">ID ${v.id.replace('gid://shopify/ProductVariant/','')} — was $${v.price}${v.compareAtPrice?' / $'+v.compareAtPrice:''}</div>`).join('')}
+          ${variants.length > 5 ? `<div class="affected-item" style="opacity:.6">...and ${variants.length - 5} more</div>` : ''}
+        </div>`;
+      }
+    } catch(e) {}
+  }
+
+  let errorHtml = j.error_message ? `<div style="margin-top:10px;background:rgba(255,61,90,0.08);border:1px solid rgba(255,61,90,0.25);border-radius:6px;padding:10px 12px;font-size:11px;color:var(--rb)">${esc(j.error_message)}</div>` : '';
+
+  document.getElementById('rpBody').innerHTML = `
+    <div style="margin-bottom:14px">
+      <span class="status-pill ${sc}" style="font-size:11px">${j.status}</span>
+      <span class="rule-pill" style="margin-left:6px">${ruleLabel}</span>
+    </div>
+    <div class="field"><label>Job name</label><div style="font-size:13px;font-weight:600">${esc(j.job_name)}</div></div>
+    <div class="field-row">
+      <div class="field"><label>Scheduled</label><div class="jm" style="font-size:11px;color:var(--tx)">${fmtDt(j.scheduled_at)}</div></div>
+      <div class="field"><label>Timezone</label><div class="jm" style="font-size:11px;color:var(--tx)">${j.timezone}</div></div>
+    </div>
+    <div class="field"><label>Target</label><div style="font-size:11px">${j.target_type === 'collection' ? 'Collection' : 'Products'}: <span style="font-family:'DM Mono',monospace;font-size:10px">${esc(j.target_ids)}</span></div></div>
+    <div class="field"><label>Price rule</label><div style="font-size:12px">${priceDetail}</div></div>
+    ${affectedHtml}
+    ${errorHtml}
+    ${j.completed_at ? `<div style="margin-top:10px;font-size:10px;color:var(--mu)">Completed: ${fmtDt(j.completed_at)}</div>` : ''}
+    <div class="btn-row">
+      ${j.status === 'pending' ? `<button class="btn btn-primary" onclick="executeJob('${j.job_id}',this)">Execute now</button>` : ''}
+      ${j.status === 'done' ? `<button class="btn btn-secondary" onclick="revertJob('${j.job_id}',this)">Create revert job</button>` : ''}
+      ${j.status === 'failed' ? `<button class="btn btn-secondary" onclick="resetJobPending('${j.job_id}',this)">Reset to pending</button>` : ''}
+      <button class="btn btn-danger" onclick="deleteJobConfirm('${j.job_id}')">Delete</button>
+    </div>`;
+}
+
+// ---- NEW JOB FORM ----
+function openNewJob() {
+  editingJobId = null;
+  selectedCollections = [];
+  selectedTags = [];
+  previewProducts = [];
+  currentRule = 'percent_discount';
+  document.getElementById('rpTitle').textContent = 'New price job';
+  document.getElementById('rpCloseBtn').style.display = 'inline-flex';
+  renderNewJobForm();
+}
+
+function renderNewJobForm() {
+  document.getElementById('rpBody').innerHTML = `
+    <div class="field">
+      <label>Job name</label>
+      <input type="text" id="f-name" placeholder="e.g. Opallac EOFY sale apply">
+    </div>
+
+    <div class="field">
+      <label>Target type</label>
+      <select id="f-target-type" onchange="onTargetTypeChange()">
+        <option value="product">Individual products</option>
+        <option value="collection">Collection</option>
+      </select>
+    </div>
+
+    <div id="filter-section">
+      <div class="field">
+        <label>Filter by collection</label>
+        <div class="filter-select-wrap">
+          <input type="text" id="coll-search" placeholder="Search collections..." onclick="openDropdown('coll-dd')" oninput="filterDropdown('coll-dd','coll-search',collections,'id','title',toggleCollection)">
+          <div class="filter-dropdown" id="coll-dd"></div>
+        </div>
+        <div class="filter-tags" id="coll-tags"></div>
+      </div>
+      <div class="field">
+        <label>Filter by tag</label>
+        <div class="filter-select-wrap">
+          <input type="text" id="tag-search" placeholder="Search tags..." onclick="openDropdown('tag-dd')" oninput="filterDropdown('tag-dd','tag-search',tags.map(t=>({id:t,title:t})),'id','title',toggleTag)">
+          <div class="filter-dropdown" id="tag-dd"></div>
+        </div>
+        <div class="filter-tags" id="tag-tags"></div>
+      </div>
+      <div class="field">
+        <label>Text search <span style="font-weight:400;text-transform:none;font-size:10px">(optional)</span></label>
+        <input type="text" id="f-q" placeholder="SKU, product name..." oninput="debouncePreview()">
+      </div>
+      <div id="product-preview"></div>
+    </div>
+
+    <div id="collection-id-section" style="display:none">
+      <div class="field">
+        <label>Collection ID</label>
+        <input type="text" id="f-collection-id" placeholder="Shopify collection ID" oninput="debouncePreview()">
+        <div class="hint">Bare integer ID, e.g. 123456789</div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:16px">
+      <label>Price rule</label>
+      <div class="rule-tabs">
+        <button class="rule-tab active" onclick="setRule('percent_discount',this)">% Discount</button>
+        <button class="rule-tab" onclick="setRule('fixed',this)">Fixed price</button>
+        <button class="rule-tab" onclick="setRule('compare_only',this)">Compare only</button>
+      </div>
+      <div class="rule-fields" id="rule-fields"></div>
+    </div>
+
+    <div class="field">
+      <label>Schedule date &amp; time</label>
+      <div class="field-row">
+        <input type="datetime-local" id="f-sched-apply">
+        <select id="f-tz">
+          <option value="Australia/Sydney">Australia/Sydney</option>
+          <option value="Australia/Melbourne">Australia/Melbourne</option>
+          <option value="Australia/Perth">Australia/Perth</option>
+          <option value="Australia/Brisbane">Australia/Brisbane</option>
+          <option value="Asia/Singapore">Asia/Singapore</option>
+          <option value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur</option>
+          <option value="Asia/Bangkok">Asia/Bangkok</option>
+          <option value="UTC">UTC</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Revert date &amp; time <span style="font-weight:400;text-transform:none;font-size:10px">(optional — creates a paired job)</span></label>
+      <div class="field-row">
+        <input type="datetime-local" id="f-sched-revert">
+        <div style="font-size:10px;color:var(--mu);padding-top:8px">Uses same timezone</div>
+      </div>
+      <div id="revert-preview" class="sched-linked" style="display:none">
+        <strong>Paired revert job will be created</strong>
+        A second job will be saved to restore original prices at this time.
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveJob()">Save job</button>
+      <button class="btn btn-secondary" onclick="closePanel()">Cancel</button>
+    </div>`;
+
+  // Set default timezone
+  const tzSel = document.getElementById('f-tz');
+  if (tzSel) tzSel.value = TZ;
+
+  // Show revert preview when revert date filled
+  document.getElementById('f-sched-revert').addEventListener('input', function() {
+    document.getElementById('revert-preview').style.display = this.value ? 'block' : 'none';
+  });
+
+  renderRuleFields();
+  renderCollDropdown();
+  renderTagDropdown();
+}
+
+function onTargetTypeChange() {
+  const type = document.getElementById('f-target-type').value;
+  document.getElementById('filter-section').style.display = type === 'product' ? 'block' : 'none';
+  document.getElementById('collection-id-section').style.display = type === 'collection' ? 'block' : 'none';
+}
+
+function setRule(rule, el) {
+  currentRule = rule;
+  document.querySelectorAll('.rule-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderRuleFields();
+  debouncePreview();
+}
+
+function renderRuleFields() {
+  const el = document.getElementById('rule-fields');
+  if (!el) return;
+  if (currentRule === 'percent_discount') {
+    el.innerHTML = `
+      <div class="field-row" style="margin-top:10px">
+        <div class="field" style="margin-bottom:0">
+          <label>Discount %</label>
+          <input type="number" id="f-discount" min="1" max="99" placeholder="e.g. 30" oninput="debouncePreview()">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>Compare at price</label>
+          <select id="f-compare-mode" onchange="toggleCompareInput()">
+            <option value="original">Set to original price</option>
+            <option value="custom">Custom value</option>
+            <option value="clear">Clear compare</option>
+            <option value="keep">Leave unchanged</option>
+          </select>
+        </div>
+      </div>
+      <div id="f-compare-custom-wrap" style="display:none;margin-top:8px">
+        <div class="field" style="margin-bottom:0"><label>Custom compare at price</label><input type="number" id="f-compare-custom" step="0.01" placeholder="e.g. 25.00" oninput="debouncePreview()"></div>
+      </div>`;
+  } else if (currentRule === 'fixed') {
+    el.innerHTML = `
+      <div class="field-row" style="margin-top:10px">
+        <div class="field" style="margin-bottom:0"><label>New price ($)</label><input type="number" id="f-new-price" step="0.01" placeholder="e.g. 20.00" oninput="debouncePreview()"></div>
+        <div class="field" style="margin-bottom:0"><label>Compare at ($) <span style="font-weight:400;font-size:9px">optional</span></label><input type="number" id="f-compare-at" step="0.01" placeholder="e.g. 28.00" oninput="debouncePreview()"></div>
+      </div>
+      <div class="field" style="margin-top:8px;margin-bottom:0">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:11px;font-weight:500;letter-spacing:0">
+          <input type="checkbox" id="f-clear-compare"> Clear compare at price
+        </label>
+      </div>`;
+  } else if (currentRule === 'compare_only') {
+    el.innerHTML = `
+      <div class="field-row" style="margin-top:10px">
+        <div class="field" style="margin-bottom:0"><label>Compare at price ($)</label><input type="number" id="f-compare-only-val" step="0.01" placeholder="e.g. 28.00" oninput="debouncePreview()"></div>
+        <div class="field" style="margin-bottom:0">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:11px;font-weight:500;letter-spacing:0;padding-top:20px">
+            <input type="checkbox" id="f-clear-compare-only"> Clear instead
+          </label>
+        </div>
+      </div>
+      <div class="hint">Price stays unchanged. Only the compare-at (strikethrough) price is updated.</div>`;
+  }
+}
+
+function toggleCompareInput() {
+  const mode = document.getElementById('f-compare-mode')?.value;
+  const wrap = document.getElementById('f-compare-custom-wrap');
+  if (wrap) wrap.style.display = mode === 'custom' ? 'block' : 'none';
+}
+
+// ---- DROPDOWNS ----
+function renderCollDropdown() {
+  const dd = document.getElementById('coll-dd');
+  if (!dd) return;
+  dd.innerHTML = collections.length
+    ? collections.map(c => `<div class="fdd-item${selectedCollections.includes(c.id)?' selected':''}" onclick="toggleCollection('${esc(c.id)}','${esc(c.title)}')">${esc(c.title)}</div>`).join('')
+    : '<div style="padding:8px 10px;font-size:11px;color:var(--mu)">No collections loaded. Sync products first.</div>';
+}
+
+function renderTagDropdown() {
+  const dd = document.getElementById('tag-dd');
+  if (!dd) return;
+  dd.innerHTML = tags.length
+    ? tags.map(t => `<div class="fdd-item${selectedTags.includes(t)?' selected':''}" onclick="toggleTag('${esc(t)}','${esc(t)}')">${esc(t)}</div>`).join('')
+    : '<div style="padding:8px 10px;font-size:11px;color:var(--mu)">No tags loaded. Sync products first.</div>';
+}
+
+function openDropdown(ddId) {
+  document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
+  document.getElementById(ddId)?.classList.add('open');
+}
+
+function filterDropdown(ddId, inputId, items, idKey, titleKey, toggleFn) {
+  const q = document.getElementById(inputId)?.value.toLowerCase() || '';
+  const dd = document.getElementById(ddId);
+  if (!dd) return;
+  const filtered = q ? items.filter(i => i[titleKey].toLowerCase().includes(q)) : items;
+  dd.innerHTML = filtered.length
+    ? filtered.map(i => `<div class="fdd-item" onclick="${toggleFn.name}('${esc(i[idKey])}','${esc(i[titleKey])}')">${esc(i[titleKey])}</div>`).join('')
+    : '<div style="padding:8px 10px;font-size:11px;color:var(--mu)">No matches.</div>';
+  dd.classList.add('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.filter-select-wrap')) {
+    document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
+  }
+});
+
+function toggleCollection(id, title) {
+  if (selectedCollections.includes(id)) {
+    selectedCollections = selectedCollections.filter(c => c !== id);
+  } else {
+    selectedCollections.push(id);
+  }
+  renderCollTags();
+  renderCollDropdown();
+  debouncePreview();
+}
+
+function toggleTag(id, title) {
+  if (selectedTags.includes(id)) {
+    selectedTags = selectedTags.filter(t => t !== id);
+  } else {
+    selectedTags.push(id);
+  }
+  renderTagTags();
+  renderTagDropdown();
+  debouncePreview();
+}
+
+function renderCollTags() {
+  const el = document.getElementById('coll-tags');
+  if (!el) return;
+  el.innerHTML = selectedCollections.map(cid => {
+    const c = collections.find(x => x.id === cid);
+    return `<span class="ftag" onclick="toggleCollection('${esc(cid)}','')">${esc(c ? c.title : cid)} <span class="fx">✕</span></span>`;
+  }).join('');
+}
+
+function renderTagTags() {
+  const el = document.getElementById('tag-tags');
+  if (!el) return;
+  el.innerHTML = selectedTags.map(t => `<span class="ftag" onclick="toggleTag('${esc(t)}','')">${esc(t)} <span class="fx">✕</span></span>`).join('');
+}
+
+// ---- PRODUCT PREVIEW ----
+let previewTimer = null;
+function debouncePreview() { clearTimeout(previewTimer); previewTimer = setTimeout(fetchPreview, 400); }
+
+async function fetchPreview() {
+  const type = document.getElementById('f-target-type')?.value;
+  if (type === 'collection') return;
+  const q = document.getElementById('f-q')?.value || '';
+  const params = new URLSearchParams({ client: CLIENT, key: KEY, status: 'active' });
+  if (q) params.set('q', q);
+  if (selectedCollections.length) params.set('collection_id', selectedCollections[0]);
+  if (selectedTags.length) params.set('tag', selectedTags[0]);
+  if (!q && !selectedCollections.length && !selectedTags.length) {
+    document.getElementById('product-preview').innerHTML = '';
+    return;
+  }
+  try {
+    const res = await fetch(`${API}/price-jobs/products/search?${params}`);
+    if (!res.ok) return;
+    previewProducts = await res.json();
+    renderProductPreview();
+  } catch(e) {}
+}
+
+function calcNewPrice(product) {
+  const orig = parseFloat(product.base_price) || 0;
+  const origCompare = parseFloat(product.compare_at_price) || 0;
+  let newPrice = orig, newCompare = origCompare;
+  if (currentRule === 'percent_discount') {
+    const disc = parseFloat(document.getElementById('f-discount')?.value) || 0;
+    if (!disc) return null;
+    newPrice = Math.round(orig * (1 - disc/100) * 100) / 100;
+    const mode = document.getElementById('f-compare-mode')?.value || 'original';
+    if (mode === 'original') newCompare = orig;
+    else if (mode === 'custom') newCompare = parseFloat(document.getElementById('f-compare-custom')?.value) || orig;
+    else if (mode === 'clear') newCompare = null;
+    else newCompare = origCompare;
+  } else if (currentRule === 'fixed') {
+    const fp = parseFloat(document.getElementById('f-new-price')?.value);
+    if (!fp) return null;
+    newPrice = fp;
+    const fc = parseFloat(document.getElementById('f-compare-at')?.value);
+    if (fc) newCompare = fc;
+    if (document.getElementById('f-clear-compare')?.checked) newCompare = null;
+  } else if (currentRule === 'compare_only') {
+    if (document.getElementById('f-clear-compare-only')?.checked) { newCompare = null; }
+    else {
+      const cv = parseFloat(document.getElementById('f-compare-only-val')?.value);
+      if (!cv) return null;
+      newCompare = cv;
+    }
+  }
+  const discPct = orig > 0 ? Math.round((1 - newPrice/orig)*100) : 0;
+  return { newPrice, newCompare, discPct };
+}
+
+function renderProductPreview() {
+  const el = document.getElementById('product-preview');
+  if (!el) return;
+  if (!previewProducts.length) { el.innerHTML = '<div style="font-size:11px;color:var(--mu);padding:8px 0">No products match these filters.</div>'; return; }
+  const show = previewProducts.slice(0, 8);
+  const rows = show.map(p => {
+    const calc = calcNewPrice(p);
+    const newPriceCell = calc
+      ? `<td class="new-price${calc.discPct > 60 ? ' warn' : ''}">${fmt$(calc.newPrice)}${calc.newCompare ? `<br><span style="font-size:9px;color:var(--mu)">was ${fmt$(calc.newCompare)}</span>` : ''}</td>`
+      : `<td class="n" style="color:var(--mu)">—</td>`;
+    return `<tr>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.formatted_product_name||p.product_title)}">${esc(p.formatted_product_name||p.product_title)}</td>
+      <td class="n">${fmt$(p.base_price)}</td>
+      ${newPriceCell}
+    </tr>`;
+  }).join('');
+  el.innerHTML = `<div class="preview-wrap">
+    <div class="preview-hdr">Product preview <span class="preview-count">${previewProducts.length} matched</span></div>
+    <table class="preview-table">
+      <thead><tr><th>Product</th><th class="n">Current</th><th class="n">New price</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${previewProducts.length > 8 ? `<div class="preview-more">+${previewProducts.length - 8} more products will be updated</div>` : ''}
+  </div>`;
+}
+
+// ---- SAVE JOB ----
+async function saveJob() {
+  const name = document.getElementById('f-name')?.value?.trim();
+  if (!name) { toast('Please enter a job name.', 'err'); return; }
+  const targetType = document.getElementById('f-target-type')?.value;
+  const schedApply = document.getElementById('f-sched-apply')?.value;
+  const tz = document.getElementById('f-tz')?.value || TZ;
+  if (!schedApply) { toast('Please set a schedule date and time.', 'err'); return; }
+
+  let targetIds = '';
+  if (targetType === 'product') {
+    if (!previewProducts.length) { toast('No products matched your filters. Adjust filters before saving.', 'err'); return; }
+    targetIds = [...new Set(previewProducts.map(p => p.shopify_product_id))].join(',');
+  } else {
+    targetIds = document.getElementById('f-collection-id')?.value?.trim();
+    if (!targetIds) { toast('Please enter a collection ID.', 'err'); return; }
+  }
+
+  const body = {
+    job_name: name,
+    client: CLIENT,
+    target_type: targetType,
+    target_ids: targetIds,
+    price_rule: currentRule,
+    scheduled_at: new Date(schedApply).toISOString(),
+    timezone: tz,
+    clear_compare_at_price: false
+  };
+
+  if (currentRule === 'percent_discount') {
+    const disc = parseFloat(document.getElementById('f-discount')?.value);
+    if (!disc) { toast('Please enter a discount percentage.', 'err'); return; }
+    body.discount_percent = disc;
+    const mode = document.getElementById('f-compare-mode')?.value;
+    if (mode === 'custom') body.new_compare_at_price = parseFloat(document.getElementById('f-compare-custom')?.value);
+    if (mode === 'clear') body.clear_compare_at_price = true;
+  } else if (currentRule === 'fixed') {
+    const np = parseFloat(document.getElementById('f-new-price')?.value);
+    if (!np) { toast('Please enter a new price.', 'err'); return; }
+    body.new_price = np;
+    const ca = parseFloat(document.getElementById('f-compare-at')?.value);
+    if (ca) body.new_compare_at_price = ca;
+    if (document.getElementById('f-clear-compare')?.checked) body.clear_compare_at_price = true;
+  } else if (currentRule === 'compare_only') {
+    if (document.getElementById('f-clear-compare-only')?.checked) {
+      body.clear_compare_at_price = true;
+    } else {
+      const cv = parseFloat(document.getElementById('f-compare-only-val')?.value);
+      if (!cv) { toast('Please enter a compare at price.', 'err'); return; }
+      body.new_compare_at_price = cv;
+    }
+  }
+
+  const btn = document.querySelector('.btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  try {
+    const res = await fetch(`${API}/price-jobs?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Save failed');
+
+    // If revert date set, save revert job
+    const schedRevert = document.getElementById('f-sched-revert')?.value;
+    if (schedRevert) {
+      const revertBody = {
+        job_name: name + ' — revert',
+        client: CLIENT,
+        target_type: targetType,
+        target_ids: targetIds,
+        price_rule: 'fixed',
+        scheduled_at: new Date(schedRevert).toISOString(),
+        timezone: tz,
+        clear_compare_at_price: false,
+        linked_job_id: data.job_id
+      };
+      await fetch(`${API}/price-jobs?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(revertBody)
+      });
+    }
+
+    toast('Job saved successfully.', 'ok');
+    await loadJobs();
+    closePanel();
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+    if (btn) { btn.disabled = false; btn.textContent = 'Save job'; }
+  }
+}
+
+// ---- EXECUTE ----
+async function executeJob(jobId, btn) {
+  if (!confirm('Execute this job now? This will write prices to Shopify immediately.')) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Running...'; }
+  try {
+    const res = await fetch(`${API}/price-jobs/${jobId}/execute`, {
+      method: 'POST',
+      headers: {'X-Execute-Key': KEY, 'Content-Type': 'application/json'}
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Execute failed');
+    toast('Job executed successfully.', 'ok');
+    await loadJobs();
+    if (editingJobId === jobId) viewJob(jobId);
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+    if (btn) { btn.disabled = false; btn.textContent = 'Execute now'; }
+    await loadJobs();
+  }
+}
+
+async function resetJobPending(jobId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Resetting...'; }
+  try {
+    await fetch(`${API}/price-jobs/${jobId}/status?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
+      method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status:'pending'})
+    });
+    toast('Job reset to pending.', 'ok');
+    await loadJobs();
+    if (editingJobId === jobId) viewJob(jobId);
+  } catch(e) { toast('Reset failed.', 'err'); }
+}
+
+function revertJob(jobId) {
+  const j = allJobs.find(x => x.job_id === jobId);
+  if (!j) return;
+  openNewJob();
+  setTimeout(() => {
+    document.getElementById('f-name').value = (j.job_name || '') + ' — revert';
+    document.getElementById('f-target-type').value = j.target_type;
+    onTargetTypeChange();
+    if (j.target_type === 'collection') {
+      document.getElementById('f-collection-id').value = j.target_ids;
+    }
+    toast('Revert job pre-filled. Set a schedule date and save.', 'ok');
+  }, 100);
+}
+
+function deleteJobConfirm(jobId) {
+  if (!confirm('Delete this job? This cannot be undone.')) return;
+  fetch(`${API}/price-jobs/${jobId}/status?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
+    method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status:'failed',error_message:'Deleted by user'})
+  }).then(() => {
+    toast('Job marked as deleted.', 'ok');
+    loadJobs();
+    closePanel();
+  });
+}
+
+// ---- PRODUCT SYNC ----
+async function triggerSync() {
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true; btn.textContent = 'Syncing...';
+  toast('Syncing products from Shopify...', 'ok');
+  try {
+    const res = await fetch(`${API}/price-jobs/products/sync`, {
+      method: 'POST',
+      headers: {'X-Execute-Key': KEY, 'Content-Type': 'application/json'},
+      body: JSON.stringify({client: CLIENT})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Sync failed');
+    toast(`Synced ${data.synced} variants across ${data.products} products.`, 'ok');
+    document.getElementById('syncNotice').style.display = 'none';
+    await loadFilters();
+  } catch(e) {
+    toast('Sync error: ' + e.message, 'err');
+  }
+  btn.disabled = false; btn.textContent = '↻ Sync Products';
+}
+
+// ---- UTILS ----
+function closePanel() {
+  editingJobId = null;
+  document.getElementById('rpTitle').textContent = 'Select a job or create new';
+  document.getElementById('rpBody').innerHTML = '<p style="color:var(--mu);font-size:12px;line-height:1.6">Use <strong>+ New Job</strong> to schedule a price change, or click an existing job to view its details.</p>';
+}
+
+function statusClass(s) {
+  return {pending:'sp-pending',running:'sp-running',done:'sp-done',failed:'sp-failed'}[s] || 'sp-pending';
+}
+
+function fmtDt(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleString('en-AU', {timeZone: TZ, day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true});
+  } catch(e) { return iso; }
+}
+
+function fmt$(v) {
+  if (v === null || v === undefined || v === '') return '—';
+  return '$' + parseFloat(v).toFixed(2);
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type === 'ok' ? 'toast-ok' : type === 'err' ? 'toast-err' : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 3500);
+}
+
+init();
+</script>
+</body>
+</html>
