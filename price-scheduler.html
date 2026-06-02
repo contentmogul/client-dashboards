@@ -225,9 +225,9 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
 const params = new URLSearchParams(location.search);
 const CLIENT = params.get('client') || '';
 const KEY = params.get('key') || '';
-const API = 'https://api.getcontentmogul.com';
+const API = 'https://contentmogul-price-api-793745221500.asia-southeast1.run.app';
 
-let TZ = 'Australia/Sydney';
+let TZ = 'Australia/Perth';
 let allJobs = [];
 let collections = [];
 let tags = [];
@@ -248,11 +248,8 @@ async function init() {
   }
   try {
     document.getElementById('lmsg').textContent = 'Loading...';
-    // Load timezone
-    try {
-      const tzRes = await fetch(`${API}/timezone?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`);
-      if (tzRes.ok) { const td = await tzRes.json(); TZ = td.timezone || 'Australia/Sydney'; }
-    } catch(e) { TZ = 'Australia/Sydney'; }
+    // Timezone: the price-api service has no timezone endpoint yet, so we use the
+    // per-job picker default (Australia/Perth for Opallac). Set per job as needed.
     document.getElementById('tzp').textContent = TZ;
     document.getElementById('htitle').textContent = CLIENT.charAt(0).toUpperCase() + CLIENT.slice(1) + ' — Price Scheduler';
     // Load jobs
