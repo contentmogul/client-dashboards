@@ -150,7 +150,7 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
     <h1 id="htitle">Sale Planner</h1>
     <span class="crumb" id="crumb" style="display:none" onclick="goSales()">&larr; All sales</span>
     <span class="tzp" id="tzp">...</span>
-    <span class="tzp" style="background:rgba(150,191,72,0.2);color:#b6d96a;border-color:rgba(150,191,72,0.4)" title="build version">v5 title-search</span>
+    <span class="tzp" style="background:rgba(150,191,72,0.2);color:#b6d96a;border-color:rgba(150,191,72,0.4)" title="build version">v6 compare-at</span>
   </div>
   <div class="hbtns">
     <button class="hb hb-green" onclick="triggerSync()" id="syncBtn">&#8635; Sync Products</button>
@@ -398,7 +398,7 @@ function viewJob(jobId){
     detail=`<table class="preview-table" style="margin-top:6px"><thead><tr><th>Variant ID</th><th class="n">Price</th><th class="n">Compare at</th></tr></thead><tbody>`+
       vp.map(v=>`<tr><td>${esc(v.variant_id)}</td><td class="n">$${Number(v.price).toFixed(2)}</td><td class="n">${v.compare_at!=null?'$'+Number(v.compare_at).toFixed(2):'-'}</td></tr>`).join('')+`</tbody></table>`;
   }else if(j.price_rule==='percent_discount'){
-    detail=`<div class="hint">${j.discount_percent}% off each matched product. Compare at set to original.</div>`;
+    detail=`<div class="hint">${j.discount_percent}% off each matched product. Existing higher compare at prices are preserved and the discount comes off them; otherwise compare at is set to the current price.</div>`;
   }else if(j.price_rule==='fixed'){
     detail=`<div class="hint">Sets price to $${j.new_price}${j.new_compare_at_price?' and compare at to $'+j.new_compare_at_price:''}.</div>`;
   }else if(j.price_rule==='compare_only'){
@@ -574,7 +574,7 @@ function setJobRule(r,el){ currentRule=r; document.querySelectorAll('#jobModal .
 function renderJobRuleFields(j){
   const el=document.getElementById('j-rule-fields'); if(!el) return;
   if(currentRule==='percent_discount'){
-    el.innerHTML=`<div class="field-row"><div class="field" style="margin:0"><label>Discount %</label><input type="number" id="j-disc" placeholder="30" value="${j.discount_percent||''}" oninput="jobPreview()"></div><div class="field" style="margin:0"><label>Compare at</label><select id="j-cmp"><option value="original">Set to original</option><option value="clear">Clear</option></select></div></div>`;
+    el.innerHTML=`<div class="field" style="margin:0"><label>Discount %</label><input type="number" id="j-disc" placeholder="30" value="${j.discount_percent||''}" oninput="jobPreview()"></div><div class="hint">Each matched product is discounted by this percent. If a product already has a higher compare at price, that compare at is preserved and the discount comes off it. Otherwise the compare at is set to the current price so the sale shows as a strikethrough.</div>`;
   }else if(currentRule==='fixed'){
     el.innerHTML=`<div class="field-row"><div class="field" style="margin:0"><label>New price ($)</label><input type="number" id="j-price" step="0.01" placeholder="57.00" value="${j.new_price||''}" oninput="jobPreview()"></div><div class="field" style="margin:0"><label>Compare at ($)</label><input type="number" id="j-cmpval" step="0.01" placeholder="95.00" value="${j.new_compare_at_price||''}" oninput="jobPreview()"></div></div><div class="hint">Single product only. Sets both numbers exactly.</div>`;
   }else if(currentRule==='compare_only'){
@@ -737,7 +737,7 @@ async function saveJob(){
 function fillRuleBody(body){
   if(currentRule==='percent_discount'){
     const d=parseFloat(document.getElementById('j-disc').value); if(!d){ toast('Enter a discount %.','err'); body.__err=1; return; }
-    body.discount_percent=d; if(document.getElementById('j-cmp').value==='clear') body.clear_compare_at_price=true;
+    body.discount_percent=d;
   }else if(currentRule==='fixed'){
     const p=parseFloat(document.getElementById('j-price').value); if(!p){ toast('Enter a price.','err'); body.__err=1; return; }
     body.new_price=p; const c=parseFloat(document.getElementById('j-cmpval').value); if(c) body.new_compare_at_price=c;
