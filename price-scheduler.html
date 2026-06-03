@@ -226,7 +226,7 @@ const CLIENT = params.get('client') || '';
 const KEY = params.get('key') || '';
 const API = 'https://contentmogul-price-api-793745221500.asia-southeast1.run.app';
 
-let TZ = 'Australia/Perth';
+let TZ = 'Australia/Sydney';
 let allJobs = [];
 let collections = [];
 let tags = [];
@@ -247,8 +247,12 @@ async function init() {
   }
   try {
     document.getElementById('lmsg').textContent = 'Loading...';
-    // Timezone: the price-api service has no timezone endpoint yet, so we use the
-    // per-job picker default (Australia/Perth for Opallac). Set per job as needed.
+    // Fetch the Shopify store timezone live from the price-api service (reads
+    // store_timezone from BigQuery client_config). Falls back to Sydney if unavailable.
+    try {
+      const tzRes = await fetch(`${API}/price-jobs/timezone?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`);
+      if (tzRes.ok) { const td = await tzRes.json(); if (td.timezone) TZ = td.timezone; }
+    } catch(e) {}
     document.getElementById('tzp').textContent = TZ;
     document.getElementById('htitle').textContent = CLIENT.charAt(0).toUpperCase() + CLIENT.slice(1) + ' — Price Scheduler';
     // Load jobs
@@ -264,10 +268,14 @@ async function init() {
   }
 }
 
+const DELETE_MARKER = '__DELETED__';
+
 async function loadJobs() {
   const res = await fetch(`${API}/price-jobs?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`);
   if (res.status === 403) throw new Error('auth');
-  allJobs = await res.json();
+  const all = await res.json();
+  // Hide jobs that have been soft-deleted (marked via error_message)
+  allJobs = all.filter(j => j.error_message !== DELETE_MARKER);
   renderJobs();
   renderPendingPanel();
 }
@@ -304,7 +312,7 @@ function renderJobs() {
   }
   el.innerHTML = filtered.map(j => {
     const sc = statusClass(j.status);
-    const schedDt = j.scheduled_at ? fmtDt(j.scheduled_at) : '';
+    const schedDt = j.scheduled_at ? fmtDt(j.scheduled_at, j.timezone) : '';
     const ruleLabel = {fixed:'Fixed price',percent_discount:'% Discount',compare_only:'Compare only'}[j.price_rule] || j.price_rule;
     return `<div class="job-card" onclick="viewJob('${j.job_id}')">
       <div class="job-card-top">
@@ -329,7 +337,7 @@ function renderPendingPanel() {
     <div class="exec-row">
       <div>
         <div class="exec-job-name">${esc(j.job_name)}</div>
-        <div class="exec-job-time">${fmtDt(j.scheduled_at)}</div>
+        <div class="exec-job-time">${fmtDt(j.scheduled_at, j.timezone)}</div>
       </div>
       <button class="exec-btn exec-btn-go" onclick="executeJob('${j.job_id}',this)">Execute</button>
     </div>`).join('');
@@ -376,14 +384,14 @@ function viewJob(jobId) {
     </div>
     <div class="field"><label>Job name</label><div style="font-size:13px;font-weight:600">${esc(j.job_name)}</div></div>
     <div class="field-row">
-      <div class="field"><label>Scheduled</label><div class="jm" style="font-size:11px;color:var(--tx)">${fmtDt(j.scheduled_at)}</div></div>
+      <div class="field"><label>Scheduled</label><div class="jm" style="font-size:11px;color:var(--tx)">${fmtDt(j.scheduled_at, j.timezone)}</div></div>
       <div class="field"><label>Timezone</label><div class="jm" style="font-size:11px;color:var(--tx)">${j.timezone}</div></div>
     </div>
     <div class="field"><label>Target</label><div style="font-size:11px">${j.target_type === 'collection' ? 'Collection' : 'Products'}: <span style="font-family:'DM Mono',monospace;font-size:10px">${esc(j.target_ids)}</span></div></div>
     <div class="field"><label>Price rule</label><div style="font-size:12px">${priceDetail}</div></div>
     ${affectedHtml}
     ${errorHtml}
-    ${j.completed_at ? `<div style="margin-top:10px;font-size:10px;color:var(--mu)">Completed: ${fmtDt(j.completed_at)}</div>` : ''}
+    ${j.completed_at ? `<div style="margin-top:10px;font-size:10px;color:var(--mu)">Completed: ${fmtDt(j.completed_at, j.timezone)}</div>` : ''}
     <div class="btn-row">
       ${j.status === 'pending' ? `<button class="btn btn-primary" onclick="executeJob('${j.job_id}',this)">Execute now</button>` : ''}
       ${j.status === 'done' ? `<button class="btn btn-secondary" onclick="revertJob('${j.job_id}',this)">Create revert job</button>` : ''}
@@ -465,24 +473,18 @@ function renderNewJobForm() {
       <label>Schedule date &amp; time</label>
       <div class="field-row">
         <input type="datetime-local" id="f-sched-apply">
-        <select id="f-tz">
-          <option value="Australia/Sydney">Australia/Sydney</option>
-          <option value="Australia/Melbourne">Australia/Melbourne</option>
-          <option value="Australia/Perth">Australia/Perth</option>
-          <option value="Australia/Brisbane">Australia/Brisbane</option>
-          <option value="Asia/Singapore">Asia/Singapore</option>
-          <option value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur</option>
-          <option value="Asia/Bangkok">Asia/Bangkok</option>
-          <option value="UTC">UTC</option>
-        </select>
+        <div style="display:flex;align-items:center;padding:7px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;font-size:11px;color:var(--mu)">
+          <span id="f-tz-display">Australia/Sydney</span>
+        </div>
       </div>
+      <div class="hint">Times use the Shopify store timezone, shown above.</div>
     </div>
 
     <div class="field">
       <label>Revert date &amp; time <span style="font-weight:400;text-transform:none;font-size:10px">(optional — creates a paired job)</span></label>
       <div class="field-row">
         <input type="datetime-local" id="f-sched-revert">
-        <div style="font-size:10px;color:var(--mu);padding-top:8px">Uses same timezone</div>
+        <div style="font-size:10px;color:var(--mu);padding-top:8px">Store timezone</div>
       </div>
       <div id="revert-preview" class="sched-linked" style="display:none">
         <strong>Paired revert job will be created</strong>
@@ -496,8 +498,8 @@ function renderNewJobForm() {
     </div>`;
 
   // Set default timezone
-  const tzSel = document.getElementById('f-tz');
-  if (tzSel) tzSel.value = TZ;
+  const tzDisplay = document.getElementById('f-tz-display');
+  if (tzDisplay) tzDisplay.textContent = TZ;
 
   // Show revert preview when revert date filled
   document.getElementById('f-sched-revert').addEventListener('input', function() {
@@ -741,7 +743,7 @@ async function saveJob() {
   if (!name) { toast('Please enter a job name.', 'err'); return; }
   const targetType = document.getElementById('f-target-type')?.value;
   const schedApply = document.getElementById('f-sched-apply')?.value;
-  const tz = document.getElementById('f-tz')?.value || TZ;
+  const tz = TZ;
   if (!schedApply) { toast('Please set a schedule date and time.', 'err'); return; }
 
   let targetIds = '';
@@ -759,7 +761,7 @@ async function saveJob() {
     target_type: targetType,
     target_ids: targetIds,
     price_rule: currentRule,
-    scheduled_at: new Date(schedApply).toISOString(),
+    scheduled_at: wallClockToUTC(schedApply, tz),
     timezone: tz,
     clear_compare_at_price: false
   };
@@ -802,12 +804,12 @@ async function saveJob() {
     const schedRevert = document.getElementById('f-sched-revert')?.value;
     if (schedRevert) {
       const revertBody = {
-        job_name: name + ' — revert',
+        job_name: name + ' (revert)',
         client: CLIENT,
         target_type: targetType,
         target_ids: targetIds,
         price_rule: 'fixed',
-        scheduled_at: new Date(schedRevert).toISOString(),
+        scheduled_at: wallClockToUTC(schedRevert, tz),
         timezone: tz,
         clear_compare_at_price: false,
         linked_job_id: data.job_id
@@ -877,9 +879,9 @@ function revertJob(jobId) {
 function deleteJobConfirm(jobId) {
   if (!confirm('Delete this job? This cannot be undone.')) return;
   fetch(`${API}/price-jobs/${jobId}/status?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
-    method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status:'failed',error_message:'Deleted by user'})
+    method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status:'failed',error_message:DELETE_MARKER})
   }).then(() => {
-    toast('Job marked as deleted.', 'ok');
+    toast('Job deleted.', 'ok');
     loadJobs();
     closePanel();
   });
@@ -949,10 +951,38 @@ function statusClass(s) {
   return {pending:'sp-pending',running:'sp-running',done:'sp-done',failed:'sp-failed'}[s] || 'sp-pending';
 }
 
-function fmtDt(iso) {
+// Convert a wall-clock datetime-local string (e.g. "2026-06-03T13:20") entered for a
+// specific IANA timezone into a correct UTC ISO string. The datetime-local input has
+// no timezone, so we must compute the target zone's offset at that instant and apply it.
+function wallClockToUTC(localStr, timeZone) {
+  // Parse the wall-clock components
+  const [datePart, timePart] = localStr.split('T');
+  const [y, mo, d] = datePart.split('-').map(Number);
+  const [h, mi] = timePart.split(':').map(Number);
+  // Build a UTC timestamp from those components as a first guess
+  const asUTC = Date.UTC(y, mo - 1, d, h, mi, 0);
+  // Find what that instant looks like in the target timezone, to derive the offset
+  const tzDate = new Date(asUTC);
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone, year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+  });
+  const parts = {};
+  for (const p of fmt.formatToParts(tzDate)) parts[p.type] = p.value;
+  // The instant asUTC, shown in the target zone, gives these wall-clock numbers.
+  // The difference between what we wanted and what we got is the offset to correct.
+  let zonedAsUTC = Date.UTC(
+    Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+    Number(parts.hour === '24' ? '0' : parts.hour), Number(parts.minute), Number(parts.second)
+  );
+  const offset = zonedAsUTC - asUTC;
+  return new Date(asUTC - offset).toISOString();
+}
+
+function fmtDt(iso, jobTz) {
   if (!iso) return '';
   try {
-    return new Date(iso).toLocaleString('en-AU', {timeZone: TZ, day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true});
+    return new Date(iso).toLocaleString('en-AU', {timeZone: jobTz || TZ, day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true});
   } catch(e) { return iso; }
 }
 
