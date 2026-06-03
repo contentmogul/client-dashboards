@@ -254,7 +254,7 @@ async function init() {
       if (tzRes.ok) { const td = await tzRes.json(); if (td.timezone) TZ = td.timezone; }
     } catch(e) {}
     document.getElementById('tzp').textContent = TZ;
-    document.getElementById('htitle').textContent = CLIENT.charAt(0).toUpperCase() + CLIENT.slice(1) + ' — Price Scheduler';
+    document.getElementById('htitle').textContent = CLIENT.charAt(0).toUpperCase() + CLIENT.slice(1) + ' Price Scheduler';
     // Load jobs
     await loadJobs();
     // Load collections and tags in background
@@ -368,7 +368,7 @@ function viewJob(jobId) {
       if (variants.length) {
         affectedHtml = `<div class="affected-wrap">
           <div class="affected-title">${variants.length} variant${variants.length!==1?'s':''} affected</div>
-          ${variants.slice(0,5).map(v=>`<div class="affected-item">ID ${v.id.replace('gid://shopify/ProductVariant/','')} — was $${v.price}${v.compareAtPrice?' / $'+v.compareAtPrice:''}</div>`).join('')}
+          ${variants.slice(0,5).map(v=>`<div class="affected-item">ID ${v.id.replace('gid://shopify/ProductVariant/','')}: was $${v.price}${v.compareAtPrice?' / $'+v.compareAtPrice:''}</div>`).join('')}
           ${variants.length > 5 ? `<div class="affected-item" style="opacity:.6">...and ${variants.length - 5} more</div>` : ''}
         </div>`;
       }
@@ -481,7 +481,7 @@ function renderNewJobForm() {
     </div>
 
     <div class="field">
-      <label>Revert date &amp; time <span style="font-weight:400;text-transform:none;font-size:10px">(optional — creates a paired job)</span></label>
+      <label>Revert date &amp; time <span style="font-weight:400;text-transform:none;font-size:10px">(optional, creates a paired job)</span></label>
       <div class="field-row">
         <input type="datetime-local" id="f-sched-revert">
         <div style="font-size:10px;color:var(--mu);padding-top:8px">Store timezone</div>
@@ -720,7 +720,7 @@ function renderProductPreview() {
     const calc = calcNewPrice(p);
     const newPriceCell = calc
       ? `<td class="new-price${calc.discPct > 60 ? ' warn' : ''}">${fmt$(calc.newPrice)}${calc.newCompare ? `<br><span style="font-size:9px;color:var(--mu)">was ${fmt$(calc.newCompare)}</span>` : ''}</td>`
-      : `<td class="n" style="color:var(--mu)">—</td>`;
+      : `<td class="n" style="color:var(--mu)">-</td>`;
     return `<tr>
       <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.formatted_product_name||p.product_title)}">${esc(p.formatted_product_name||p.product_title)}</td>
       <td class="n">${fmt$(p.base_price)}</td>
@@ -808,7 +808,7 @@ async function saveJob() {
         client: CLIENT,
         target_type: targetType,
         target_ids: targetIds,
-        price_rule: 'fixed',
+        price_rule: 'revert',
         scheduled_at: wallClockToUTC(schedRevert, tz),
         timezone: tz,
         clear_compare_at_price: false,
@@ -864,16 +864,37 @@ async function resetJobPending(jobId, btn) {
 function revertJob(jobId) {
   const j = allJobs.find(x => x.job_id === jobId);
   if (!j) return;
-  openNewJob();
-  setTimeout(() => {
-    document.getElementById('f-name').value = (j.job_name || '') + ' — revert';
-    document.getElementById('f-target-type').value = j.target_type;
-    onTargetTypeChange();
-    if (j.target_type === 'collection') {
-      document.getElementById('f-collection-id').value = j.target_ids;
-    }
-    toast('Revert job pre-filled. Set a schedule date and save.', 'ok');
-  }, 100);
+  if (j.status !== 'done') { toast('Can only revert a job that completed successfully.', 'err'); return; }
+  const when = prompt('Schedule the revert for when? Enter date and time as YYYY-MM-DD HH:MM (24h), in ' + (j.timezone || TZ) + ' time. Leave blank to revert immediately as a pending job you execute now.');
+  // Build scheduled_at: if blank, schedule for now (immediately due)
+  let scheduledIso;
+  const jobTz = j.timezone || TZ;
+  if (when && when.trim()) {
+    const norm = when.trim().replace(' ', 'T');
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(norm)) { toast('Invalid format. Use YYYY-MM-DD HH:MM', 'err'); return; }
+    scheduledIso = wallClockToUTC(norm, jobTz);
+  } else {
+    scheduledIso = new Date().toISOString();
+  }
+  const revertBody = {
+    job_name: (j.job_name || 'Job') + ' (revert)',
+    client: CLIENT,
+    target_type: j.target_type,
+    target_ids: j.target_ids,
+    price_rule: 'revert',
+    scheduled_at: scheduledIso,
+    timezone: jobTz,
+    clear_compare_at_price: false,
+    linked_job_id: j.job_id
+  };
+  fetch(`${API}/price-jobs?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(revertBody)
+  }).then(async res => {
+    if (!res.ok) { const d = await res.json().catch(()=>({})); throw new Error(d.message || 'Failed to create revert job'); }
+    toast('Revert job created, restoring original prices from this job\'s snapshot.', 'ok');
+    await loadJobs();
+    closePanel();
+  }).catch(e => toast('Error: ' + e.message, 'err'));
 }
 
 function deleteJobConfirm(jobId) {
@@ -987,7 +1008,7 @@ function fmtDt(iso, jobTz) {
 }
 
 function fmt$(v) {
-  if (v === null || v === undefined || v === '') return '—';
+  if (v === null || v === undefined || v === '') return '-';
   return '$' + parseFloat(v).toFixed(2);
 }
 
