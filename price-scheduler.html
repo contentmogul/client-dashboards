@@ -3,18 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Price Scheduler</title>
+<title>Sale Planner</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --cm:#D028A6;--cm-s:rgba(208,40,166,0.12);--cm-b:rgba(208,40,166,0.25);
   --shopify:#96BF48;--shopify-s:rgba(150,191,72,0.12);--shopify-b:rgba(150,191,72,0.3);
-  --rg:#00c47a;--ro:#ffb300;--rb:#ff3d5a;
-  --warn:#ff8800;--warn-s:rgba(255,136,0,0.12);
+  --rg:#00c47a;--ro:#ffb300;--rb:#ff3d5a;--warn:#ff8800;--warn-s:rgba(255,136,0,0.12);
 }
-:root{--bg:#FBF7E8;--sf:#fff;--sf2:#f5f0e8;--bd:#e0d8cc;--tx:#111827;--mu:#6b7280;--hd:#200D1B;--hfg:#fff;--hv:rgba(208,40,166,0.05);--sh:0 1px 4px rgba(0,0,0,0.07);--tot:#200D1B;--totfg:#fff;}
-@media(prefers-color-scheme:dark){:root{--bg:#200D1B;--sf:#2a1523;--sf2:#362445;--bd:#472a3c;--tx:#f3e8f0;--mu:#9b7a8f;--hd:#150910;--hfg:#f3e8f0;--hv:rgba(208,40,166,0.08);--sh:0 1px 4px rgba(0,0,0,0.4);--tot:#150910;--totfg:#f3e8f0;}}
+:root{--bg:#FBF7E8;--sf:#fff;--sf2:#f5f0e8;--bd:#e0d8cc;--tx:#111827;--mu:#6b7280;--hd:#200D1B;--hfg:#fff;--hv:rgba(208,40,166,0.05);--sh:0 1px 4px rgba(0,0,0,0.07);}
+@media(prefers-color-scheme:dark){:root{--bg:#200D1B;--sf:#2a1523;--sf2:#362445;--bd:#472a3c;--tx:#f3e8f0;--mu:#9b7a8f;--hd:#150910;--hfg:#f3e8f0;--hv:rgba(208,40,166,0.08);--sh:0 1px 4px rgba(0,0,0,0.4);}}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-size:13px;min-height:100vh}
 #loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
 .spin{width:32px;height:32px;border:2px solid var(--bd);border-top-color:var(--cm);border-radius:50%;animation:sp .8s linear infinite}
@@ -23,13 +22,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
 #loader.gone{display:none}
 #err{display:none;position:fixed;inset:0;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:998}
 #err.show{display:flex}
-#err h2{color:var(--rb)}
-#err p{color:var(--mu);font-size:12px}
+#err h2{color:var(--rb)}#err p{color:var(--mu);font-size:12px}
 
-/* header */
 header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:100;border-bottom:2px solid var(--cm)}
+.hl{display:flex;align-items:center;gap:10px}
 .hl h1{font-size:14px;font-weight:700}
-.tzp{font-size:10px;font-family:'DM Mono',monospace;background:rgba(208,40,166,0.2);color:#ff7bdb;border:1px solid rgba(208,40,166,0.4);padding:2px 8px;border-radius:10px;margin-left:8px}
+.crumb{font-size:11px;color:rgba(255,255,255,0.5);cursor:pointer}
+.crumb:hover{color:var(--cm)}
+.tzp{font-size:10px;font-family:'DM Mono',monospace;background:rgba(208,40,166,0.2);color:#ff7bdb;border:1px solid rgba(208,40,166,0.4);padding:2px 8px;border-radius:10px}
 .hbtns{display:flex;align-items:center;gap:6px}
 .hb{border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.7);padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;transition:all .2s;background:transparent;font-family:'DM Sans',sans-serif}
 .hb:hover{border-color:var(--cm);color:var(--cm)}
@@ -37,135 +37,98 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
 .hb.hb-green:hover{border-color:var(--rg);color:var(--rg)}
 .hb:disabled{opacity:.5;cursor:not-allowed}
 
-/* layout */
-.app-body{display:grid;grid-template-columns:1fr 400px;gap:0;height:calc(100vh - 49px);overflow:hidden}
-@media(max-width:900px){.app-body{grid-template-columns:1fr;height:auto;overflow:visible}}
-.panel-left{overflow-y:auto;border-right:1px solid var(--bd)}
-.panel-right{overflow-y:auto;background:var(--sf);border-left:1px solid var(--bd)}
+.wrap{max-width:1100px;margin:0 auto;padding:20px}
+.btn{padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--cm);color:#fff}.btn-primary:hover{background:#b01f8e}.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{background:var(--sf2);border:1px solid var(--bd);color:var(--tx)}.btn-secondary:hover{border-color:var(--cm);color:var(--cm)}
+.btn-danger{background:rgba(255,61,90,0.1);border:1px solid rgba(255,61,90,0.3);color:var(--rb)}.btn-danger:hover{background:var(--rb);color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
 
-/* section labels */
-.slbl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;color:var(--mu);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.slbl::after{content:'';flex:1;height:1px;background:var(--bd)}
-.slbl.sc{color:var(--cm)}
-.slbl.ss{color:var(--shopify)}
-
-/* tabs */
-.tabs-wrap{padding:0 20px;background:var(--sf);border-bottom:1px solid var(--bd)}
-.tabs{display:flex;gap:4px;border-bottom:2px solid var(--bd)}
-.tab{padding:10px 20px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--mu);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;font-family:'DM Sans',sans-serif}
-.tab:hover{color:var(--tx)}
-.tab.active{color:var(--cm);border-bottom-color:var(--cm);background:var(--cm-s);font-weight:700}
-
-/* jobs list */
-.sec{padding:14px 20px 0}
-.jobs-list{padding:12px 20px 20px}
-.job-card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
-.job-card:hover{border-color:var(--cm);background:var(--hv)}
-.job-card.selected{border-color:var(--cm);background:var(--cm-s)}
-.job-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
-.job-name{font-size:12px;font-weight:600;line-height:1.4}
-.job-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}
-.jm{font-size:10px;color:var(--mu);font-family:'DM Mono',monospace}
-.status-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}
-.sp-pending{background:var(--warn-s);color:var(--warn);border:1px solid rgba(255,136,0,0.3)}
-.sp-running{background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b)}
+.status-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+.sp-draft{background:var(--sf2);color:var(--mu);border:1px solid var(--bd)}
+.sp-scheduled{background:var(--warn-s);color:var(--warn);border:1px solid rgba(255,136,0,0.3)}
+.sp-live{background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b)}
+.sp-reverted{background:rgba(0,196,122,0.1);color:var(--rg);border:1px solid rgba(0,196,122,0.25)}
 .sp-done{background:rgba(0,196,122,0.1);color:var(--rg);border:1px solid rgba(0,196,122,0.25)}
 .sp-failed{background:rgba(255,61,90,0.1);color:var(--rb);border:1px solid rgba(255,61,90,0.25)}
+.sp-pending{background:var(--warn-s);color:var(--warn);border:1px solid rgba(255,136,0,0.3)}
+.sp-running{background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b)}
 .rule-pill{display:inline-block;padding:1px 7px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;background:var(--shopify-s);color:var(--shopify);border:1px solid var(--shopify-b)}
-.job-sched{font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;margin-top:3px}
-.no-jobs{padding:32px 20px;text-align:center;color:var(--mu);font-size:12px}
 
-/* right panel: job builder */
-.rp-header{padding:14px 20px;border-bottom:1px solid var(--bd);background:var(--sf2);display:flex;align-items:center;justify-content:space-between}
-.rp-title{font-size:13px;font-weight:700}
-.rp-body{padding:16px 20px}
+.sec-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;color:var(--mu);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+/* sale cards */
+.sale-card{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
+.sale-card:hover{border-color:var(--cm);background:var(--hv)}
+.sale-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.sale-name{font-size:15px;font-weight:700}
+.sale-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--mu);font-family:'DM Mono',monospace}
+.sale-meta b{color:var(--tx);font-weight:500}
+.no-data{padding:40px 20px;text-align:center;color:var(--mu);font-size:13px}
+
+/* detail */
+.detail-head{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:18px;margin-bottom:18px;box-shadow:var(--sh)}
+.detail-head-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.detail-dates{display:flex;gap:24px;flex-wrap:wrap}
+.detail-date-item{font-size:11px}
+.detail-date-item .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);font-weight:700;margin-bottom:2px}
+.detail-date-item .val{font-family:'DM Mono',monospace;font-size:12px}
+
+.add-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+
+/* job row */
+.job-row{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--sh)}
+.job-row-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.job-label{font-size:12px;font-weight:600}
+.job-detail{font-size:11px;color:var(--mu);margin-top:5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.job-actions{display:flex;gap:6px;margin-top:8px}
+.kind-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:3px}
+.kind-apply{background:var(--cm-s);color:var(--cm)}
+.kind-revert{background:var(--sf2);color:var(--mu);border:1px solid var(--bd)}
+
+/* modal / panel */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg);border:1px solid var(--bd);border-radius:12px;width:100%;max-width:620px;box-shadow:0 8px 40px rgba(0,0,0,0.3)}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--sf2);border-radius:12px 12px 0 0}
+.modal-title{font-size:14px;font-weight:700}
+.modal-body{padding:20px}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
+
 .field{margin-bottom:14px}
 .field label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);margin-bottom:5px}
-.field input,.field select,.field textarea{width:100%;background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .15s}
+.field input,.field select,.field textarea{width:100%;background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:8px 10px;border-radius:6px;font-size:12px;outline:none;font-family:'DM Sans',sans-serif}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--cm)}
-.field textarea{resize:vertical;min-height:60px;font-family:'DM Mono',monospace;font-size:11px}
+.field textarea{resize:vertical;min-height:200px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.5}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .hint{font-size:10px;color:var(--mu);margin-top:4px;line-height:1.5}
+.locked-tz{display:flex;align-items:center;padding:8px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;font-size:11px;color:var(--mu);font-family:'DM Mono',monospace}
 
-/* filter pills */
-.filter-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
-.ftag{display:inline-flex;align-items:center;gap:4px;background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;cursor:pointer}
-.ftag:hover{background:var(--cm);color:#fff}
-.ftag .fx{font-size:11px;opacity:.7}
-.filter-select-wrap{position:relative}
-.filter-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:50;max-height:200px;overflow-y:auto;margin-top:3px;display:none}
-.filter-dropdown.open{display:block}
-.fdd-item{padding:7px 10px;font-size:11px;cursor:pointer;transition:background .1s}
-.fdd-item:hover{background:var(--hv)}
-.fdd-item.selected{color:var(--cm);font-weight:600}
-.fdd-search{padding:6px 10px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--sf)}
-.fdd-search input{width:100%;background:none;border:none;outline:none;font-size:11px;color:var(--tx);font-family:'DM Sans',sans-serif}
-
-/* product preview */
-.preview-wrap{margin-top:10px;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:var(--sf)}
-.preview-hdr{padding:6px 10px;background:var(--sf2);border-bottom:1px solid var(--bd);font-size:10px;font-weight:700;color:var(--mu);display:flex;align-items:center;justify-content:space-between}
-.preview-count{background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b);border-radius:10px;padding:1px 8px;font-family:'DM Mono',monospace;font-size:10px}
-.preview-table{width:100%;border-collapse:collapse;font-size:10px}
-.preview-table th{padding:5px 8px;text-align:left;color:var(--mu);font-size:9px;font-weight:700;letter-spacing:.3px;border-bottom:1px solid var(--bd);background:var(--sf2)}
-.preview-table th.n{text-align:right}
-.preview-table td{padding:5px 8px;border-bottom:1px solid var(--bd);vertical-align:middle}
-.preview-table tr:last-child td{border-bottom:none}
-.preview-table td.n{text-align:right;font-family:'DM Mono',monospace}
-.preview-table td.new-price{text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:var(--rg)}
-.preview-table td.new-price.warn{color:var(--ro)}
-.preview-more{padding:6px 10px;font-size:10px;color:var(--mu);text-align:center;background:var(--sf2);border-top:1px solid var(--bd)}
-
-/* price rule toggle */
-.rule-tabs{display:flex;gap:0;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:var(--sf2)}
+.rule-tabs{display:flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:var(--sf2)}
 .rule-tab{flex:1;padding:7px 8px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--mu);transition:all .15s;font-family:'DM Sans',sans-serif;text-align:center}
 .rule-tab:not(:last-child){border-right:1px solid var(--bd)}
 .rule-tab.active{background:var(--cm);color:#fff}
-.rule-fields{margin-top:10px}
 
-/* schedule */
-.sched-linked{background:var(--shopify-s);border:1px solid var(--shopify-b);border-radius:6px;padding:10px 12px;margin-top:8px;font-size:11px;color:var(--shopify)}
-.sched-linked strong{display:block;margin-bottom:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+/* preview */
+.preview-box{margin-top:14px;border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.preview-job{border-bottom:1px solid var(--bd)}
+.preview-job:last-child{border-bottom:none}
+.preview-job-head{padding:8px 12px;background:var(--sf2);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.preview-count{background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b);border-radius:10px;padding:1px 8px;font-family:'DM Mono',monospace;font-size:10px}
+.preview-err{color:var(--rb);font-size:10px;padding:6px 12px;background:rgba(255,61,90,0.06)}
+.preview-table{width:100%;border-collapse:collapse;font-size:10px}
+.preview-table th{padding:5px 12px;text-align:left;color:var(--mu);font-size:9px;font-weight:700;border-bottom:1px solid var(--bd)}
+.preview-table th.n,.preview-table td.n{text-align:right;font-family:'DM Mono',monospace}
+.preview-table td{padding:5px 12px;border-bottom:1px solid var(--bd)}
+.preview-table tr:last-child td{border-bottom:none}
+.prc-new{color:var(--rg);font-weight:700}
 
-/* action buttons */
-.btn{padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'DM Sans',sans-serif}
-.btn-primary{background:var(--cm);color:#fff}
-.btn-primary:hover{background:#b01f8e}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed}
-.btn-secondary{background:var(--sf2);border:1px solid var(--bd);color:var(--tx)}
-.btn-secondary:hover{border-color:var(--cm);color:var(--cm)}
-.btn-danger{background:rgba(255,61,90,0.1);border:1px solid rgba(255,61,90,0.3);color:var(--rb)}
-.btn-danger:hover{background:var(--rb);color:#fff}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)}
-
-/* execute panel */
-.exec-panel{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:14px;margin:12px 20px}
-.exec-panel-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);margin-bottom:10px}
-.exec-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)}
-.exec-row:last-child{border-bottom:none}
-.exec-job-name{font-size:12px;font-weight:600}
-.exec-job-time{font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;margin-top:2px}
-.exec-btn{padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:all .2s;font-family:'DM Sans',sans-serif;background:none}
-.exec-btn-go{border-color:rgba(0,196,122,0.4);color:var(--rg)}
-.exec-btn-go:hover{background:var(--rg);color:#fff;border-color:var(--rg)}
-.exec-btn-go:disabled{opacity:.4;cursor:not-allowed}
-
-/* toast */
-#toast{position:fixed;bottom:24px;right:24px;background:var(--hd);color:var(--hfg);padding:10px 16px;border-radius:8px;font-size:12px;border-left:3px solid var(--cm);box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:9999;transition:opacity .3s;opacity:0;pointer-events:none}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--hd);color:var(--hfg);padding:10px 16px;border-radius:8px;font-size:12px;border-left:3px solid var(--cm);box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:9999;transition:opacity .3s;opacity:0;pointer-events:none;max-width:340px}
 #toast.show{opacity:1}
-#toast.toast-ok{border-left-color:var(--rg)}
-#toast.toast-err{border-left-color:var(--rb)}
+#toast.toast-ok{border-left-color:var(--rg)}#toast.toast-err{border-left-color:var(--rb)}
 
-/* variant detail in job card */
-.affected-wrap{margin-top:8px;background:var(--sf2);border-radius:5px;padding:8px 10px;border:1px solid var(--bd)}
-.affected-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--mu);margin-bottom:5px}
-.affected-item{font-size:10px;font-family:'DM Mono',monospace;color:var(--mu);padding:1px 0}
-
-/* sync button notice */
-.sync-notice{margin:12px 20px 0;background:var(--shopify-s);border:1px solid var(--shopify-b);border-radius:6px;padding:9px 12px;font-size:11px;color:var(--shopify);display:flex;align-items:center;justify-content:space-between;gap:8px}
-.sync-notice span{line-height:1.5}
-
-@media(max-width:700px){.rp-body{padding:12px 14px}.field-row,.field-row3{grid-template-columns:1fr}}
+@media(max-width:700px){.field-row{grid-template-columns:1fr}.detail-dates{gap:14px}}
 </style>
 </head>
 <body>
@@ -174,48 +137,72 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
 
 <div id="app" style="display:none">
 <header>
-  <div class="hl"><h1 id="htitle">Price Scheduler</h1><span class="tzp" id="tzp">...</span></div>
+  <div class="hl">
+    <h1 id="htitle">Sale Planner</h1>
+    <span class="crumb" id="crumb" style="display:none" onclick="goSales()">&larr; All sales</span>
+    <span class="tzp" id="tzp">...</span>
+  </div>
   <div class="hbtns">
-    <button class="hb hb-green" onclick="triggerSync()" id="syncBtn">↻ Sync Products</button>
-    <button class="hb" onclick="openNewJob()" id="newJobBtn">+ New Job</button>
+    <button class="hb hb-green" onclick="triggerSync()" id="syncBtn">&#8635; Sync Products</button>
+    <button class="hb" onclick="openNewSale()" id="newSaleBtn">+ New Sale</button>
   </div>
 </header>
 
-<div class="app-body">
-  <!-- LEFT: job list + execute panel -->
-  <div class="panel-left">
-    <div id="syncNotice" class="sync-notice" style="display:none">
-      <span id="syncMsg">Product catalogue not synced yet. Click Sync Products in the header to enable product filtering.</span>
-    </div>
+<div class="wrap">
+  <div id="syncBannerSlot"></div>
+  <div id="view"></div>
+</div>
+</div>
 
-    <div class="exec-panel" id="pendingPanel" style="display:none">
-      <div class="exec-panel-title">Ready to execute</div>
-      <div id="pendingList"></div>
-    </div>
-
-    <div class="sec"><div class="slbl sc">Scheduled jobs</div></div>
-    <div class="tabs-wrap" style="padding:0 20px 0">
-      <div class="tabs">
-        <button class="tab active" onclick="setTab('all',this)">All</button>
-        <button class="tab" onclick="setTab('pending',this)">Pending</button>
-        <button class="tab" onclick="setTab('done',this)">Done</button>
-        <button class="tab" onclick="setTab('failed',this)">Failed</button>
+<!-- New / Edit Sale modal -->
+<div class="modal-bg" id="saleModal">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title" id="saleModalTitle">New sale</span><button class="btn btn-secondary btn-sm" onclick="closeModal('saleModal')">Close</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Sale name</label><input type="text" id="s-name" placeholder="e.g. Opallac EOFY 2026"></div>
+      <div class="field-row">
+        <div class="field"><label>Go live date &amp; time</label><input type="datetime-local" id="s-golive"></div>
+        <div class="field"><label>Revert date &amp; time</label><input type="datetime-local" id="s-revert"></div>
       </div>
+      <div class="field"><label>Timezone (store)</label><div class="locked-tz" id="s-tz-display">...</div><div class="hint">Locked to the Shopify store timezone. All jobs in this sale fire at these times, within about 5 minutes.</div></div>
     </div>
-    <div class="jobs-list" id="jobsList"></div>
-  </div>
-
-  <!-- RIGHT: job builder / detail -->
-  <div class="panel-right" id="rightPanel">
-    <div class="rp-header">
-      <span class="rp-title" id="rpTitle">Select a job or create new</span>
-      <button class="btn btn-secondary" style="font-size:10px;padding:4px 10px" onclick="closePanel()" id="rpCloseBtn" style="display:none">✕ Close</button>
-    </div>
-    <div class="rp-body" id="rpBody">
-      <p style="color:var(--mu);font-size:12px;line-height:1.6">Use <strong>+ New Job</strong> to schedule a price change, or click an existing job to view its details.</p>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('saleModal')">Cancel</button>
+      <button class="btn btn-primary" id="saleSaveBtn" onclick="saveSale()">Create sale</button>
     </div>
   </div>
 </div>
+
+<!-- Add / Edit single job modal -->
+<div class="modal-bg" id="jobModal">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title" id="jobModalTitle">Add job</span><button class="btn btn-secondary btn-sm" onclick="closeModal('jobModal')">Close</button></div>
+    <div class="modal-body" id="jobModalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('jobModal')">Cancel</button>
+      <button class="btn btn-primary" id="jobSaveBtn" onclick="saveJob()">Save job</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk JSON modal -->
+<div class="modal-bg" id="bulkModal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-head"><span class="modal-title">Bulk add jobs (JSON)</span><button class="btn btn-secondary btn-sm" onclick="closeModal('bulkModal')">Close</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Paste sale spec JSON (jobs array)</label>
+        <textarea id="bulk-json" placeholder='{ "jobs": [ { "label": "...", "target": { ... }, "rule": "..." } ] }'></textarea>
+        <div class="hint">Paste the jobs array authored from your sale strategy. Click Validate to preview before scheduling. Timing comes from the sale, not the spec.</div>
+      </div>
+      <div id="bulk-preview"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('bulkModal')">Cancel</button>
+      <button class="btn btn-secondary" id="bulkValidateBtn" onclick="validateBulk()">Validate</button>
+      <button class="btn btn-primary" id="bulkCreateBtn" onclick="createBulk()" disabled>Schedule all</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -227,803 +214,413 @@ const KEY = params.get('key') || '';
 const API = 'https://contentmogul-price-api-793745221500.asia-southeast1.run.app';
 
 let TZ = 'Australia/Sydney';
-let allJobs = [];
-let collections = [];
-let tags = [];
-let selectedCollections = [];
-let selectedTags = [];
-let previewProducts = [];
-let currentTab = 'all';
+let sales = [];
+let currentSale = null;     // sale detail object {sale, jobs}
+let editingSaleId = null;
 let editingJobId = null;
 let currentRule = 'percent_discount';
+let lastValidatedSpec = null;
 
-// ---- INIT ----
-async function init() {
-  if (!CLIENT || !KEY) {
-    document.getElementById('emsg').textContent = 'Missing client or key in URL.';
-    document.getElementById('err').classList.add('show');
+const qs = `client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`;
+
+async function init(){
+  if(!CLIENT||!KEY){ showErr('Missing client or key in URL.'); return; }
+  try{
+    document.getElementById('lmsg').textContent='Loading...';
+    try{ const r=await fetch(`${API}/price-jobs/timezone?${qs}`); if(r.ok){const d=await r.json(); if(d.timezone) TZ=d.timezone;} }catch(e){}
+    document.getElementById('tzp').textContent=TZ;
+    document.getElementById('htitle').textContent=CLIENT.charAt(0).toUpperCase()+CLIENT.slice(1)+' Sale Planner';
+    await loadSales();
     document.getElementById('loader').classList.add('gone');
-    return;
+    document.getElementById('app').style.display='block';
+  }catch(e){ showErr('Failed to load. Check your URL and try again.'); }
+}
+function showErr(m){ document.getElementById('emsg').textContent=m; document.getElementById('err').classList.add('show'); document.getElementById('loader').classList.add('gone'); }
+
+async function loadSales(){
+  const r=await fetch(`${API}/price-jobs/sales?${qs}`);
+  if(r.status===403) throw new Error('auth');
+  sales=await r.json();
+  renderSales();
+}
+
+function goSales(){ currentSale=null; document.getElementById('crumb').style.display='none'; renderSales(); }
+
+function renderSales(){
+  const v=document.getElementById('view');
+  let html=`<div class="sec-lbl">Sales</div>`;
+  if(!sales.length){ html+=`<div class="no-data">No sales yet. Click <strong>+ New Sale</strong> to create one.</div>`; }
+  else{
+    html+=sales.map(s=>{
+      const sc='sp-'+(s.status||'draft');
+      return `<div class="sale-card" onclick="openSale('${s.sale_id}')">
+        <div class="sale-card-top">
+          <div class="sale-name">${esc(s.sale_name)}</div>
+          <span class="status-pill ${sc}">${s.status||'draft'}</span>
+        </div>
+        <div class="sale-meta">
+          <span>Go live: <b>${fmtDt(s.go_live_at)}</b></span>
+          <span>Revert: <b>${s.revert_at?fmtDt(s.revert_at):'none'}</b></span>
+        </div>
+      </div>`;
+    }).join('');
   }
-  try {
-    document.getElementById('lmsg').textContent = 'Loading...';
-    // Fetch the Shopify store timezone live from the price-api service (reads
-    // store_timezone from BigQuery client_config). Falls back to Sydney if unavailable.
-    try {
-      const tzRes = await fetch(`${API}/price-jobs/timezone?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`);
-      if (tzRes.ok) { const td = await tzRes.json(); if (td.timezone) TZ = td.timezone; }
-    } catch(e) {}
-    document.getElementById('tzp').textContent = TZ;
-    document.getElementById('htitle').textContent = CLIENT.charAt(0).toUpperCase() + CLIENT.slice(1) + ' Price Scheduler';
-    // Load jobs
-    await loadJobs();
-    // Load collections and tags in background
-    loadFilters();
-    document.getElementById('loader').classList.add('gone');
-    document.getElementById('app').style.display = 'block';
-  } catch(e) {
-    document.getElementById('emsg').textContent = 'Failed to load. Check your URL and try again.';
-    document.getElementById('err').classList.add('show');
-    document.getElementById('loader').classList.add('gone');
-  }
+  v.innerHTML=html;
 }
 
-const DELETE_MARKER = '__DELETED__';
-
-async function loadJobs() {
-  const res = await fetch(`${API}/price-jobs?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`);
-  if (res.status === 403) throw new Error('auth');
-  const all = await res.json();
-  // Hide jobs that have been soft-deleted (marked via error_message)
-  allJobs = all.filter(j => j.error_message !== DELETE_MARKER);
-  renderJobs();
-  renderPendingPanel();
+async function openSale(saleId){
+  const r=await fetch(`${API}/price-jobs/sales/${saleId}?${qs}`);
+  if(!r.ok){ toast('Could not load sale.','err'); return; }
+  currentSale=await r.json();
+  document.getElementById('crumb').style.display='inline';
+  renderSaleDetail();
 }
 
-async function loadFilters() {
-  try {
-    const [cRes, tRes] = await Promise.all([
-      fetch(`${API}/price-jobs/products/collections?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`),
-      fetch(`${API}/price-jobs/products/tags?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`)
-    ]);
-    if (cRes.ok) collections = await cRes.json();
-    if (tRes.ok) tags = await tRes.json();
-    if (collections.length === 0 && tags.length === 0) {
-      document.getElementById('syncNotice').style.display = 'flex';
-      document.getElementById('syncMsg').textContent = 'Product catalogue not synced yet. Sync to enable product filtering.';
-    }
-  } catch(e) {}
-}
+function renderSaleDetail(){
+  const s=currentSale.sale||currentSale;
+  const jobs=currentSale.jobs||[];
+  const editable=(s.status==='draft'||s.status==='scheduled');
+  const v=document.getElementById('view');
+  // pair apply + revert by linked_job_id
+  const applies=jobs.filter(j=>j.job_kind!=='revert');
+  const reverts=jobs.filter(j=>j.job_kind==='revert');
+  const revertByLink={}; reverts.forEach(r=>{ if(r.linked_job_id) revertByLink[r.linked_job_id]=r; });
 
-// ---- JOBS LIST ----
-function setTab(tab, el) {
-  currentTab = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  renderJobs();
-}
-
-function renderJobs() {
-  const filtered = currentTab === 'all' ? allJobs : allJobs.filter(j => j.status === currentTab);
-  const el = document.getElementById('jobsList');
-  if (!filtered.length) {
-    el.innerHTML = `<div class="no-jobs">No ${currentTab === 'all' ? '' : currentTab + ' '}jobs found.</div>`;
-    return;
-  }
-  el.innerHTML = filtered.map(j => {
-    const sc = statusClass(j.status);
-    const schedDt = j.scheduled_at ? fmtDt(j.scheduled_at, j.timezone) : '';
-    const ruleLabel = {fixed:'Fixed price',percent_discount:'% Discount',compare_only:'Compare only'}[j.price_rule] || j.price_rule;
-    return `<div class="job-card" onclick="viewJob('${j.job_id}')">
-      <div class="job-card-top">
-        <div class="job-name">${esc(j.job_name)}</div>
-        <span class="status-pill ${sc}">${j.status}</span>
+  let html=`<div class="detail-head">
+    <div class="detail-head-top">
+      <div><div class="sale-name">${esc(s.sale_name)}</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="status-pill sp-${s.status||'draft'}">${s.status||'draft'}</span>
       </div>
-      <div class="job-meta">
-        <span class="rule-pill">${ruleLabel}</span>
-        <span class="jm">${j.target_type === 'collection' ? 'Collection' : 'Products'}</span>
-      </div>
-      <div class="job-sched">${schedDt ? 'Scheduled: ' + schedDt : ''}</div>
-    </div>`;
-  }).join('');
-}
+    </div>
+    <div class="detail-dates">
+      <div class="detail-date-item"><div class="lbl">Go live</div><div class="val">${fmtDt(s.go_live_at)}</div></div>
+      <div class="detail-date-item"><div class="lbl">Revert</div><div class="val">${s.revert_at?fmtDt(s.revert_at):'none'}</div></div>
+      <div class="detail-date-item"><div class="lbl">Timezone</div><div class="val">${s.timezone||TZ}</div></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      ${editable?`<button class="btn btn-secondary btn-sm" onclick="openEditSale()">Edit sale</button>`:''}
+      <button class="btn btn-danger btn-sm" onclick="deleteSale('${s.sale_id}')">Delete sale</button>
+    </div>
+  </div>`;
 
-function renderPendingPanel() {
-  const pending = allJobs.filter(j => j.status === 'pending');
-  const panel = document.getElementById('pendingPanel');
-  if (!pending.length) { panel.style.display = 'none'; return; }
-  panel.style.display = 'block';
-  document.getElementById('pendingList').innerHTML = pending.map(j => `
-    <div class="exec-row">
-      <div>
-        <div class="exec-job-name">${esc(j.job_name)}</div>
-        <div class="exec-job-time">${fmtDt(j.scheduled_at, j.timezone)}</div>
-      </div>
-      <button class="exec-btn exec-btn-go" onclick="executeJob('${j.job_id}',this)">Execute</button>
-    </div>`).join('');
-}
+  html+=`<div class="add-bar">
+    <button class="btn btn-primary btn-sm" onclick="openAddJob()">+ Add job</button>
+    <button class="btn btn-secondary btn-sm" onclick="openBulk()">Bulk add (JSON)</button>
+  </div>`;
 
-// ---- VIEW JOB ----
-function viewJob(jobId) {
-  const j = allJobs.find(j => j.job_id === jobId);
-  if (!j) return;
-  editingJobId = jobId;
-  document.getElementById('rpTitle').textContent = 'Job details';
-  document.getElementById('rpCloseBtn').style.display = 'inline-flex';
-
-  const ruleLabel = {fixed:'Fixed price',percent_discount:'% Discount',compare_only:'Compare only'}[j.price_rule] || j.price_rule;
-  const sc = statusClass(j.status);
-
-  let priceDetail = '';
-  if (j.price_rule === 'percent_discount') priceDetail = `${j.discount_percent}% off`;
-  else if (j.price_rule === 'fixed') priceDetail = `Price: $${j.new_price}`;
-  else if (j.price_rule === 'compare_only') priceDetail = `Compare at: $${j.new_compare_at_price}`;
-  if (j.new_compare_at_price && j.price_rule !== 'compare_only') priceDetail += `, compare at: $${j.new_compare_at_price}`;
-  if (j.clear_compare_at_price) priceDetail += ', clear compare';
-
-  let affectedHtml = '';
-  if (j.affected_variants) {
-    try {
-      const variants = typeof j.affected_variants === 'string' ? JSON.parse(j.affected_variants) : j.affected_variants;
-      if (variants.length) {
-        affectedHtml = `<div class="affected-wrap">
-          <div class="affected-title">${variants.length} variant${variants.length!==1?'s':''} affected</div>
-          ${variants.slice(0,5).map(v=>`<div class="affected-item">ID ${v.id.replace('gid://shopify/ProductVariant/','')}: was $${v.price}${v.compareAtPrice?' / $'+v.compareAtPrice:''}</div>`).join('')}
-          ${variants.length > 5 ? `<div class="affected-item" style="opacity:.6">...and ${variants.length - 5} more</div>` : ''}
-        </div>`;
-      }
-    } catch(e) {}
+  html+=`<div class="sec-lbl">Jobs (${applies.length})</div>`;
+  if(!applies.length){ html+=`<div class="no-data">No jobs yet. Add one, or paste a JSON spec.</div>`; }
+  else{
+    html+=applies.map(j=>{
+      const rev=revertByLink[j.job_id];
+      return `<div class="job-row">
+        <div class="job-row-top">
+          <div>
+            <div class="job-label">${esc(j.label||j.job_name||'Job')}</div>
+            <div class="job-detail">
+              <span class="kind-badge kind-apply">apply</span>
+              <span class="rule-pill">${ruleLabel(j.price_rule)}</span>
+              <span class="status-pill sp-${j.status}">${j.status}</span>
+              ${priceDesc(j)}
+            </div>
+            ${rev?`<div class="job-detail"><span class="kind-badge kind-revert">revert</span><span class="status-pill sp-${rev.status}">${rev.status}</span><span style="color:var(--mu)">restores original prices at revert time</span></div>`:''}
+            ${j.error_message&&j.error_message!=='__DELETED__'?`<div style="margin-top:6px;font-size:10px;color:var(--rb)">${esc(j.error_message)}</div>`:''}
+          </div>
+        </div>
+        <div class="job-actions">
+          ${j.status==='pending'?`<button class="btn btn-secondary btn-sm" onclick="openEditJob('${j.job_id}')">Edit</button>`:''}
+          ${j.status==='pending'?`<button class="btn btn-secondary btn-sm" onclick="execNow('${j.job_id}')">Execute now</button>`:''}
+          <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.job_id}')">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
   }
-
-  let errorHtml = j.error_message ? `<div style="margin-top:10px;background:rgba(255,61,90,0.08);border:1px solid rgba(255,61,90,0.25);border-radius:6px;padding:10px 12px;font-size:11px;color:var(--rb)">${esc(j.error_message)}</div>` : '';
-
-  document.getElementById('rpBody').innerHTML = `
-    <div style="margin-bottom:14px">
-      <span class="status-pill ${sc}" style="font-size:11px">${j.status}</span>
-      <span class="rule-pill" style="margin-left:6px">${ruleLabel}</span>
-    </div>
-    <div class="field"><label>Job name</label><div style="font-size:13px;font-weight:600">${esc(j.job_name)}</div></div>
-    <div class="field-row">
-      <div class="field"><label>Scheduled</label><div class="jm" style="font-size:11px;color:var(--tx)">${fmtDt(j.scheduled_at, j.timezone)}</div></div>
-      <div class="field"><label>Timezone</label><div class="jm" style="font-size:11px;color:var(--tx)">${j.timezone}</div></div>
-    </div>
-    <div class="field"><label>Target</label><div style="font-size:11px">${j.target_type === 'collection' ? 'Collection' : 'Products'}: <span style="font-family:'DM Mono',monospace;font-size:10px">${esc(j.target_ids)}</span></div></div>
-    <div class="field"><label>Price rule</label><div style="font-size:12px">${priceDetail}</div></div>
-    ${affectedHtml}
-    ${errorHtml}
-    ${j.completed_at ? `<div style="margin-top:10px;font-size:10px;color:var(--mu)">Completed: ${fmtDt(j.completed_at, j.timezone)}</div>` : ''}
-    <div class="btn-row">
-      ${j.status === 'pending' ? `<button class="btn btn-primary" onclick="executeJob('${j.job_id}',this)">Execute now</button>` : ''}
-      ${j.status === 'done' ? `<button class="btn btn-secondary" onclick="revertJob('${j.job_id}',this)">Create revert job</button>` : ''}
-      ${j.status === 'failed' ? `<button class="btn btn-secondary" onclick="resetJobPending('${j.job_id}',this)">Reset to pending</button>` : ''}
-      <button class="btn btn-danger" onclick="deleteJobConfirm('${j.job_id}')">Delete</button>
-    </div>`;
+  v.innerHTML=html;
 }
 
-// ---- NEW JOB FORM ----
-function openNewJob() {
-  editingJobId = null;
-  selectedCollections = [];
-  selectedTags = [];
-  previewProducts = [];
-  currentRule = 'percent_discount';
-  document.getElementById('rpTitle').textContent = 'New price job';
-  document.getElementById('rpCloseBtn').style.display = 'inline-flex';
-  renderNewJobForm();
+function priceDesc(j){
+  if(j.price_rule==='percent_discount') return `<span style="color:var(--mu)">${j.discount_percent}% off</span>`;
+  if(j.price_rule==='fixed') return `<span style="color:var(--mu)">price $${j.new_price}${j.new_compare_at_price?' / compare $'+j.new_compare_at_price:''}</span>`;
+  if(j.price_rule==='compare_only') return `<span style="color:var(--mu)">compare $${j.new_compare_at_price}</span>`;
+  if(j.price_rule==='per_variant'){ let n=0; try{ const vp=typeof j.variant_pricing==='string'?JSON.parse(j.variant_pricing):j.variant_pricing; n=(vp||[]).length; }catch(e){} return `<span style="color:var(--mu)">${n} variants</span>`; }
+  if(j.price_rule==='revert') return `<span style="color:var(--mu)">restore from snapshot</span>`;
+  return '';
 }
 
-function renderNewJobForm() {
-  document.getElementById('rpBody').innerHTML = `
-    <div class="field">
-      <label>Job name</label>
-      <input type="text" id="f-name" placeholder="e.g. Opallac EOFY sale apply">
-    </div>
+/* ---- NEW / EDIT SALE ---- */
+function openNewSale(){
+  editingSaleId=null;
+  document.getElementById('saleModalTitle').textContent='New sale';
+  document.getElementById('saleSaveBtn').textContent='Create sale';
+  document.getElementById('s-name').value='';
+  document.getElementById('s-golive').value='';
+  document.getElementById('s-revert').value='';
+  document.getElementById('s-tz-display').textContent=TZ;
+  openModal('saleModal');
+}
+function openEditSale(){
+  const s=currentSale.sale||currentSale;
+  editingSaleId=s.sale_id;
+  document.getElementById('saleModalTitle').textContent='Edit sale';
+  document.getElementById('saleSaveBtn').textContent='Save changes';
+  document.getElementById('s-name').value=s.sale_name||'';
+  document.getElementById('s-golive').value=isoToLocal(s.go_live_at);
+  document.getElementById('s-revert').value=s.revert_at?isoToLocal(s.revert_at):'';
+  document.getElementById('s-tz-display').textContent=s.timezone||TZ;
+  openModal('saleModal');
+}
+async function saveSale(){
+  const name=document.getElementById('s-name').value.trim();
+  const golive=document.getElementById('s-golive').value;
+  const revert=document.getElementById('s-revert').value;
+  if(!name){ toast('Enter a sale name.','err'); return; }
+  if(!golive){ toast('Set a go live date and time.','err'); return; }
+  const body={ client:CLIENT, sale_name:name, go_live_at:wallClockToUTC(golive,TZ), revert_at:revert?wallClockToUTC(revert,TZ):null, timezone:TZ };
+  const btn=document.getElementById('saleSaveBtn'); btn.disabled=true;
+  try{
+    let r;
+    if(editingSaleId){ r=await fetch(`${API}/price-jobs/sales/${editingSaleId}?${qs}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
+    else{ r=await fetch(`${API}/price-jobs/sales?${qs}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
+    if(!r.ok){ const d=await r.json().catch(()=>({})); throw new Error(d.message||'Save failed'); }
+    const saved=await r.json();
+    toast(editingSaleId?'Sale updated.':'Sale created.','ok');
+    closeModal('saleModal');
+    await loadSales();
+    const sid=editingSaleId||saved.sale_id||(saved.sale&&saved.sale.sale_id);
+    if(sid) openSale(sid);
+  }catch(e){ toast('Error: '+e.message,'err'); }
+  btn.disabled=false;
+}
+async function deleteSale(saleId){
+  if(!confirm('Delete this sale and all its pending jobs? This cannot be undone.')) return;
+  try{
+    const r=await fetch(`${API}/price-jobs/sales/${saleId}?${qs}`,{method:'DELETE'});
+    if(!r.ok) throw new Error('Delete failed');
+    toast('Sale deleted.','ok'); goSales(); await loadSales();
+  }catch(e){ toast('Error: '+e.message,'err'); }
+}
 
-    <div class="field">
-      <label>Target type</label>
-      <select id="f-target-type" onchange="onTargetTypeChange()">
-        <option value="product">Individual products</option>
+/* ---- ADD / EDIT JOB ---- */
+function openAddJob(){
+  editingJobId=null; currentRule='percent_discount';
+  document.getElementById('jobModalTitle').textContent='Add job';
+  renderJobForm({});
+  openModal('jobModal');
+}
+function openEditJob(jobId){
+  const j=(currentSale.jobs||[]).find(x=>x.job_id===jobId);
+  if(!j) return;
+  editingJobId=jobId; currentRule=j.price_rule==='revert'?'percent_discount':j.price_rule;
+  document.getElementById('jobModalTitle').textContent='Edit job';
+  renderJobForm(j);
+  openModal('jobModal');
+}
+function renderJobForm(j){
+  const b=document.getElementById('jobModalBody');
+  b.innerHTML=`
+    <div class="field"><label>Job label</label><input type="text" id="j-label" placeholder="e.g. 30% off gel singles" value="${esc(j.label||j.job_name||'')}"></div>
+    <div class="field"><label>Target type</label>
+      <select id="j-target-type" onchange="onJobTargetChange()">
         <option value="collection">Collection</option>
+        <option value="product">Product IDs</option>
       </select>
     </div>
-
-    <div id="filter-section">
-      <div class="field">
-        <label>Filter by collection</label>
-        <div class="filter-select-wrap">
-          <input type="text" id="coll-search" placeholder="Search collections..." onclick="openDropdown('coll-dd')" oninput="filterDropdown('coll-dd','coll-search',collections,'id','title',toggleCollection)">
-          <div class="filter-dropdown" id="coll-dd"></div>
-        </div>
-        <div class="filter-tags" id="coll-tags"></div>
-      </div>
-      <div class="field">
-        <label>Filter by tag</label>
-        <div class="filter-select-wrap">
-          <input type="text" id="tag-search" placeholder="Search tags..." onclick="openDropdown('tag-dd')" oninput="filterDropdown('tag-dd','tag-search',tags.map(t=>({id:t,title:t})),'id','title',toggleTag)">
-          <div class="filter-dropdown" id="tag-dd"></div>
-        </div>
-        <div class="filter-tags" id="tag-tags"></div>
-      </div>
-      <div class="field">
-        <label>Text search <span style="font-weight:400;text-transform:none;font-size:10px">(optional)</span></label>
-        <input type="text" id="f-q" placeholder="SKU, product name..." oninput="debouncePreview()">
-      </div>
-      <div id="product-preview"></div>
-    </div>
-
-    <div id="collection-id-section" style="display:none">
-      <div class="field">
-        <label>Collection ID</label>
-        <input type="text" id="f-collection-id" placeholder="Shopify collection ID" oninput="debouncePreview()">
-        <div class="hint">Bare integer ID, e.g. 123456789</div>
-      </div>
-    </div>
-
-    <div class="field" style="margin-top:16px">
-      <label>Price rule</label>
+    <div class="field" id="j-coll-wrap"><label>Collection (search)</label><input type="text" id="j-coll" placeholder="Search collections..." oninput="jobCollSearch()"><div id="j-coll-dd"></div></div>
+    <div class="field" id="j-prod-wrap" style="display:none"><label>Product IDs (comma separated)</label><input type="text" id="j-prod" placeholder="10110277026071, ..." value="${j.target_type==='product'?esc(j.target_ids||''):''}"><div class="hint">Bare Shopify product IDs.</div></div>
+    <div class="field" id="j-tag-wrap"><label>Filter by tag (optional)</label><input type="text" id="j-tag" placeholder="tag"></div>
+    <div class="field"><label>Price rule</label>
       <div class="rule-tabs">
-        <button class="rule-tab active" onclick="setRule('percent_discount',this)">% Discount</button>
-        <button class="rule-tab" onclick="setRule('fixed',this)">Fixed price</button>
-        <button class="rule-tab" onclick="setRule('compare_only',this)">Compare only</button>
+        <button class="rule-tab" data-r="percent_discount" onclick="setJobRule('percent_discount',this)">% Discount</button>
+        <button class="rule-tab" data-r="fixed" onclick="setJobRule('fixed',this)">Fixed</button>
+        <button class="rule-tab" data-r="compare_only" onclick="setJobRule('compare_only',this)">Compare only</button>
       </div>
-      <div class="rule-fields" id="rule-fields"></div>
-    </div>
-
-    <div class="field">
-      <label>Schedule date &amp; time</label>
-      <div class="field-row">
-        <input type="datetime-local" id="f-sched-apply">
-        <div style="display:flex;align-items:center;padding:7px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;font-size:11px;color:var(--mu)">
-          <span id="f-tz-display">Australia/Sydney</span>
-        </div>
-      </div>
-      <div class="hint">Times use the Shopify store timezone, shown above.</div>
-    </div>
-
-    <div class="field">
-      <label>Revert date &amp; time <span style="font-weight:400;text-transform:none;font-size:10px">(optional, creates a paired job)</span></label>
-      <div class="field-row">
-        <input type="datetime-local" id="f-sched-revert">
-        <div style="font-size:10px;color:var(--mu);padding-top:8px">Store timezone</div>
-      </div>
-      <div id="revert-preview" class="sched-linked" style="display:none">
-        <strong>Paired revert job will be created</strong>
-        A second job will be saved to restore original prices at this time.
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveJob()">Save job</button>
-      <button class="btn btn-secondary" onclick="closePanel()">Cancel</button>
+      <div id="j-rule-fields" style="margin-top:10px"></div>
     </div>`;
-
-  // Set default timezone
-  const tzDisplay = document.getElementById('f-tz-display');
-  if (tzDisplay) tzDisplay.textContent = TZ;
-
-  // Show revert preview when revert date filled
-  document.getElementById('f-sched-revert').addEventListener('input', function() {
-    document.getElementById('revert-preview').style.display = this.value ? 'block' : 'none';
-  });
-
-  renderRuleFields();
-  renderCollDropdown();
-  renderTagDropdown();
+  // set selects
+  document.getElementById('j-target-type').value=(j.target_type==='product')?'product':'collection';
+  onJobTargetChange();
+  // activate rule tab
+  document.querySelectorAll('#jobModal .rule-tab').forEach(t=>{ if(t.dataset.r===currentRule) t.classList.add('active'); else t.classList.remove('active'); });
+  renderJobRuleFields(j);
 }
-
-function onTargetTypeChange() {
-  const type = document.getElementById('f-target-type').value;
-  document.getElementById('filter-section').style.display = type === 'product' ? 'block' : 'none';
-  document.getElementById('collection-id-section').style.display = type === 'collection' ? 'block' : 'none';
+function onJobTargetChange(){
+  const t=document.getElementById('j-target-type').value;
+  document.getElementById('j-coll-wrap').style.display=t==='collection'?'block':'none';
+  document.getElementById('j-tag-wrap').style.display=t==='collection'?'block':'none';
+  document.getElementById('j-prod-wrap').style.display=t==='product'?'block':'none';
 }
-
-function setRule(rule, el) {
-  currentRule = rule;
-  document.querySelectorAll('.rule-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  renderRuleFields();
-  debouncePreview();
-}
-
-function renderRuleFields() {
-  const el = document.getElementById('rule-fields');
-  if (!el) return;
-  if (currentRule === 'percent_discount') {
-    el.innerHTML = `
-      <div class="field-row" style="margin-top:10px">
-        <div class="field" style="margin-bottom:0">
-          <label>Discount %</label>
-          <input type="number" id="f-discount" min="1" max="99" placeholder="e.g. 30" oninput="debouncePreview()">
-        </div>
-        <div class="field" style="margin-bottom:0">
-          <label>Compare at price</label>
-          <select id="f-compare-mode" onchange="toggleCompareInput()">
-            <option value="original">Set to original price</option>
-            <option value="custom">Custom value</option>
-            <option value="clear">Clear compare</option>
-            <option value="keep">Leave unchanged</option>
-          </select>
-        </div>
-      </div>
-      <div id="f-compare-custom-wrap" style="display:none;margin-top:8px">
-        <div class="field" style="margin-bottom:0"><label>Custom compare at price</label><input type="number" id="f-compare-custom" step="0.01" placeholder="e.g. 25.00" oninput="debouncePreview()"></div>
-      </div>`;
-  } else if (currentRule === 'fixed') {
-    el.innerHTML = `
-      <div class="field-row" style="margin-top:10px">
-        <div class="field" style="margin-bottom:0"><label>New price ($)</label><input type="number" id="f-new-price" step="0.01" placeholder="e.g. 20.00" oninput="debouncePreview()"></div>
-        <div class="field" style="margin-bottom:0"><label>Compare at ($) <span style="font-weight:400;font-size:9px">optional</span></label><input type="number" id="f-compare-at" step="0.01" placeholder="e.g. 28.00" oninput="debouncePreview()"></div>
-      </div>
-      <div class="field" style="margin-top:8px;margin-bottom:0">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:11px;font-weight:500;letter-spacing:0">
-          <input type="checkbox" id="f-clear-compare"> Clear compare at price
-        </label>
-      </div>`;
-  } else if (currentRule === 'compare_only') {
-    el.innerHTML = `
-      <div class="field-row" style="margin-top:10px">
-        <div class="field" style="margin-bottom:0"><label>Compare at price ($)</label><input type="number" id="f-compare-only-val" step="0.01" placeholder="e.g. 28.00" oninput="debouncePreview()"></div>
-        <div class="field" style="margin-bottom:0">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:11px;font-weight:500;letter-spacing:0;padding-top:20px">
-            <input type="checkbox" id="f-clear-compare-only"> Clear instead
-          </label>
-        </div>
-      </div>
-      <div class="hint">Price stays unchanged. Only the compare-at (strikethrough) price is updated.</div>`;
+function setJobRule(r,el){ currentRule=r; document.querySelectorAll('#jobModal .rule-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderJobRuleFields({}); }
+function renderJobRuleFields(j){
+  const el=document.getElementById('j-rule-fields'); if(!el) return;
+  if(currentRule==='percent_discount'){
+    el.innerHTML=`<div class="field-row"><div class="field" style="margin:0"><label>Discount %</label><input type="number" id="j-disc" placeholder="30" value="${j.discount_percent||''}"></div><div class="field" style="margin:0"><label>Compare at</label><select id="j-cmp"><option value="original">Set to original</option><option value="clear">Clear</option></select></div></div>`;
+  }else if(currentRule==='fixed'){
+    el.innerHTML=`<div class="field-row"><div class="field" style="margin:0"><label>New price ($)</label><input type="number" id="j-price" step="0.01" placeholder="57.00" value="${j.new_price||''}"></div><div class="field" style="margin:0"><label>Compare at ($)</label><input type="number" id="j-cmpval" step="0.01" placeholder="95.00" value="${j.new_compare_at_price||''}"></div></div><div class="hint">Single product only. Sets both numbers exactly.</div>`;
+  }else if(currentRule==='compare_only'){
+    el.innerHTML=`<div class="field" style="margin:0"><label>Compare at price ($)</label><input type="number" id="j-cmponly" step="0.01" placeholder="95.00" value="${j.new_compare_at_price||''}"></div><div class="hint">Price unchanged, only the struck-through compare changes.</div>`;
   }
 }
+let jobCollTimer=null;
+function jobCollSearch(){ /* lightweight: collections loaded on demand could go here; kept simple, user types collection id/title */ }
 
-function toggleCompareInput() {
-  const mode = document.getElementById('f-compare-mode')?.value;
-  const wrap = document.getElementById('f-compare-custom-wrap');
-  if (wrap) wrap.style.display = mode === 'custom' ? 'block' : 'none';
-}
-
-// ---- DROPDOWNS ----
-function renderCollDropdown() {
-  const dd = document.getElementById('coll-dd');
-  if (!dd) return;
-  dd.innerHTML = collections.length
-    ? collections.map(c => `<div class="fdd-item${selectedCollections.includes(c.id)?' selected':''}" onclick="toggleCollection('${esc(c.id)}','${esc(c.title)}')">${esc(c.title)}</div>`).join('')
-    : '<div style="padding:8px 10px;font-size:11px;color:var(--mu)">No collections loaded. Sync products first.</div>';
-}
-
-function renderTagDropdown() {
-  const dd = document.getElementById('tag-dd');
-  if (!dd) return;
-  dd.innerHTML = tags.length
-    ? tags.map(t => `<div class="fdd-item${selectedTags.includes(t)?' selected':''}" onclick="toggleTag('${esc(t)}','${esc(t)}')">${esc(t)}</div>`).join('')
-    : '<div style="padding:8px 10px;font-size:11px;color:var(--mu)">No tags loaded. Sync products first.</div>';
-}
-
-function openDropdown(ddId) {
-  document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
-  document.getElementById(ddId)?.classList.add('open');
-}
-
-function filterDropdown(ddId, inputId, items, idKey, titleKey, toggleFn) {
-  const q = document.getElementById(inputId)?.value.toLowerCase() || '';
-  const dd = document.getElementById(ddId);
-  if (!dd) return;
-  const filtered = q ? items.filter(i => i[titleKey].toLowerCase().includes(q)) : items;
-  dd.innerHTML = filtered.length
-    ? filtered.map(i => `<div class="fdd-item" onclick="${toggleFn.name}('${esc(i[idKey])}','${esc(i[titleKey])}')">${esc(i[titleKey])}</div>`).join('')
-    : '<div style="padding:8px 10px;font-size:11px;color:var(--mu)">No matches.</div>';
-  dd.classList.add('open');
-}
-
-document.addEventListener('click', e => {
-  if (!e.target.closest('.filter-select-wrap')) {
-    document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('open'));
+async function saveJob(){
+  const s=currentSale.sale||currentSale;
+  const label=document.getElementById('j-label').value.trim();
+  if(!label){ toast('Enter a job label.','err'); return; }
+  const tt=document.getElementById('j-target-type').value;
+  const body={ label, job_name:label, price_rule:currentRule };
+  if(tt==='collection'){
+    const coll=document.getElementById('j-coll').value.trim();
+    const tag=document.getElementById('j-tag').value.trim();
+    if(!coll && !tag){ toast('Enter a collection or tag.','err'); return; }
+    body.target_type='collection'; body.target_ids=coll;
+    if(tag) body.filter_tag=tag;
+  }else{
+    const prod=document.getElementById('j-prod').value.trim();
+    if(!prod){ toast('Enter product IDs.','err'); return; }
+    body.target_type='product'; body.target_ids=prod;
   }
-});
-
-function toggleCollection(id, title) {
-  if (selectedCollections.includes(id)) {
-    selectedCollections = selectedCollections.filter(c => c !== id);
-  } else {
-    selectedCollections.push(id);
+  if(currentRule==='percent_discount'){
+    const d=parseFloat(document.getElementById('j-disc').value); if(!d){ toast('Enter a discount %.','err'); return; }
+    body.discount_percent=d;
+    if(document.getElementById('j-cmp').value==='clear') body.clear_compare_at_price=true;
+  }else if(currentRule==='fixed'){
+    const p=parseFloat(document.getElementById('j-price').value); if(!p){ toast('Enter a price.','err'); return; }
+    body.new_price=p; const c=parseFloat(document.getElementById('j-cmpval').value); if(c) body.new_compare_at_price=c;
+  }else if(currentRule==='compare_only'){
+    const c=parseFloat(document.getElementById('j-cmponly').value); if(!c){ toast('Enter a compare price.','err'); return; }
+    body.new_compare_at_price=c;
   }
-  renderCollTags();
-  renderCollDropdown();
-  debouncePreview();
+  const btn=document.getElementById('jobSaveBtn'); btn.disabled=true;
+  try{
+    let r;
+    if(editingJobId){ r=await fetch(`${API}/price-jobs/${editingJobId}?${qs}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
+    else{ r=await fetch(`${API}/price-jobs/sales/${s.sale_id}/jobs?${qs}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
+    if(!r.ok){ const d=await r.json().catch(()=>({})); throw new Error(d.message||'Save failed'); }
+    toast(editingJobId?'Job updated.':'Job added.','ok');
+    closeModal('jobModal');
+    await openSale(s.sale_id);
+  }catch(e){ toast('Error: '+e.message,'err'); }
+  btn.disabled=false;
+}
+async function deleteJob(jobId){
+  if(!confirm('Delete this job?')) return;
+  const s=currentSale.sale||currentSale;
+  try{
+    const r=await fetch(`${API}/price-jobs/${jobId}/status?${qs}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'failed',error_message:'__DELETED__'})});
+    if(!r.ok) throw new Error('Delete failed');
+    toast('Job deleted.','ok'); await openSale(s.sale_id);
+  }catch(e){ toast('Error: '+e.message,'err'); }
+}
+async function execNow(jobId){
+  if(!confirm('Execute this job now? This writes prices to Shopify immediately.')) return;
+  const s=currentSale.sale||currentSale;
+  try{
+    const r=await fetch(`${API}/price-jobs/${jobId}/execute`,{method:'POST',headers:{'X-Execute-Key':KEY,'Content-Type':'application/json'}});
+    const d=await r.json(); if(!r.ok) throw new Error(d.message||'Execute failed');
+    toast('Job executed.','ok'); await openSale(s.sale_id);
+  }catch(e){ toast('Error: '+e.message,'err'); await openSale(s.sale_id); }
 }
 
-function toggleTag(id, title) {
-  if (selectedTags.includes(id)) {
-    selectedTags = selectedTags.filter(t => t !== id);
-  } else {
-    selectedTags.push(id);
-  }
-  renderTagTags();
-  renderTagDropdown();
-  debouncePreview();
+/* ---- BULK JSON ---- */
+function openBulk(){
+  lastValidatedSpec=null;
+  document.getElementById('bulk-json').value='';
+  document.getElementById('bulk-preview').innerHTML='';
+  document.getElementById('bulkCreateBtn').disabled=true;
+  openModal('bulkModal');
 }
-
-function renderCollTags() {
-  const el = document.getElementById('coll-tags');
-  if (!el) return;
-  el.innerHTML = selectedCollections.map(cid => {
-    const c = collections.find(x => x.id === cid);
-    return `<span class="ftag" onclick="toggleCollection('${esc(cid)}','')">${esc(c ? c.title : cid)} <span class="fx">✕</span></span>`;
-  }).join('');
+async function validateBulk(){
+  const s=currentSale.sale||currentSale;
+  let spec;
+  try{ spec=JSON.parse(document.getElementById('bulk-json').value); }
+  catch(e){ toast('Invalid JSON: '+e.message,'err'); return; }
+  const jobs=spec.jobs||spec;
+  const btn=document.getElementById('bulkValidateBtn'); btn.disabled=true; btn.textContent='Validating...';
+  try{
+    const r=await fetch(`${API}/price-jobs/sales/${s.sale_id}/jobs/bulk/validate?${qs}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobs})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.message||'Validation failed');
+    renderBulkPreview(d);
+    const hasErr=(d.jobs||[]).some(j=>j.errors&&j.errors.length);
+    lastValidatedSpec=hasErr?null:{jobs};
+    document.getElementById('bulkCreateBtn').disabled=hasErr;
+    if(hasErr) toast('Some jobs have errors. Fix them before scheduling.','err');
+    else toast('Validated. Review the preview, then Schedule all.','ok');
+  }catch(e){ toast('Error: '+e.message,'err'); }
+  btn.disabled=false; btn.textContent='Validate';
 }
-
-function renderTagTags() {
-  const el = document.getElementById('tag-tags');
-  if (!el) return;
-  el.innerHTML = selectedTags.map(t => `<span class="ftag" onclick="toggleTag('${esc(t)}','')">${esc(t)} <span class="fx">✕</span></span>`).join('');
-}
-
-// ---- PRODUCT PREVIEW ----
-let previewTimer = null;
-function debouncePreview() { clearTimeout(previewTimer); previewTimer = setTimeout(fetchPreview, 400); }
-
-async function fetchPreview() {
-  const type = document.getElementById('f-target-type')?.value;
-  if (type === 'collection') return;
-  const q = document.getElementById('f-q')?.value || '';
-  const params = new URLSearchParams({ client: CLIENT, key: KEY, status: 'active' });
-  if (q) params.set('q', q);
-  if (selectedCollections.length) params.set('collection_id', selectedCollections[0]);
-  if (selectedTags.length) params.set('tag', selectedTags[0]);
-  if (!q && !selectedCollections.length && !selectedTags.length) {
-    document.getElementById('product-preview').innerHTML = '';
-    return;
-  }
-  try {
-    const res = await fetch(`${API}/price-jobs/products/search?${params}`);
-    if (!res.ok) return;
-    previewProducts = await res.json();
-    renderProductPreview();
-  } catch(e) {}
-}
-
-function calcNewPrice(product) {
-  const orig = parseFloat(product.base_price) || 0;
-  const origCompare = parseFloat(product.compare_at_price) || 0;
-  let newPrice = orig, newCompare = origCompare;
-  if (currentRule === 'percent_discount') {
-    const disc = parseFloat(document.getElementById('f-discount')?.value) || 0;
-    if (!disc) return null;
-    newPrice = Math.round(orig * (1 - disc/100) * 100) / 100;
-    const mode = document.getElementById('f-compare-mode')?.value || 'original';
-    if (mode === 'original') newCompare = orig;
-    else if (mode === 'custom') newCompare = parseFloat(document.getElementById('f-compare-custom')?.value) || orig;
-    else if (mode === 'clear') newCompare = null;
-    else newCompare = origCompare;
-  } else if (currentRule === 'fixed') {
-    const fp = parseFloat(document.getElementById('f-new-price')?.value);
-    if (!fp) return null;
-    newPrice = fp;
-    const fc = parseFloat(document.getElementById('f-compare-at')?.value);
-    if (fc) newCompare = fc;
-    if (document.getElementById('f-clear-compare')?.checked) newCompare = null;
-  } else if (currentRule === 'compare_only') {
-    if (document.getElementById('f-clear-compare-only')?.checked) { newCompare = null; }
-    else {
-      const cv = parseFloat(document.getElementById('f-compare-only-val')?.value);
-      if (!cv) return null;
-      newCompare = cv;
-    }
-  }
-  const discPct = orig > 0 ? Math.round((1 - newPrice/orig)*100) : 0;
-  return { newPrice, newCompare, discPct };
-}
-
-function renderProductPreview() {
-  const el = document.getElementById('product-preview');
-  if (!el) return;
-  if (!previewProducts.length) { el.innerHTML = '<div style="font-size:11px;color:var(--mu);padding:8px 0">No products match these filters.</div>'; return; }
-  const show = previewProducts.slice(0, 8);
-  const rows = show.map(p => {
-    const calc = calcNewPrice(p);
-    const newPriceCell = calc
-      ? `<td class="new-price${calc.discPct > 60 ? ' warn' : ''}">${fmt$(calc.newPrice)}${calc.newCompare ? `<br><span style="font-size:9px;color:var(--mu)">was ${fmt$(calc.newCompare)}</span>` : ''}</td>`
-      : `<td class="n" style="color:var(--mu)">-</td>`;
-    return `<tr>
-      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.formatted_product_name||p.product_title)}">${esc(p.formatted_product_name||p.product_title)}</td>
-      <td class="n">${fmt$(p.base_price)}</td>
-      ${newPriceCell}
-    </tr>`;
-  }).join('');
-  el.innerHTML = `<div class="preview-wrap">
-    <div class="preview-hdr">Product preview <span class="preview-count">${previewProducts.length} matched</span></div>
-    <table class="preview-table">
-      <thead><tr><th>Product</th><th class="n">Current</th><th class="n">New price</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    ${previewProducts.length > 8 ? `<div class="preview-more">+${previewProducts.length - 8} more products will be updated</div>` : ''}
-  </div>`;
-}
-
-// ---- SAVE JOB ----
-async function saveJob() {
-  const name = document.getElementById('f-name')?.value?.trim();
-  if (!name) { toast('Please enter a job name.', 'err'); return; }
-  const targetType = document.getElementById('f-target-type')?.value;
-  const schedApply = document.getElementById('f-sched-apply')?.value;
-  const tz = TZ;
-  if (!schedApply) { toast('Please set a schedule date and time.', 'err'); return; }
-
-  let targetIds = '';
-  if (targetType === 'product') {
-    if (!previewProducts.length) { toast('No products matched your filters. Adjust filters before saving.', 'err'); return; }
-    targetIds = [...new Set(previewProducts.map(p => p.shopify_product_id))].join(',');
-  } else {
-    targetIds = document.getElementById('f-collection-id')?.value?.trim();
-    if (!targetIds) { toast('Please enter a collection ID.', 'err'); return; }
-  }
-
-  const body = {
-    job_name: name,
-    client: CLIENT,
-    target_type: targetType,
-    target_ids: targetIds,
-    price_rule: currentRule,
-    scheduled_at: wallClockToUTC(schedApply, tz),
-    timezone: tz,
-    clear_compare_at_price: false
-  };
-
-  if (currentRule === 'percent_discount') {
-    const disc = parseFloat(document.getElementById('f-discount')?.value);
-    if (!disc) { toast('Please enter a discount percentage.', 'err'); return; }
-    body.discount_percent = disc;
-    const mode = document.getElementById('f-compare-mode')?.value;
-    if (mode === 'custom') body.new_compare_at_price = parseFloat(document.getElementById('f-compare-custom')?.value);
-    if (mode === 'clear') body.clear_compare_at_price = true;
-  } else if (currentRule === 'fixed') {
-    const np = parseFloat(document.getElementById('f-new-price')?.value);
-    if (!np) { toast('Please enter a new price.', 'err'); return; }
-    body.new_price = np;
-    const ca = parseFloat(document.getElementById('f-compare-at')?.value);
-    if (ca) body.new_compare_at_price = ca;
-    if (document.getElementById('f-clear-compare')?.checked) body.clear_compare_at_price = true;
-  } else if (currentRule === 'compare_only') {
-    if (document.getElementById('f-clear-compare-only')?.checked) {
-      body.clear_compare_at_price = true;
-    } else {
-      const cv = parseFloat(document.getElementById('f-compare-only-val')?.value);
-      if (!cv) { toast('Please enter a compare at price.', 'err'); return; }
-      body.new_compare_at_price = cv;
-    }
-  }
-
-  const btn = document.querySelector('.btn-primary');
-  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
-
-  try {
-    const res = await fetch(`${API}/price-jobs?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
-      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+function renderBulkPreview(d){
+  const el=document.getElementById('bulk-preview');
+  const jobs=d.jobs||[];
+  if(!jobs.length){ el.innerHTML='<div class="hint">No jobs in spec.</div>'; return; }
+  el.innerHTML=`<div class="sec-lbl" style="margin-top:16px">Preview</div><div class="preview-box">`+jobs.map(j=>{
+    const errs=(j.errors||[]);
+    let rows='';
+    (j.sample||[]).slice(0,8).forEach(p=>{
+      rows+=`<tr><td>${esc(p.product_title||p.title||p.name||'')}</td><td class="n">${p.current_price!=null?'$'+p.current_price:'-'}</td><td class="n prc-new">${p.proposed_price!=null?'$'+p.proposed_price:'-'}</td></tr>`;
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Save failed');
-
-    // If revert date set, save revert job
-    const schedRevert = document.getElementById('f-sched-revert')?.value;
-    if (schedRevert) {
-      const revertBody = {
-        job_name: name + ' (revert)',
-        client: CLIENT,
-        target_type: targetType,
-        target_ids: targetIds,
-        price_rule: 'revert',
-        scheduled_at: wallClockToUTC(schedRevert, tz),
-        timezone: tz,
-        clear_compare_at_price: false,
-        linked_job_id: data.job_id
-      };
-      await fetch(`${API}/price-jobs?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
-        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(revertBody)
-      });
-    }
-
-    toast('Job saved successfully.', 'ok');
-    await loadJobs();
-    closePanel();
-  } catch(e) {
-    toast('Error: ' + e.message, 'err');
-    if (btn) { btn.disabled = false; btn.textContent = 'Save job'; }
-  }
+    return `<div class="preview-job">
+      <div class="preview-job-head"><span>${esc(j.label||'Job')}</span><span class="preview-count">${j.resolved_count!=null?j.resolved_count:'?'} products</span></div>
+      ${errs.length?`<div class="preview-err">${errs.map(esc).join('<br>')}</div>`:''}
+      ${rows?`<table class="preview-table"><thead><tr><th>Product</th><th class="n">Current</th><th class="n">Proposed</th></tr></thead><tbody>${rows}</tbody></table>`:''}
+    </div>`;
+  }).join('')+`</div>`;
+}
+async function createBulk(){
+  if(!lastValidatedSpec){ toast('Validate first.','err'); return; }
+  const s=currentSale.sale||currentSale;
+  const btn=document.getElementById('bulkCreateBtn'); btn.disabled=true; btn.textContent='Scheduling...';
+  try{
+    const r=await fetch(`${API}/price-jobs/sales/${s.sale_id}/jobs/bulk/create?${qs}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(lastValidatedSpec)});
+    const d=await r.json(); if(!r.ok) throw new Error(d.message||'Create failed');
+    toast('All jobs scheduled.','ok');
+    closeModal('bulkModal');
+    await openSale(s.sale_id);
+  }catch(e){ toast('Error: '+e.message,'err'); btn.disabled=false; }
+  btn.textContent='Schedule all';
 }
 
-// ---- EXECUTE ----
-async function executeJob(jobId, btn) {
-  if (!confirm('Execute this job now? This will write prices to Shopify immediately.')) return;
-  if (btn) { btn.disabled = true; btn.textContent = 'Running...'; }
-  try {
-    const res = await fetch(`${API}/price-jobs/${jobId}/execute`, {
-      method: 'POST',
-      headers: {'X-Execute-Key': KEY, 'Content-Type': 'application/json'}
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Execute failed');
-    toast('Job executed successfully.', 'ok');
-    await loadJobs();
-    if (editingJobId === jobId) viewJob(jobId);
-  } catch(e) {
-    toast('Error: ' + e.message, 'err');
-    if (btn) { btn.disabled = false; btn.textContent = 'Execute now'; }
-    await loadJobs();
-  }
+/* ---- SYNC ---- */
+let syncing=false;
+function syncBanner(state,msg){
+  const slot=document.getElementById('syncBannerSlot');
+  if(state==='hide'){ slot.innerHTML=''; return; }
+  const col=state==='running'?'background:var(--cm-s);border:1px solid var(--cm-b);color:var(--cm)':state==='ok'?'background:rgba(0,196,122,0.1);border:1px solid rgba(0,196,122,0.3);color:var(--rg)':'background:rgba(255,61,90,0.1);border:1px solid rgba(255,61,90,0.3);color:var(--rb)';
+  const ic=state==='running'?'<span class="spin" style="width:14px;height:14px;border-width:2px"></span>':state==='ok'?'&#10003;':'&#10007;';
+  slot.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:11px 14px;border-radius:8px;font-size:12px;font-weight:600;${col}">${ic}<span>${msg}</span></div>`;
+}
+async function triggerSync(){
+  if(syncing){ toast('Sync already running.','err'); return; }
+  syncing=true; const b=document.getElementById('syncBtn'); b.disabled=true; b.textContent='Syncing...';
+  syncBanner('running','Syncing products from Shopify, please wait...');
+  const t=Date.now();
+  try{
+    const r=await fetch(`${API}/price-jobs/products/sync`,{method:'POST',headers:{'X-Execute-Key':KEY,'Content-Type':'application/json'},body:JSON.stringify({client:CLIENT})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.message||'Sync failed');
+    syncBanner('ok',`Synced ${d.synced} variants across ${d.products} products in ${Math.round((Date.now()-t)/1000)}s.`);
+    setTimeout(()=>syncBanner('hide'),8000);
+  }catch(e){ syncBanner('err','Sync failed: '+e.message); }
+  syncing=false; b.disabled=false; b.textContent='\u21BB Sync Products';
 }
 
-async function resetJobPending(jobId, btn) {
-  if (btn) { btn.disabled = true; btn.textContent = 'Resetting...'; }
-  try {
-    await fetch(`${API}/price-jobs/${jobId}/status?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
-      method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status:'pending'})
-    });
-    toast('Job reset to pending.', 'ok');
-    await loadJobs();
-    if (editingJobId === jobId) viewJob(jobId);
-  } catch(e) { toast('Reset failed.', 'err'); }
+/* ---- UTILS ---- */
+function ruleLabel(r){ return {fixed:'Fixed',percent_discount:'% Discount',compare_only:'Compare only',per_variant:'Per variant',revert:'Revert'}[r]||r; }
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function fmtDt(iso){ if(!iso) return ''; try{ return new Date(iso).toLocaleString('en-AU',{timeZone:TZ,day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}); }catch(e){ return iso; } }
+function isoToLocal(iso){ // for datetime-local prefill in store tz
+  try{ const d=new Date(iso); const f=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}); const p={}; for(const x of f.formatToParts(d)) p[x.type]=x.value; return `${p.year}-${p.month}-${p.day}T${p.hour==='24'?'00':p.hour}:${p.minute}`; }catch(e){ return ''; }
 }
-
-function revertJob(jobId) {
-  const j = allJobs.find(x => x.job_id === jobId);
-  if (!j) return;
-  if (j.status !== 'done') { toast('Can only revert a job that completed successfully.', 'err'); return; }
-  const when = prompt('Schedule the revert for when? Enter date and time as YYYY-MM-DD HH:MM (24h), in ' + (j.timezone || TZ) + ' time. Leave blank to revert immediately as a pending job you execute now.');
-  // Build scheduled_at: if blank, schedule for now (immediately due)
-  let scheduledIso;
-  const jobTz = j.timezone || TZ;
-  if (when && when.trim()) {
-    const norm = when.trim().replace(' ', 'T');
-    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(norm)) { toast('Invalid format. Use YYYY-MM-DD HH:MM', 'err'); return; }
-    scheduledIso = wallClockToUTC(norm, jobTz);
-  } else {
-    scheduledIso = new Date().toISOString();
-  }
-  const revertBody = {
-    job_name: (j.job_name || 'Job') + ' (revert)',
-    client: CLIENT,
-    target_type: j.target_type,
-    target_ids: j.target_ids,
-    price_rule: 'revert',
-    scheduled_at: scheduledIso,
-    timezone: jobTz,
-    clear_compare_at_price: false,
-    linked_job_id: j.job_id
-  };
-  fetch(`${API}/price-jobs?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
-    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(revertBody)
-  }).then(async res => {
-    if (!res.ok) { const d = await res.json().catch(()=>({})); throw new Error(d.message || 'Failed to create revert job'); }
-    toast('Revert job created, restoring original prices from this job\'s snapshot.', 'ok');
-    await loadJobs();
-    closePanel();
-  }).catch(e => toast('Error: ' + e.message, 'err'));
+function wallClockToUTC(localStr,timeZone){
+  const [dp,tp]=localStr.split('T'); const [y,mo,d]=dp.split('-').map(Number); const [h,mi]=tp.split(':').map(Number);
+  const asUTC=Date.UTC(y,mo-1,d,h,mi,0); const f=new Intl.DateTimeFormat('en-US',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const p={}; for(const x of f.formatToParts(new Date(asUTC))) p[x.type]=x.value;
+  const zoned=Date.UTC(+p.year,+p.month-1,+p.day,+(p.hour==='24'?'0':p.hour),+p.minute,+p.second);
+  return new Date(asUTC-(zoned-asUTC)).toISOString();
 }
-
-function deleteJobConfirm(jobId) {
-  if (!confirm('Delete this job? This cannot be undone.')) return;
-  fetch(`${API}/price-jobs/${jobId}/status?client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`, {
-    method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status:'failed',error_message:DELETE_MARKER})
-  }).then(() => {
-    toast('Job deleted.', 'ok');
-    loadJobs();
-    closePanel();
-  });
-}
-
-// ---- PRODUCT SYNC ----
-let syncInProgress = false;
-
-function showSyncBanner(state, msg) {
-  let banner = document.getElementById('syncBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'syncBanner';
-    const parent = document.querySelector('.panel-left');
-    parent.insertBefore(banner, parent.firstChild);
-  }
-  if (state === 'hide') { banner.style.display = 'none'; return; }
-  const styles = {
-    running: 'background:var(--cm-s);border:1px solid var(--cm-b);color:var(--cm)',
-    ok: 'background:rgba(0,196,122,0.1);border:1px solid rgba(0,196,122,0.3);color:var(--rg)',
-    err: 'background:rgba(255,61,90,0.1);border:1px solid rgba(255,61,90,0.3);color:var(--rb)'
-  };
-  const spinner = state === 'running'
-    ? '<span style="width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;display:inline-block;animation:sp .8s linear infinite;flex-shrink:0"></span>'
-    : state === 'ok' ? '<span style="flex-shrink:0">✓</span>' : '<span style="flex-shrink:0">✕</span>';
-  banner.style.cssText = `display:flex;align-items:center;gap:10px;margin:12px 20px 0;padding:11px 14px;border-radius:8px;font-size:12px;font-weight:600;${styles[state]}`;
-  banner.innerHTML = `${spinner}<span>${msg}</span>`;
-}
-
-async function triggerSync() {
-  if (syncInProgress) { toast('A sync is already running. Please wait.', 'err'); return; }
-  syncInProgress = true;
-
-  const headerBtn = document.getElementById('syncBtn');
-  headerBtn.disabled = true; headerBtn.textContent = 'Syncing...';
-  document.getElementById('syncNotice').style.display = 'none';
-  showSyncBanner('running', 'Syncing products from Shopify. This usually takes 10 to 30 seconds, please wait...');
-
-  const startTime = Date.now();
-  try {
-    const res = await fetch(`${API}/price-jobs/products/sync`, {
-      method: 'POST',
-      headers: {'X-Execute-Key': KEY, 'Content-Type': 'application/json'},
-      body: JSON.stringify({client: CLIENT})
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Sync failed');
-    const secs = Math.round((Date.now() - startTime) / 1000);
-    showSyncBanner('ok', `Synced ${data.synced} variants across ${data.products} products in ${secs}s. Filters are now ready.`);
-    await loadFilters();
-    setTimeout(() => showSyncBanner('hide'), 8000);
-  } catch(e) {
-    showSyncBanner('err', 'Sync failed: ' + e.message + '. Try again, or check the connection.');
-  }
-  syncInProgress = false;
-  headerBtn.disabled = false; headerBtn.textContent = '↻ Sync Products';
-}
-
-// ---- UTILS ----
-function closePanel() {
-  editingJobId = null;
-  document.getElementById('rpTitle').textContent = 'Select a job or create new';
-  document.getElementById('rpBody').innerHTML = '<p style="color:var(--mu);font-size:12px;line-height:1.6">Use <strong>+ New Job</strong> to schedule a price change, or click an existing job to view its details.</p>';
-}
-
-function statusClass(s) {
-  return {pending:'sp-pending',running:'sp-running',done:'sp-done',failed:'sp-failed'}[s] || 'sp-pending';
-}
-
-// Convert a wall-clock datetime-local string (e.g. "2026-06-03T13:20") entered for a
-// specific IANA timezone into a correct UTC ISO string. The datetime-local input has
-// no timezone, so we must compute the target zone's offset at that instant and apply it.
-function wallClockToUTC(localStr, timeZone) {
-  // Parse the wall-clock components
-  const [datePart, timePart] = localStr.split('T');
-  const [y, mo, d] = datePart.split('-').map(Number);
-  const [h, mi] = timePart.split(':').map(Number);
-  // Build a UTC timestamp from those components as a first guess
-  const asUTC = Date.UTC(y, mo - 1, d, h, mi, 0);
-  // Find what that instant looks like in the target timezone, to derive the offset
-  const tzDate = new Date(asUTC);
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone, year:'numeric', month:'2-digit', day:'2-digit',
-    hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
-  });
-  const parts = {};
-  for (const p of fmt.formatToParts(tzDate)) parts[p.type] = p.value;
-  // The instant asUTC, shown in the target zone, gives these wall-clock numbers.
-  // The difference between what we wanted and what we got is the offset to correct.
-  let zonedAsUTC = Date.UTC(
-    Number(parts.year), Number(parts.month) - 1, Number(parts.day),
-    Number(parts.hour === '24' ? '0' : parts.hour), Number(parts.minute), Number(parts.second)
-  );
-  const offset = zonedAsUTC - asUTC;
-  return new Date(asUTC - offset).toISOString();
-}
-
-function fmtDt(iso, jobTz) {
-  if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleString('en-AU', {timeZone: jobTz || TZ, day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true});
-  } catch(e) { return iso; }
-}
-
-function fmt$(v) {
-  if (v === null || v === undefined || v === '') return '-';
-  return '$' + parseFloat(v).toFixed(2);
-}
-
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-function toast(msg, type) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'show ' + (type === 'ok' ? 'toast-ok' : type === 'err' ? 'toast-err' : '');
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.className = '', 3500);
-}
+function esc(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function toast(m,t){ const el=document.getElementById('toast'); el.textContent=m; el.className='show '+(t==='ok'?'toast-ok':t==='err'?'toast-err':''); clearTimeout(el._t); el._t=setTimeout(()=>el.className='',3800); }
 
 init();
 </script>
