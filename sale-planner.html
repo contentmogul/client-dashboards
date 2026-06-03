@@ -44,7 +44,7 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
 .btn-danger{background:rgba(255,61,90,0.1);border:1px solid rgba(255,61,90,0.3);color:var(--rb)}.btn-danger:hover{background:var(--rb);color:#fff}
 .btn-sm{padding:5px 10px;font-size:11px}
 
-.status-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+.status-pill{display:inline-flex;align-items:center;justify-content:center;height:20px;padding:0 9px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px;line-height:1;vertical-align:middle}
 .sp-draft{background:var(--sf2);color:var(--mu);border:1px solid var(--bd)}
 .sp-scheduled{background:var(--warn-s);color:var(--warn);border:1px solid rgba(255,136,0,0.3)}
 .sp-live{background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b)}
@@ -53,7 +53,8 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
 .sp-failed{background:rgba(255,61,90,0.1);color:var(--rb);border:1px solid rgba(255,61,90,0.25)}
 .sp-pending{background:var(--warn-s);color:var(--warn);border:1px solid rgba(255,136,0,0.3)}
 .sp-running{background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b)}
-.rule-pill{display:inline-block;padding:1px 7px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;background:var(--shopify-s);color:var(--shopify);border:1px solid var(--shopify-b)}
+/* quiet neutral attribute label, uniform size, no rainbow */
+.attr{display:inline-flex;align-items:center;justify-content:center;height:20px;padding:0 8px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap;line-height:1;background:var(--sf2);color:var(--mu);border:1px solid var(--bd);text-transform:none;letter-spacing:0;vertical-align:middle}
 
 .sec-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;color:var(--mu);margin:0 0 12px;display:flex;align-items:center;gap:8px}
 .sec-lbl::after{content:'';flex:1;height:1px;background:var(--bd)}
@@ -180,6 +181,7 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
     <div class="modal-body" id="jobModalBody"></div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('jobModal')">Cancel</button>
+      <button class="btn btn-primary" id="jobModalFootEdit" style="display:none" onclick="">Edit job</button>
       <button class="btn btn-primary" id="jobSaveBtn" onclick="saveJob()">Save job</button>
     </div>
   </div>
@@ -220,6 +222,12 @@ let editingSaleId = null;
 let editingJobId = null;
 let currentRule = 'percent_discount';
 let lastValidatedSpec = null;
+let collections = [];
+let tags = [];
+let selectedColl = '';      // selected collection id for current job form
+let previewProducts = [];
+let previewTimer = null;
+let variantRows = [];       // per-variant editor rows
 
 const qs = `client=${encodeURIComponent(CLIENT)}&key=${encodeURIComponent(KEY)}`;
 
@@ -231,11 +239,23 @@ async function init(){
     document.getElementById('tzp').textContent=TZ;
     document.getElementById('htitle').textContent=CLIENT.charAt(0).toUpperCase()+CLIENT.slice(1)+' Sale Planner';
     await loadSales();
+    loadFilters();
     document.getElementById('loader').classList.add('gone');
     document.getElementById('app').style.display='block';
   }catch(e){ showErr('Failed to load. Check your URL and try again.'); }
 }
 function showErr(m){ document.getElementById('emsg').textContent=m; document.getElementById('err').classList.add('show'); document.getElementById('loader').classList.add('gone'); }
+
+async function loadFilters(){
+  try{
+    const [c,t]=await Promise.all([
+      fetch(`${API}/price-jobs/products/collections?${qs}`),
+      fetch(`${API}/price-jobs/products/tags?${qs}`)
+    ]);
+    if(c.ok) collections=await c.json();
+    if(t.ok) tags=await t.json();
+  }catch(e){}
+}
 
 async function loadSales(){
   const r=await fetch(`${API}/price-jobs/sales?${qs}`);
@@ -314,21 +334,20 @@ function renderSaleDetail(){
   else{
     html+=applies.map(j=>{
       const rev=revertByLink[j.job_id];
-      return `<div class="job-row">
+      return `<div class="job-row" onclick="viewJob('${j.job_id}')">
         <div class="job-row-top">
-          <div>
+          <div style="flex:1;min-width:0">
             <div class="job-label">${esc(j.label||j.job_name||'Job')}</div>
             <div class="job-detail">
-              <span class="kind-badge kind-apply">apply</span>
-              <span class="rule-pill">${ruleLabel(j.price_rule)}</span>
-              <span class="status-pill sp-${j.status}">${j.status}</span>
-              ${priceDesc(j)}
+              <span class="attr">${ruleLabel(j.price_rule)}</span>
+              <span style="color:var(--mu)">${priceDescPlain(j)}</span>
+              ${rev?`<span class="attr">auto-reverts</span>`:''}
             </div>
-            ${rev?`<div class="job-detail"><span class="kind-badge kind-revert">revert</span><span class="status-pill sp-${rev.status}">${rev.status}</span><span style="color:var(--mu)">restores original prices at revert time</span></div>`:''}
-            ${j.error_message&&j.error_message!=='__DELETED__'?`<div style="margin-top:6px;font-size:10px;color:var(--rb)">${esc(j.error_message)}</div>`:''}
           </div>
+          <span class="status-pill sp-${j.status}">${j.status}</span>
         </div>
-        <div class="job-actions">
+        ${j.error_message&&j.error_message!=='__DELETED__'?`<div style="margin-top:6px;font-size:10px;color:var(--rb)">${esc(j.error_message)}</div>`:''}
+        <div class="job-actions" onclick="event.stopPropagation()">
           ${j.status==='pending'?`<button class="btn btn-secondary btn-sm" onclick="openEditJob('${j.job_id}')">Edit</button>`:''}
           ${j.status==='pending'?`<button class="btn btn-secondary btn-sm" onclick="execNow('${j.job_id}')">Execute now</button>`:''}
           <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.job_id}')">Delete</button>
@@ -339,13 +358,43 @@ function renderSaleDetail(){
   v.innerHTML=html;
 }
 
-function priceDesc(j){
-  if(j.price_rule==='percent_discount') return `<span style="color:var(--mu)">${j.discount_percent}% off</span>`;
-  if(j.price_rule==='fixed') return `<span style="color:var(--mu)">price $${j.new_price}${j.new_compare_at_price?' / compare $'+j.new_compare_at_price:''}</span>`;
-  if(j.price_rule==='compare_only') return `<span style="color:var(--mu)">compare $${j.new_compare_at_price}</span>`;
-  if(j.price_rule==='per_variant'){ let n=0; try{ const vp=typeof j.variant_pricing==='string'?JSON.parse(j.variant_pricing):j.variant_pricing; n=(vp||[]).length; }catch(e){} return `<span style="color:var(--mu)">${n} variants</span>`; }
-  if(j.price_rule==='revert') return `<span style="color:var(--mu)">restore from snapshot</span>`;
+function priceDescPlain(j){
+  if(j.price_rule==='percent_discount') return `${j.discount_percent}% off`;
+  if(j.price_rule==='fixed') return `price $${j.new_price}${j.new_compare_at_price?', compare $'+j.new_compare_at_price:''}`;
+  if(j.price_rule==='compare_only') return `compare $${j.new_compare_at_price}`;
+  if(j.price_rule==='per_variant'){ let n=0; try{ const vp=typeof j.variant_pricing==='string'?JSON.parse(j.variant_pricing):j.variant_pricing; n=(vp||[]).length; }catch(e){} return `${n} variant${n!==1?'s':''}`; }
+  if(j.price_rule==='revert') return `restore from snapshot`;
   return '';
+}
+
+function viewJob(jobId){
+  const j=(currentSale.jobs||[]).find(x=>x.job_id===jobId);
+  if(!j) return;
+  let detail='';
+  if(j.price_rule==='per_variant'){
+    let vp=[]; try{ vp=typeof j.variant_pricing==='string'?JSON.parse(j.variant_pricing):(j.variant_pricing||[]); }catch(e){}
+    detail=`<table class="preview-table" style="margin-top:6px"><thead><tr><th>Variant ID</th><th class="n">Price</th><th class="n">Compare at</th></tr></thead><tbody>`+
+      vp.map(v=>`<tr><td>${esc(v.variant_id)}</td><td class="n">$${Number(v.price).toFixed(2)}</td><td class="n">${v.compare_at!=null?'$'+Number(v.compare_at).toFixed(2):'-'}</td></tr>`).join('')+`</tbody></table>`;
+  }else if(j.price_rule==='percent_discount'){
+    detail=`<div class="hint">${j.discount_percent}% off each matched product. Compare at set to original.</div>`;
+  }else if(j.price_rule==='fixed'){
+    detail=`<div class="hint">Sets price to $${j.new_price}${j.new_compare_at_price?' and compare at to $'+j.new_compare_at_price:''}.</div>`;
+  }else if(j.price_rule==='compare_only'){
+    detail=`<div class="hint">Sets compare at to $${j.new_compare_at_price}. Price unchanged.</div>`;
+  }
+  const tgt=j.target_type==='variants'?'Specific variants':j.target_type==='collection'?('Collection: '+esc(j.target_ids||'')):j.target_type==='product'?('Products: '+esc(j.target_ids||'')):esc(j.target_type||'');
+  document.getElementById('jobModalTitle').textContent='Job details';
+  document.getElementById('jobModalBody').innerHTML=`
+    <div class="field"><label>Label</label><div style="font-size:13px;font-weight:600">${esc(j.label||j.job_name||'')}</div></div>
+    <div class="field"><label>Status</label><div><span class="status-pill sp-${j.status}">${j.status}</span></div></div>
+    <div class="field"><label>Rule</label><div style="font-size:12px">${ruleLabel(j.price_rule)}</div></div>
+    <div class="field"><label>Target</label><div style="font-size:12px">${tgt}</div></div>
+    <div class="field"><label>Detail</label>${detail}</div>
+    ${j.error_message&&j.error_message!=='__DELETED__'?`<div class="field"><label>Error</label><div style="font-size:11px;color:var(--rb)">${esc(j.error_message)}</div></div>`:''}`;
+  document.getElementById('jobSaveBtn').style.display='none';
+  document.getElementById('jobModalFootEdit').style.display=j.status==='pending'?'inline-flex':'none';
+  document.getElementById('jobModalFootEdit').onclick=()=>{ closeModal('jobModal'); openEditJob(jobId); };
+  openModal('jobModal');
 }
 
 /* ---- NEW / EDIT SALE ---- */
@@ -403,8 +452,11 @@ async function deleteSale(saleId){
 
 /* ---- ADD / EDIT JOB ---- */
 function openAddJob(){
-  editingJobId=null; currentRule='percent_discount';
+  editingJobId=null; currentRule='percent_discount'; selectedColl=''; previewProducts=[]; variantRows=[{variant_id:'',price:'',compare_at:''}];
   document.getElementById('jobModalTitle').textContent='Add job';
+  document.getElementById('jobSaveBtn').style.display='inline-flex';
+  document.getElementById('jobSaveBtn').textContent='Save job';
+  document.getElementById('jobModalFootEdit').style.display='none';
   renderJobForm({});
   openModal('jobModal');
 }
@@ -412,85 +464,167 @@ function openEditJob(jobId){
   const j=(currentSale.jobs||[]).find(x=>x.job_id===jobId);
   if(!j) return;
   editingJobId=jobId; currentRule=j.price_rule==='revert'?'percent_discount':j.price_rule;
+  selectedColl=j.target_type==='collection'?(j.target_ids||''):'';
+  previewProducts=[];
+  // load existing variant rows for per_variant
+  if(j.price_rule==='per_variant'){ try{ const vp=typeof j.variant_pricing==='string'?JSON.parse(j.variant_pricing):(j.variant_pricing||[]); variantRows=vp.length?vp.map(v=>({variant_id:v.variant_id,price:v.price,compare_at:v.compare_at})):[{variant_id:'',price:'',compare_at:''}]; }catch(e){ variantRows=[{variant_id:'',price:'',compare_at:''}]; } }
+  else{ variantRows=[{variant_id:'',price:'',compare_at:''}]; }
   document.getElementById('jobModalTitle').textContent='Edit job';
+  document.getElementById('jobSaveBtn').style.display='inline-flex';
+  document.getElementById('jobSaveBtn').textContent='Save changes';
+  document.getElementById('jobModalFootEdit').style.display='none';
   renderJobForm(j);
   openModal('jobModal');
 }
 function renderJobForm(j){
+  const tt=j.target_type||'collection';
   const b=document.getElementById('jobModalBody');
   b.innerHTML=`
     <div class="field"><label>Job label</label><input type="text" id="j-label" placeholder="e.g. 30% off gel singles" value="${esc(j.label||j.job_name||'')}"></div>
     <div class="field"><label>Target type</label>
       <select id="j-target-type" onchange="onJobTargetChange()">
-        <option value="collection">Collection</option>
-        <option value="product">Product IDs</option>
+        <option value="collection">Collection or filter</option>
+        <option value="product">Specific product IDs</option>
+        <option value="variants">Specific variants (per variant pricing)</option>
       </select>
     </div>
-    <div class="field" id="j-coll-wrap"><label>Collection (search)</label><input type="text" id="j-coll" placeholder="Search collections..." oninput="jobCollSearch()"><div id="j-coll-dd"></div></div>
-    <div class="field" id="j-prod-wrap" style="display:none"><label>Product IDs (comma separated)</label><input type="text" id="j-prod" placeholder="10110277026071, ..." value="${j.target_type==='product'?esc(j.target_ids||''):''}"><div class="hint">Bare Shopify product IDs.</div></div>
-    <div class="field" id="j-tag-wrap"><label>Filter by tag (optional)</label><input type="text" id="j-tag" placeholder="tag"></div>
-    <div class="field"><label>Price rule</label>
+    <div id="j-coll-wrap">
+      <div class="field" style="position:relative"><label>Collection</label>
+        <input type="text" id="j-coll-search" placeholder="Search collections..." autocomplete="off" oninput="collAutocomplete()" onfocus="collAutocomplete()">
+        <div id="j-coll-dd" style="position:absolute;left:0;right:0;top:100%;z-index:10;background:var(--sf);border:1px solid var(--bd);border-radius:6px;max-height:180px;overflow:auto;display:none;box-shadow:var(--sh)"></div>
+        <div id="j-coll-chosen" class="hint"></div>
+      </div>
+      <div class="field"><label>Filter by tag (optional)</label><input type="text" id="j-tag" placeholder="tag" oninput="jobPreview()"></div>
+      <div class="field"><label>Text search (optional)</label><input type="text" id="j-q" placeholder="SKU or product name" oninput="jobPreview()"></div>
+    </div>
+    <div id="j-prod-wrap" style="display:none">
+      <div class="field"><label>Product IDs (comma separated)</label><input type="text" id="j-prod" placeholder="10110277026071, ..." value="${tt==='product'?esc(j.target_ids||''):''}"><div class="hint">Bare Shopify product IDs.</div></div>
+    </div>
+    <div id="j-var-wrap" style="display:none">
+      <div class="field"><label>Variant pricing</label><div id="j-var-rows"></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addVariantRow()">+ Add variant</button>
+        <div class="hint">Each variant gets its own exact price and compare at. Used for multi-variant products like Bundle &amp; Save.</div>
+      </div>
+    </div>
+    <div class="field" id="j-rule-wrap"><label>Price rule</label>
       <div class="rule-tabs">
         <button class="rule-tab" data-r="percent_discount" onclick="setJobRule('percent_discount',this)">% Discount</button>
         <button class="rule-tab" data-r="fixed" onclick="setJobRule('fixed',this)">Fixed</button>
         <button class="rule-tab" data-r="compare_only" onclick="setJobRule('compare_only',this)">Compare only</button>
       </div>
       <div id="j-rule-fields" style="margin-top:10px"></div>
-    </div>`;
-  // set selects
-  document.getElementById('j-target-type').value=(j.target_type==='product')?'product':'collection';
+    </div>
+    <div id="j-preview"></div>`;
+  document.getElementById('j-target-type').value=(tt==='product'||tt==='variants')?tt:'collection';
+  if(selectedColl) document.getElementById('j-coll-chosen').textContent='Selected collection: '+selectedColl;
   onJobTargetChange();
-  // activate rule tab
   document.querySelectorAll('#jobModal .rule-tab').forEach(t=>{ if(t.dataset.r===currentRule) t.classList.add('active'); else t.classList.remove('active'); });
   renderJobRuleFields(j);
+  if(j.target_type==='variants') renderVariantRows();
 }
 function onJobTargetChange(){
   const t=document.getElementById('j-target-type').value;
   document.getElementById('j-coll-wrap').style.display=t==='collection'?'block':'none';
-  document.getElementById('j-tag-wrap').style.display=t==='collection'?'block':'none';
   document.getElementById('j-prod-wrap').style.display=t==='product'?'block':'none';
+  document.getElementById('j-var-wrap').style.display=t==='variants'?'block':'none';
+  // per_variant forces the per_variant rule; hide the rule tabs for variants
+  document.getElementById('j-rule-wrap').style.display=t==='variants'?'none':'block';
+  if(t==='variants'){ currentRule='per_variant'; renderVariantRows(); }
+  else if(currentRule==='per_variant'){ currentRule='percent_discount'; document.querySelectorAll('#jobModal .rule-tab').forEach(x=>{ x.classList.toggle('active',x.dataset.r==='percent_discount'); }); renderJobRuleFields({}); }
+  document.getElementById('j-preview').innerHTML='';
 }
-function setJobRule(r,el){ currentRule=r; document.querySelectorAll('#jobModal .rule-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderJobRuleFields({}); }
+function setJobRule(r,el){ currentRule=r; document.querySelectorAll('#jobModal .rule-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderJobRuleFields({}); jobPreview(); }
 function renderJobRuleFields(j){
   const el=document.getElementById('j-rule-fields'); if(!el) return;
   if(currentRule==='percent_discount'){
-    el.innerHTML=`<div class="field-row"><div class="field" style="margin:0"><label>Discount %</label><input type="number" id="j-disc" placeholder="30" value="${j.discount_percent||''}"></div><div class="field" style="margin:0"><label>Compare at</label><select id="j-cmp"><option value="original">Set to original</option><option value="clear">Clear</option></select></div></div>`;
+    el.innerHTML=`<div class="field-row"><div class="field" style="margin:0"><label>Discount %</label><input type="number" id="j-disc" placeholder="30" value="${j.discount_percent||''}" oninput="jobPreview()"></div><div class="field" style="margin:0"><label>Compare at</label><select id="j-cmp"><option value="original">Set to original</option><option value="clear">Clear</option></select></div></div>`;
   }else if(currentRule==='fixed'){
-    el.innerHTML=`<div class="field-row"><div class="field" style="margin:0"><label>New price ($)</label><input type="number" id="j-price" step="0.01" placeholder="57.00" value="${j.new_price||''}"></div><div class="field" style="margin:0"><label>Compare at ($)</label><input type="number" id="j-cmpval" step="0.01" placeholder="95.00" value="${j.new_compare_at_price||''}"></div></div><div class="hint">Single product only. Sets both numbers exactly.</div>`;
+    el.innerHTML=`<div class="field-row"><div class="field" style="margin:0"><label>New price ($)</label><input type="number" id="j-price" step="0.01" placeholder="57.00" value="${j.new_price||''}" oninput="jobPreview()"></div><div class="field" style="margin:0"><label>Compare at ($)</label><input type="number" id="j-cmpval" step="0.01" placeholder="95.00" value="${j.new_compare_at_price||''}" oninput="jobPreview()"></div></div><div class="hint">Single product only. Sets both numbers exactly.</div>`;
   }else if(currentRule==='compare_only'){
-    el.innerHTML=`<div class="field" style="margin:0"><label>Compare at price ($)</label><input type="number" id="j-cmponly" step="0.01" placeholder="95.00" value="${j.new_compare_at_price||''}"></div><div class="hint">Price unchanged, only the struck-through compare changes.</div>`;
+    el.innerHTML=`<div class="field" style="margin:0"><label>Compare at price ($)</label><input type="number" id="j-cmponly" step="0.01" placeholder="95.00" value="${j.new_compare_at_price||''}" oninput="jobPreview()"></div><div class="hint">Price unchanged, only the struck-through compare changes.</div>`;
   }
 }
-let jobCollTimer=null;
-function jobCollSearch(){ /* lightweight: collections loaded on demand could go here; kept simple, user types collection id/title */ }
+
+/* collection autocomplete */
+function collAutocomplete(){
+  const q=(document.getElementById('j-coll-search').value||'').toLowerCase();
+  const dd=document.getElementById('j-coll-dd');
+  const list=q?collections.filter(c=>(c.title||'').toLowerCase().includes(q)):collections.slice(0,30);
+  if(!list.length){ dd.style.display='none'; return; }
+  dd.innerHTML=list.slice(0,30).map(c=>`<div style="padding:7px 10px;font-size:11px;cursor:pointer;border-bottom:1px solid var(--bd)" onmousedown="pickColl('${esc(c.id)}','${esc((c.title||'').replace(/'/g,""))}')">${esc(c.title)}</div>`).join('');
+  dd.style.display='block';
+}
+function pickColl(id,title){ selectedColl=id; document.getElementById('j-coll-search').value=title; document.getElementById('j-coll-chosen').textContent='Selected collection ID: '+id; document.getElementById('j-coll-dd').style.display='none'; jobPreview(); }
+
+/* per-variant row editor */
+function renderVariantRows(){
+  const el=document.getElementById('j-var-rows'); if(!el) return;
+  el.innerHTML=variantRows.map((v,i)=>`<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:center">
+    <input type="text" placeholder="variant ID" value="${esc(v.variant_id||'')}" oninput="updVar(${i},'variant_id',this.value)" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:7px 8px;border-radius:5px;font-size:11px;font-family:'DM Mono',monospace">
+    <input type="number" step="0.01" placeholder="price" value="${v.price!==''&&v.price!=null?v.price:''}" oninput="updVar(${i},'price',this.value)" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:7px 8px;border-radius:5px;font-size:11px">
+    <input type="number" step="0.01" placeholder="compare" value="${v.compare_at!==''&&v.compare_at!=null?v.compare_at:''}" oninput="updVar(${i},'compare_at',this.value)" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:7px 8px;border-radius:5px;font-size:11px">
+    <button class="btn btn-danger btn-sm" onclick="rmVariantRow(${i})" ${variantRows.length<=1?'disabled style=opacity:.4':''}>&times;</button>
+  </div>`).join('');
+}
+function addVariantRow(){ variantRows.push({variant_id:'',price:'',compare_at:''}); renderVariantRows(); }
+function rmVariantRow(i){ if(variantRows.length<=1) return; variantRows.splice(i,1); renderVariantRows(); }
+function updVar(i,k,val){ variantRows[i][k]=val; }
+
+/* live product preview for collection/filter targets */
+function jobPreview(){ clearTimeout(previewTimer); previewTimer=setTimeout(doJobPreview,400); }
+async function doJobPreview(){
+  const t=document.getElementById('j-target-type')?.value;
+  if(t!=='collection'){ document.getElementById('j-preview').innerHTML=''; return; }
+  const tag=(document.getElementById('j-tag')?.value||'').trim();
+  const q=(document.getElementById('j-q')?.value||'').trim();
+  if(!selectedColl && !tag && !q){ document.getElementById('j-preview').innerHTML=''; return; }
+  const p=new URLSearchParams({client:CLIENT,key:KEY,status:'active'});
+  if(q) p.set('q',q); if(selectedColl) p.set('collection_id',selectedColl); if(tag) p.set('tag',tag);
+  try{
+    const r=await fetch(`${API}/price-jobs/products/search?${p}`);
+    if(!r.ok){ return; }
+    previewProducts=await r.json();
+    renderJobPreview();
+  }catch(e){}
+}
+function renderJobPreview(){
+  const el=document.getElementById('j-preview'); if(!el) return;
+  if(!previewProducts.length){ el.innerHTML='<div class="hint" style="margin-top:8px">No products match these filters.</div>'; return; }
+  const show=previewProducts.slice(0,8);
+  const rows=show.map(p=>{
+    const c=calcJobNewPrice(p);
+    const np=c?('$'+Number(c.newPrice).toFixed(2)):'-';
+    return `<tr><td>${esc(p.formatted_product_name||p.product_title||'')}</td><td class="n">$${Number(p.base_price||0).toFixed(2)}</td><td class="n prc-new">${np}</td></tr>`;
+  }).join('');
+  el.innerHTML=`<div class="sec-lbl" style="margin-top:14px">Preview</div><div class="preview-box"><div class="preview-job"><div class="preview-job-head"><span>Matched</span><span class="preview-count">${previewProducts.length} products</span></div><table class="preview-table"><thead><tr><th>Product</th><th class="n">Current</th><th class="n">New price</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+function calcJobNewPrice(product){
+  const orig=parseFloat(product.base_price)||0;
+  if(currentRule==='percent_discount'){ const d=parseFloat(document.getElementById('j-disc')?.value)||0; if(!d) return null; return {newPrice:Math.round(orig*(1-d/100)*100)/100}; }
+  if(currentRule==='fixed'){ const fp=parseFloat(document.getElementById('j-price')?.value); if(!fp) return null; return {newPrice:fp}; }
+  return null;
+}
 
 async function saveJob(){
   const s=currentSale.sale||currentSale;
   const label=document.getElementById('j-label').value.trim();
   if(!label){ toast('Enter a job label.','err'); return; }
   const tt=document.getElementById('j-target-type').value;
-  const body={ label, job_name:label, price_rule:currentRule };
-  if(tt==='collection'){
-    const coll=document.getElementById('j-coll').value.trim();
-    const tag=document.getElementById('j-tag').value.trim();
-    if(!coll && !tag){ toast('Enter a collection or tag.','err'); return; }
-    body.target_type='collection'; body.target_ids=coll;
-    if(tag) body.filter_tag=tag;
+  const body={ label, job_name:label };
+  if(tt==='variants'){
+    const vp=variantRows.map(v=>({variant_id:String(v.variant_id||'').trim(),price:parseFloat(v.price),compare_at:v.compare_at!==''&&v.compare_at!=null?parseFloat(v.compare_at):null})).filter(v=>v.variant_id);
+    if(!vp.length){ toast('Add at least one variant with an ID.','err'); return; }
+    if(vp.some(v=>isNaN(v.price))){ toast('Each variant needs a valid price.','err'); return; }
+    body.target_type='variants'; body.price_rule='per_variant'; body.variant_pricing=vp;
+  }else if(tt==='collection'){
+    if(!selectedColl){ toast('Select a collection.','err'); return; }
+    body.target_type='collection'; body.target_ids=selectedColl; body.price_rule=currentRule;
+    fillRuleBody(body); if(body.__err) return;
   }else{
     const prod=document.getElementById('j-prod').value.trim();
     if(!prod){ toast('Enter product IDs.','err'); return; }
-    body.target_type='product'; body.target_ids=prod;
-  }
-  if(currentRule==='percent_discount'){
-    const d=parseFloat(document.getElementById('j-disc').value); if(!d){ toast('Enter a discount %.','err'); return; }
-    body.discount_percent=d;
-    if(document.getElementById('j-cmp').value==='clear') body.clear_compare_at_price=true;
-  }else if(currentRule==='fixed'){
-    const p=parseFloat(document.getElementById('j-price').value); if(!p){ toast('Enter a price.','err'); return; }
-    body.new_price=p; const c=parseFloat(document.getElementById('j-cmpval').value); if(c) body.new_compare_at_price=c;
-  }else if(currentRule==='compare_only'){
-    const c=parseFloat(document.getElementById('j-cmponly').value); if(!c){ toast('Enter a compare price.','err'); return; }
-    body.new_compare_at_price=c;
+    body.target_type='product'; body.target_ids=prod; body.price_rule=currentRule;
+    fillRuleBody(body); if(body.__err) return;
   }
   const btn=document.getElementById('jobSaveBtn'); btn.disabled=true;
   try{
@@ -503,6 +637,18 @@ async function saveJob(){
     await openSale(s.sale_id);
   }catch(e){ toast('Error: '+e.message,'err'); }
   btn.disabled=false;
+}
+function fillRuleBody(body){
+  if(currentRule==='percent_discount'){
+    const d=parseFloat(document.getElementById('j-disc').value); if(!d){ toast('Enter a discount %.','err'); body.__err=1; return; }
+    body.discount_percent=d; if(document.getElementById('j-cmp').value==='clear') body.clear_compare_at_price=true;
+  }else if(currentRule==='fixed'){
+    const p=parseFloat(document.getElementById('j-price').value); if(!p){ toast('Enter a price.','err'); body.__err=1; return; }
+    body.new_price=p; const c=parseFloat(document.getElementById('j-cmpval').value); if(c) body.new_compare_at_price=c;
+  }else if(currentRule==='compare_only'){
+    const c=parseFloat(document.getElementById('j-cmponly').value); if(!c){ toast('Enter a compare price.','err'); body.__err=1; return; }
+    body.new_compare_at_price=c;
+  }
 }
 async function deleteJob(jobId){
   if(!confirm('Delete this job?')) return;
@@ -557,13 +703,18 @@ function renderBulkPreview(d){
   el.innerHTML=`<div class="sec-lbl" style="margin-top:16px">Preview</div><div class="preview-box">`+jobs.map(j=>{
     const errs=(j.errors||[]);
     let rows='';
-    (j.sample||[]).slice(0,8).forEach(p=>{
-      rows+=`<tr><td>${esc(p.product_title||p.title||p.name||'')}</td><td class="n">${p.current_price!=null?'$'+p.current_price:'-'}</td><td class="n prc-new">${p.proposed_price!=null?'$'+p.proposed_price:'-'}</td></tr>`;
+    (j.sample||[]).slice(0,10).forEach(p=>{
+      const name=esc((p.product_title||'')+(p.variant_title&&p.variant_title!=='Default Title'?(' / '+p.variant_title):''));
+      const curP=p.current_price!=null?'$'+Number(p.current_price).toFixed(2):'-';
+      const newP=p.proposed_price!=null?'$'+Number(p.proposed_price).toFixed(2):'-';
+      const curC=p.current_compare_at!=null?'$'+Number(p.current_compare_at).toFixed(2):'-';
+      const newC=p.proposed_compare_at!=null?'$'+Number(p.proposed_compare_at).toFixed(2):'-';
+      rows+=`<tr><td>${name}</td><td class="n">${curP}</td><td class="n prc-new">${newP}</td><td class="n">${curC}</td><td class="n prc-new">${newC}</td></tr>`;
     });
     return `<div class="preview-job">
       <div class="preview-job-head"><span>${esc(j.label||'Job')}</span><span class="preview-count">${j.resolved_count!=null?j.resolved_count:'?'} products</span></div>
       ${errs.length?`<div class="preview-err">${errs.map(esc).join('<br>')}</div>`:''}
-      ${rows?`<table class="preview-table"><thead><tr><th>Product</th><th class="n">Current</th><th class="n">Proposed</th></tr></thead><tbody>${rows}</tbody></table>`:''}
+      ${rows?`<table class="preview-table"><thead><tr><th>Product</th><th class="n">Price now</th><th class="n">Price new</th><th class="n">Compare now</th><th class="n">Compare new</th></tr></thead><tbody>${rows}</tbody></table>`:''}
     </div>`;
   }).join('')+`</div>`;
 }
