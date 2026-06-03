@@ -55,6 +55,14 @@ header{background:var(--hd);color:var(--hfg);padding:12px 20px;display:flex;alig
 .sp-running{background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b)}
 /* quiet neutral attribute label, uniform size, no rainbow */
 .attr{display:inline-flex;align-items:center;justify-content:center;height:20px;padding:0 8px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap;line-height:1;background:var(--sf2);color:var(--mu);border:1px solid var(--bd);text-transform:none;letter-spacing:0;vertical-align:middle}
+.dd-pop{position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--sf);border:1px solid var(--bd);border-radius:6px;max-height:200px;overflow:auto;display:none;box-shadow:var(--sh);margin-top:2px}
+.dd-item{padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--bd)}
+.dd-item:last-child{border-bottom:none}
+.dd-item:hover{background:var(--hv)}
+.dd-item .sub{font-size:10px;color:var(--mu);font-family:'DM Mono',monospace}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--cm-s);color:var(--cm);border:1px solid var(--cm-b);border-radius:6px;padding:4px 8px;font-size:11px;margin:0 6px 6px 0}
+.chip .cx{cursor:pointer;font-weight:700}
+.chip .cid{font-family:'DM Mono',monospace;font-size:9px;opacity:.7}
 
 .sec-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;color:var(--mu);margin:0 0 12px;display:flex;align-items:center;gap:8px}
 .sec-lbl::after{content:'';flex:1;height:1px;background:var(--bd)}
@@ -246,6 +254,14 @@ async function init(){
 }
 function showErr(m){ document.getElementById('emsg').textContent=m; document.getElementById('err').classList.add('show'); document.getElementById('loader').classList.add('gone'); }
 
+// Close any open search dropdown when clicking outside its field
+document.addEventListener('mousedown', e=>{
+  ['j-coll-dd','j-prod-dd','j-var-dd'].forEach(id=>{
+    const dd=document.getElementById(id);
+    if(dd && dd.style.display==='block' && !dd.parentElement.contains(e.target)){ dd.style.display='none'; }
+  });
+});
+
 async function loadFilters(){
   try{
     const [c,t]=await Promise.all([
@@ -359,12 +375,17 @@ function renderSaleDetail(){
 }
 
 function priceDescPlain(j){
-  if(j.price_rule==='percent_discount') return `${j.discount_percent}% off`;
-  if(j.price_rule==='fixed') return `price $${j.new_price}${j.new_compare_at_price?', compare $'+j.new_compare_at_price:''}`;
-  if(j.price_rule==='compare_only') return `compare $${j.new_compare_at_price}`;
-  if(j.price_rule==='per_variant'){ let n=0; try{ const vp=typeof j.variant_pricing==='string'?JSON.parse(j.variant_pricing):j.variant_pricing; n=(vp||[]).length; }catch(e){} return `${n} variant${n!==1?'s':''}`; }
-  if(j.price_rule==='revert') return `restore from snapshot`;
-  return '';
+  let base='';
+  if(j.price_rule==='percent_discount') base=`${j.discount_percent}% off`;
+  else if(j.price_rule==='fixed') base=`price $${j.new_price}${j.new_compare_at_price?', compare $'+j.new_compare_at_price:''}`;
+  else if(j.price_rule==='compare_only') base=`compare $${j.new_compare_at_price}`;
+  else if(j.price_rule==='per_variant'){ let n=0; try{ const vp=typeof j.variant_pricing==='string'?JSON.parse(j.variant_pricing):j.variant_pricing; n=(vp||[]).length; }catch(e){} base=`${n} variant${n!==1?'s':''}`; }
+  else if(j.price_rule==='revert') base=`restore from snapshot`;
+  // append target context
+  let tgt='';
+  if(j.target_type==='collection'){ const c=collections.find(x=>String(x.id)===String(j.target_ids)); tgt=c?(' . '+c.title):(' . collection '+(j.target_ids||'')); }
+  else if(j.target_type==='product'){ const ids=String(j.target_ids||'').split(',').filter(Boolean); tgt=` . ${ids.length} product${ids.length!==1?'s':''}`; }
+  return base+tgt;
 }
 
 function viewJob(jobId){
@@ -452,7 +473,7 @@ async function deleteSale(saleId){
 
 /* ---- ADD / EDIT JOB ---- */
 function openAddJob(){
-  editingJobId=null; currentRule='percent_discount'; selectedColl=''; previewProducts=[]; variantRows=[{variant_id:'',price:'',compare_at:''}];
+  editingJobId=null; currentRule='percent_discount'; selectedColl=''; selectedProducts=[]; previewProducts=[]; variantRows=[{variant_id:'',price:'',compare_at:''}];
   document.getElementById('jobModalTitle').textContent='Add job';
   document.getElementById('jobSaveBtn').style.display='inline-flex';
   document.getElementById('jobSaveBtn').textContent='Save job';
@@ -465,6 +486,8 @@ function openEditJob(jobId){
   if(!j) return;
   editingJobId=jobId; currentRule=j.price_rule==='revert'?'percent_discount':j.price_rule;
   selectedColl=j.target_type==='collection'?(j.target_ids||''):'';
+  selectedProducts=[];
+  if(j.target_type==='product'&&j.target_ids){ selectedProducts=String(j.target_ids).split(',').map(id=>id.trim()).filter(Boolean).map(id=>({id,title:'Product '+id})); }
   previewProducts=[];
   // load existing variant rows for per_variant
   if(j.price_rule==='per_variant'){ try{ const vp=typeof j.variant_pricing==='string'?JSON.parse(j.variant_pricing):(j.variant_pricing||[]); variantRows=vp.length?vp.map(v=>({variant_id:v.variant_id,price:v.price,compare_at:v.compare_at})):[{variant_id:'',price:'',compare_at:''}]; }catch(e){ variantRows=[{variant_id:'',price:'',compare_at:''}]; } }
@@ -490,20 +513,32 @@ function renderJobForm(j){
     </div>
     <div id="j-coll-wrap">
       <div class="field" style="position:relative"><label>Collection</label>
-        <input type="text" id="j-coll-search" placeholder="Search collections..." autocomplete="off" oninput="collAutocomplete()" onfocus="collAutocomplete()">
-        <div id="j-coll-dd" style="position:absolute;left:0;right:0;top:100%;z-index:10;background:var(--sf);border:1px solid var(--bd);border-radius:6px;max-height:180px;overflow:auto;display:none;box-shadow:var(--sh)"></div>
+        <input type="text" id="j-coll-search" placeholder="Search collections by name..." autocomplete="off" oninput="collAutocomplete()" onfocus="collAutocomplete()">
+        <div id="j-coll-dd" class="dd-pop"></div>
         <div id="j-coll-chosen" class="hint"></div>
       </div>
       <div class="field"><label>Filter by tag (optional)</label><input type="text" id="j-tag" placeholder="tag" oninput="jobPreview()"></div>
       <div class="field"><label>Text search (optional)</label><input type="text" id="j-q" placeholder="SKU or product name" oninput="jobPreview()"></div>
     </div>
     <div id="j-prod-wrap" style="display:none">
-      <div class="field"><label>Product IDs (comma separated)</label><input type="text" id="j-prod" placeholder="10110277026071, ..." value="${tt==='product'?esc(j.target_ids||''):''}"><div class="hint">Bare Shopify product IDs.</div></div>
+      <div class="field" style="position:relative"><label>Product (search by name)</label>
+        <input type="text" id="j-prod-search" placeholder="Search products by name..." autocomplete="off" oninput="prodAutocomplete()" onfocus="prodAutocomplete()">
+        <div id="j-prod-dd" class="dd-pop"></div>
+        <div id="j-prod-chosen" style="margin-top:8px"></div>
+      </div>
     </div>
     <div id="j-var-wrap" style="display:none">
-      <div class="field"><label>Variant pricing</label><div id="j-var-rows"></div>
-        <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addVariantRow()">+ Add variant</button>
-        <div class="hint">Each variant gets its own exact price and compare at. Used for multi-variant products like Bundle &amp; Save.</div>
+      <div class="field" style="position:relative"><label>Find product, then pick variants</label>
+        <input type="text" id="j-var-search" placeholder="Search products by name..." autocomplete="off" oninput="varAutocomplete()" onfocus="varAutocomplete()">
+        <div id="j-var-dd" class="dd-pop"></div>
+      </div>
+      <div class="field"><label>Variant pricing</label>
+        <div id="j-var-head" style="display:none;grid-template-columns:1.6fr 1fr 1fr auto;gap:6px;margin-bottom:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--mu)">
+          <div>Variant</div><div>Price ($)</div><div>Compare ($)</div><div></div>
+        </div>
+        <div id="j-var-rows"></div>
+        <div class="hint">Search a product above to add its variants, or add a blank row to enter a variant ID manually. Each variant gets its own exact price and compare at.</div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addVariantRow()">+ Add blank row</button>
       </div>
     </div>
     <div class="field" id="j-rule-wrap"><label>Price rule</label>
@@ -516,7 +551,8 @@ function renderJobForm(j){
     </div>
     <div id="j-preview"></div>`;
   document.getElementById('j-target-type').value=(tt==='product'||tt==='variants')?tt:'collection';
-  if(selectedColl) document.getElementById('j-coll-chosen').textContent='Selected collection: '+selectedColl;
+  if(selectedColl){ const c=collections.find(x=>String(x.id)===String(selectedColl)); const title=c?c.title:('Collection '+selectedColl); document.getElementById('j-coll-search').value=title; document.getElementById('j-coll-chosen').innerHTML='<span class="chip">'+esc(title)+' <span class="cid">'+esc(selectedColl)+'</span></span>'; }
+  renderSelectedProducts();
   onJobTargetChange();
   document.querySelectorAll('#jobModal .rule-tab').forEach(t=>{ if(t.dataset.r===currentRule) t.classList.add('active'); else t.classList.remove('active'); });
   renderJobRuleFields(j);
@@ -545,21 +581,81 @@ function renderJobRuleFields(j){
   }
 }
 
-/* collection autocomplete */
+/* ---- COLLECTION title search ---- */
 function collAutocomplete(){
   const q=(document.getElementById('j-coll-search').value||'').toLowerCase();
   const dd=document.getElementById('j-coll-dd');
-  const list=q?collections.filter(c=>(c.title||'').toLowerCase().includes(q)):collections.slice(0,30);
+  const list=q?collections.filter(c=>(c.title||'').toLowerCase().includes(q)):collections.slice(0,40);
   if(!list.length){ dd.style.display='none'; return; }
-  dd.innerHTML=list.slice(0,30).map(c=>`<div style="padding:7px 10px;font-size:11px;cursor:pointer;border-bottom:1px solid var(--bd)" onmousedown="pickColl('${esc(c.id)}','${esc((c.title||'').replace(/'/g,""))}')">${esc(c.title)}</div>`).join('');
+  dd.innerHTML=list.slice(0,40).map(c=>`<div class="dd-item" onmousedown="pickColl('${esc(c.id)}',&quot;${esc((c.title||'').replace(/"/g,''))}&quot;)">${esc(c.title)}<div class="sub">ID ${esc(c.id)}</div></div>`).join('');
   dd.style.display='block';
 }
-function pickColl(id,title){ selectedColl=id; document.getElementById('j-coll-search').value=title; document.getElementById('j-coll-chosen').textContent='Selected collection ID: '+id; document.getElementById('j-coll-dd').style.display='none'; jobPreview(); }
+function pickColl(id,title){ selectedColl=id; document.getElementById('j-coll-search').value=title; document.getElementById('j-coll-chosen').innerHTML='<span class="chip">'+esc(title)+' <span class="cid">'+esc(id)+'</span></span>'; document.getElementById('j-coll-dd').style.display='none'; jobPreview(); }
 
-/* per-variant row editor */
+/* ---- PRODUCT title search (multi-select) ---- */
+let selectedProducts=[]; // [{id,title}]
+let prodSearchTimer=null;
+function prodAutocomplete(){ clearTimeout(prodSearchTimer); prodSearchTimer=setTimeout(()=>doProdSearch('j-prod-search','j-prod-dd',pickProduct),300); }
+function varAutocomplete(){ clearTimeout(prodSearchTimer); prodSearchTimer=setTimeout(()=>doProdSearch('j-var-search','j-var-dd',pickVariantProduct,true),300); }
+async function doProdSearch(inputId,ddId,onPick,wantVariants){
+  const q=(document.getElementById(inputId).value||'').trim();
+  const dd=document.getElementById(ddId);
+  if(q.length<2){ dd.style.display='none'; return; }
+  const p=new URLSearchParams({client:CLIENT,key:KEY,status:'active',q});
+  try{
+    const r=await fetch(`${API}/price-jobs/products/search?${p}`);
+    if(!r.ok){ dd.style.display='none'; return; }
+    const rows=await r.json();
+    if(!rows.length){ dd.innerHTML='<div class="dd-item" style="cursor:default;color:var(--mu)">No matches</div>'; dd.style.display='block'; return; }
+    if(wantVariants){
+      // show each row as a variant if variant fields exist, else as a product
+      dd.innerHTML=rows.slice(0,40).map(r=>{
+        const vid=r.shopify_variant_id||'';
+        const vt=r.variant_title&&r.variant_title!=='Default Title'?(' / '+r.variant_title):'';
+        const name=(r.product_title||r.formatted_product_name||'')+vt;
+        const price=r.base_price!=null?(' . $'+Number(r.base_price).toFixed(2)):'';
+        return `<div class="dd-item" onmousedown='pickVariantProduct(${JSON.stringify({vid:String(vid),pid:String(r.shopify_product_id||''),name:name,price:r.base_price,compare:r.compare_at_price}).replace(/'/g,"&#39;")})'>${esc(name)}${price}<div class="sub">${vid?('variant '+esc(String(vid))):('product '+esc(String(r.shopify_product_id||'')))}</div></div>`;
+      }).join('');
+    }else{
+      // dedupe by product
+      const seen={}; const prods=[];
+      rows.forEach(r=>{ const id=String(r.shopify_product_id||''); if(id&&!seen[id]){ seen[id]=1; prods.push({id,title:r.product_title||r.formatted_product_name||id}); } });
+      dd.innerHTML=prods.slice(0,40).map(pr=>`<div class="dd-item" onmousedown='pickProduct(${JSON.stringify(pr).replace(/'/g,"&#39;")})'>${esc(pr.title)}<div class="sub">ID ${esc(pr.id)}</div></div>`).join('');
+    }
+    dd.style.display='block';
+  }catch(e){ dd.style.display='none'; }
+}
+function pickProduct(pr){
+  if(!selectedProducts.some(x=>x.id===pr.id)) selectedProducts.push(pr);
+  document.getElementById('j-prod-search').value='';
+  document.getElementById('j-prod-dd').style.display='none';
+  renderSelectedProducts();
+}
+function renderSelectedProducts(){
+  const el=document.getElementById('j-prod-chosen'); if(!el) return;
+  el.innerHTML=selectedProducts.map((p,i)=>`<span class="chip">${esc(p.title)} <span class="cid">${esc(p.id)}</span> <span class="cx" onclick="rmProduct(${i})">&times;</span></span>`).join('');
+}
+function rmProduct(i){ selectedProducts.splice(i,1); renderSelectedProducts(); }
+
+function pickVariantProduct(v){
+  // add or fill a variant row from a picked variant
+  if(!v.vid){ toast('That result has no variant ID. The search may be product-level only.','err'); return; }
+  // fill first empty row or push new
+  const empty=variantRows.findIndex(r=>!r.variant_id);
+  const row={variant_id:String(v.vid),price:'',compare_at:'',name:v.name};
+  if(empty>=0) variantRows[empty]=row; else variantRows.push(row);
+  document.getElementById('j-var-search').value='';
+  document.getElementById('j-var-dd').style.display='none';
+  renderVariantRows();
+}
+
+/* per-variant row editor with labels and names */
 function renderVariantRows(){
   const el=document.getElementById('j-var-rows'); if(!el) return;
-  el.innerHTML=variantRows.map((v,i)=>`<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:center">
+  const head=document.getElementById('j-var-head'); if(head) head.style.display=variantRows.length?'grid':'none';
+  el.innerHTML=variantRows.map((v,i)=>`
+    ${v.name?`<div style="font-size:10px;color:var(--mu);margin:2px 0">${esc(v.name)}</div>`:''}
+    <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center">
     <input type="text" placeholder="variant ID" value="${esc(v.variant_id||'')}" oninput="updVar(${i},'variant_id',this.value)" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:7px 8px;border-radius:5px;font-size:11px;font-family:'DM Mono',monospace">
     <input type="number" step="0.01" placeholder="price" value="${v.price!==''&&v.price!=null?v.price:''}" oninput="updVar(${i},'price',this.value)" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:7px 8px;border-radius:5px;font-size:11px">
     <input type="number" step="0.01" placeholder="compare" value="${v.compare_at!==''&&v.compare_at!=null?v.compare_at:''}" oninput="updVar(${i},'compare_at',this.value)" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx);padding:7px 8px;border-radius:5px;font-size:11px">
@@ -621,9 +717,8 @@ async function saveJob(){
     body.target_type='collection'; body.target_ids=selectedColl; body.price_rule=currentRule;
     fillRuleBody(body); if(body.__err) return;
   }else{
-    const prod=document.getElementById('j-prod').value.trim();
-    if(!prod){ toast('Enter product IDs.','err'); return; }
-    body.target_type='product'; body.target_ids=prod; body.price_rule=currentRule;
+    if(!selectedProducts.length){ toast('Search and select at least one product.','err'); return; }
+    body.target_type='product'; body.target_ids=selectedProducts.map(p=>p.id).join(','); body.price_rule=currentRule;
     fillRuleBody(body); if(body.__err) return;
   }
   const btn=document.getElementById('jobSaveBtn'); btn.disabled=true;
