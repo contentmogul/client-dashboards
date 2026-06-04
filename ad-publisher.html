@@ -15,6 +15,29 @@
     --border: #2e2e3e;
     --text: #f0f0f5;
     --text-muted: #888899;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f4f4f8;
+      --surface: #ffffff;
+      --surface2: #f0f0f5;
+      --border: #e0e0ea;
+      --text: #111118;
+      --text-muted: #666677;
+    }
+    input, select, textarea { color: #111118; }
+    select option { background: #ffffff; color: #111118; }
+  }
+  :root.light {
+    --bg: #f4f4f8;
+    --surface: #ffffff;
+    --surface2: #f0f0f5;
+    --border: #e0e0ea;
+    --text: #111118;
+    --text-muted: #666677;
+  }
+  :root.light input, :root.light select, :root.light textarea { color: #111118; }
+  :root.light select option { background: #ffffff; color: #111118; }
     --success: #22c55e;
     --warning: #f59e0b;
     --error: #ef4444;
@@ -131,8 +154,8 @@
   /* Inline status */
   .status-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
 
-  /* Auth warning */
-  .auth-warning { background: #2a1a1a; border: 1px solid #5a2020; border-radius: 8px; padding: 14px 18px; color: #f87171; font-size: 13px; margin-bottom: 20px; }
+  .theme-toggle { background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; color: var(--text-muted); cursor: pointer; font-size: 12px; }
+  .theme-toggle:hover { background: var(--surface2); } background: #2a1a1a; border: 1px solid #5a2020; border-radius: 8px; padding: 14px 18px; color: #f87171; font-size: 13px; margin-bottom: 20px; }
 
   /* Dropdown loading state */
   select:disabled { opacity: 0.5; }
@@ -149,7 +172,9 @@
   <div class="header-logo">Content Mogul</div>
   <div class="header-divider"></div>
   <div class="header-client" id="headerClient">Loading...</div>
-  <div class="header-meta" id="headerMeta"></div>
+  <div class="header-meta" id="headerMeta">
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☀️ Light</button>
+  </div>
 </div>
 
 <div class="main">
@@ -320,8 +345,29 @@ const state = {
   queuedIds: new Set(),
 };
 
+// ─── Theme ────────────────────────────────────────────────────────────────────
+function initTheme() {
+  const saved = localStorage.getItem('cm_theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = saved ? saved === 'dark' : prefersDark;
+  applyTheme(isDark ? 'dark' : 'light');
+}
+function applyTheme(theme) {
+  const root = document.documentElement;
+  if (theme === 'light') { root.classList.add('light'); }
+  else { root.classList.remove('light'); }
+  const btn = document.getElementById('themeBtn');
+  if (btn) btn.textContent = theme === 'light' ? '🌙 Dark' : '☀️ Light';
+  localStorage.setItem('cm_theme', theme);
+}
+function toggleTheme() {
+  const isLight = document.documentElement.classList.contains('light');
+  applyTheme(isLight ? 'dark' : 'light');
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
+  initTheme();
   const params = new URLSearchParams(window.location.search);
   state.clientSlug = params.get('client') || '';
   state.clientKey  = params.get('key') || '';
@@ -335,17 +381,34 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 async function loadClientConfig() {
   try {
-    const res = await fetch(`${API_BASE}/clients`);
-    if (!res.ok) throw new Error(`/clients returned ${res.status}`);
-    const clients = await res.json();
-    const match = clients.find(c => c.id === state.clientSlug && c.client_key === state.clientKey);
-    if (!match) {
-      showAuthWarning('Client not found or key mismatch.');
+    // Same auth pattern as the reporting dashboard:
+    // Pass client slug and key as query params to Cloud Run.
+    // Cloud Run validates the key server-side against BigQuery client_config.
+    const res = await fetch(
+      `${API_BASE}/client-config?client=${encodeURIComponent(state.clientSlug)}&key=${encodeURIComponent(state.clientKey)}`
+    );
+    if (res.status === 401 || res.status === 403) {
+      showAuthWarning('Authentication failed. Check your key parameter in the URL.');
       return;
     }
-    state.client = match;
-    renderHeader(match);
-    await resolveMetaToken(match.meta_token_secret_name);
+    if (res.status === 404) {
+      showAuthWarning(`Client "${state.clientSlug}" not found.`);
+      return;
+    }
+    if (!res.ok) throw new Error(`Config endpoint returned ${res.status}`);
+
+    const data = await res.json();
+    // Normalise field names — may be client_config row or wrapped object
+    const c = data.config || data;
+    state.client = {
+      client_name:       c.client_name || c.client_slug || state.clientSlug,
+      ad_account_id:     c.meta_account_id || c.ad_account_id || '',
+      fb_page_id:        c.meta_page_id || c.fb_page_id || '',
+      instagram_user_id: c.meta_instagram_id || c.instagram_user_id || null,
+      meta_token_secret_name: c.meta_token_secret_name || null,
+    };
+    renderHeader(state.client);
+    await resolveMetaToken(state.client.meta_token_secret_name);
     loadCampaigns();
   } catch (e) {
     showAuthWarning(`Failed to load client config: ${e.message}`);
@@ -353,12 +416,14 @@ async function loadClientConfig() {
 }
 
 function renderHeader(c) {
-  document.getElementById('headerClient').textContent = c.client_name || state.clientSlug;
+  document.getElementById('headerClient').textContent = c.client_name;
   const meta = document.getElementById('headerMeta');
+  const tokenDot = state.metaToken ? 'status-dot' : 'status-dot warn';
   meta.innerHTML = `
-    <div class="meta-chip"><div class="status-dot"></div> Meta Connected</div>
-    <div class="meta-chip">Act <span>${c.ad_account_id}</span></div>
+    <div class="meta-chip"><div class="${tokenDot}"></div> Meta</div>
+    <div class="meta-chip">Act <span>${c.ad_account_id || 'N/A'}</span></div>
     ${c.instagram_user_id ? `<div class="meta-chip">IG <span>${c.instagram_user_id}</span></div>` : ''}
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☀️ Light</button>
   `;
 }
 
