@@ -536,18 +536,18 @@ function renderFileSummary(files) {
 // For now, folder browsing calls are routed through Cloud Run for auth.
 
 async function driveFolders(parentId) {
-  const res = await fetch(`${API_BASE}/drive/folders?parent_id=${parentId}`, {
-    headers: { 'x-client-key': state.clientKey, 'x-client-slug': state.clientSlug }
-  });
+  const res = await fetch(
+    `${API_BASE}/drive/folders?parent_id=${parentId}&client=${state.clientSlug}&key=${state.clientKey}`
+  );
   if (!res.ok) throw new Error(`Drive folder fetch failed: ${res.status}`);
   const data = await res.json();
   return data.folders || [];
 }
 
 async function driveFiles(folderId) {
-  const res = await fetch(`${API_BASE}/drive/files?folder_id=${folderId}`, {
-    headers: { 'x-client-key': state.clientKey, 'x-client-slug': state.clientSlug }
-  });
+  const res = await fetch(
+    `${API_BASE}/drive/files?folder_id=${folderId}&client=${state.clientSlug}&key=${state.clientKey}`
+  );
   if (!res.ok) throw new Error(`Drive file fetch failed: ${res.status}`);
   const data = await res.json();
   return data.files || [];
