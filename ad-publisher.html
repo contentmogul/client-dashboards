@@ -417,7 +417,7 @@ async function loadCampaigns() {
   const sel = document.getElementById('campaignSelect');
   sel.innerHTML = '<option>Loading campaigns...</option>'; sel.disabled = true;
   try {
-    const res = await fetch(`${API_BASE}/meta/campaigns?${authQS()}`);
+    const res = await fetch(`${API_BASE}/meta/campaigns?client_id=${encodeURIComponent(state.clientSlug)}&${authQS()}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || `Campaigns returned ${res.status}`);
     const c = data.campaigns || data.data || (Array.isArray(data) ? data : []);
@@ -434,7 +434,7 @@ async function loadAdSets() {
   if (!cid) { sel.innerHTML = '<option value="">Select ad set...</option>'; sel.disabled = true; return; }
   sel.innerHTML = '<option>Loading ad sets...</option>'; sel.disabled = true;
   try {
-    const res = await fetch(`${API_BASE}/meta/adsets?${authQS()}&campaign_id=${encodeURIComponent(cid)}`);
+    const res = await fetch(`${API_BASE}/meta/adsets?client_id=${encodeURIComponent(state.clientSlug)}&${authQS()}&campaign_id=${encodeURIComponent(cid)}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || `Ad sets returned ${res.status}`);
     const s = data.adsets || data.data || (Array.isArray(data) ? data : []);
