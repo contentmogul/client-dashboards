@@ -100,12 +100,13 @@
   .auth-warning { background: #2a1a1a; border: 1px solid #5a2020; border-radius: 8px; padding: 14px 18px; color: #f87171; font-size: 13px; margin-bottom: 20px; }
   @media (prefers-color-scheme: light) { .auth-warning { background: #fef2f2; border-color: #fecaca; color: #b91c1c; } }
   select:disabled { opacity: 0.5; }
-  .activity-toggle { position: fixed; bottom: 16px; right: 16px; z-index: 150; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
-  .activity-panel { position: fixed; bottom: 0; right: 0; width: 420px; max-width: 90vw; height: 320px; background: var(--surface); border: 1px solid var(--border); border-top-left-radius: 12px; z-index: 250; transform: translateY(100%); transition: transform 0.2s ease; display: flex; flex-direction: column; box-shadow: 0 -4px 24px rgba(0,0,0,0.3); }
-  .activity-panel.open { transform: translateY(0); }
-  .activity-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-  .activity-head button { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; }
-  .activity-feed { flex: 1; overflow-y: auto; padding: 10px 14px; font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.6; }
+  .activity-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+  .activity-toggle { width: 100%; background: transparent; border: none; padding: 14px 20px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+  .activity-toggle .chev { transition: transform 0.2s ease; font-size: 11px; }
+  .activity-card.open .activity-toggle .chev { transform: rotate(180deg); }
+  .activity-panel { max-height: 0; overflow: hidden; transition: max-height 0.2s ease; }
+  .activity-card.open .activity-panel { max-height: 360px; }
+  .activity-feed { max-height: 340px; overflow-y: auto; padding: 4px 20px 16px; font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.6; }
   .log-line { display: flex; gap: 8px; padding: 2px 0; }
   .log-time { color: var(--text-muted); flex-shrink: 0; }
   .log-tag { font-weight: 700; flex-shrink: 0; width: 56px; }
@@ -120,11 +121,6 @@
 <body>
 
 <div class="toast-container" id="toastContainer"></div>
-<button class="activity-toggle" onclick="toggleActivity()">Activity Log</button>
-<div class="activity-panel" id="activityPanel">
-  <div class="activity-head"><span>Activity Log</span><button onclick="toggleActivity()">&times;</button></div>
-  <div class="activity-feed" id="activityFeed"></div>
-</div>
 
 <div class="header">
   <div class="header-logo">Content Mogul</div>
@@ -186,6 +182,11 @@
       <div class="media-grid" id="mediaGrid"></div>
     </div>
   </div>
+
+  <div class="activity-card" id="activityCard">
+    <button class="activity-toggle" onclick="toggleActivity()"><span>Activity Log</span><span class="chev">&#9662;</span></button>
+    <div class="activity-panel"><div class="activity-feed" id="activityFeed"></div></div>
+  </div>
 </div>
 
 <div class="publish-footer" id="publishFooter">
@@ -198,8 +199,7 @@
 
 <script>
 const API_BASE = 'https://publish.getcontentmogul.com';
-const META_GRAPH = 'https://graph.facebook.com/v22.0';
-const state = { clientSlug:'', clientKey:'', client:null, metaToken:null, topFolderId:null, offerFolders:[], batchFolders:[], selectedBatchId:null, selectedBatchName:'', ingestedFiles:[], mediaRecords:[], queuedIds:new Set(), lastPackageId:null };
+const state = { clientSlug:'', clientKey:'', client:null, metaConnected:false, topFolderId:null, offerFolders:[], batchFolders:[], selectedBatchId:null, selectedBatchName:'', ingestedFiles:[], mediaRecords:[], queuedIds:new Set(), lastPackageId:null };
 
 function authQS() { return `client=${encodeURIComponent(state.clientSlug)}&key=${encodeURIComponent(state.clientKey)}`; }
 
@@ -221,7 +221,7 @@ function logActivity(tag, msg) {
   line.innerHTML = `<span class="log-time">${t}</span><span class="log-tag ${tag.toLowerCase()}">${tag}</span><span class="log-msg">${msg}</span>`;
   feed.appendChild(line); feed.scrollTop = feed.scrollHeight;
 }
-function toggleActivity() { document.getElementById('activityPanel').classList.toggle('open'); }
+function toggleActivity() { document.getElementById('activityCard').classList.toggle('open'); }
 
 function initTheme() {
   const saved = localStorage.getItem('cm_theme');
@@ -248,21 +248,14 @@ async function loadClientConfig() {
     state.client = { client_name: c.client_name || state.clientSlug, ad_account_id: c.meta_account_id || '', fb_page_id: c.meta_page_id || '', instagram_user_id: c.meta_instagram_id || null };
     renderHeader(state.client);
     logActivity('SUCCESS', `Loaded config for ${state.client.client_name}.`);
-    resolveMetaToken(); loadCampaigns();
+    loadCampaigns();
   } catch (e) { showAuthWarning(`Failed to load client config: ${e.message}`); logActivity('ERROR', e.message); }
 }
 
 function renderHeader(c) {
   document.getElementById('headerClient').textContent = c.client_name;
-  const dot = state.metaToken ? 'status-dot' : 'status-dot warn';
+  const dot = state.metaConnected ? 'status-dot' : 'status-dot warn';
   document.getElementById('headerMeta').innerHTML = `<div class="meta-chip"><div class="${dot}"></div> Meta</div><div class="meta-chip">Act <span>${c.ad_account_id||'N/A'}</span></div>${c.instagram_user_id?`<div class="meta-chip">IG <span>${c.instagram_user_id}</span></div>`:''}<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">${document.documentElement.classList.contains('light')?'Dark':'Light'}</button>`;
-}
-
-async function resolveMetaToken() {
-  try {
-    const res = await fetch(`${API_BASE}/meta/token?${authQS()}`);
-    if (res.ok) { const d = await res.json(); state.metaToken = d.token; renderHeader(state.client); logActivity('SUCCESS','Meta token resolved.'); }
-  } catch (_) {}
 }
 
 function extractFolderId(url) { const m = url.match(/\/folders\/([a-zA-Z0-9_-]+)/); return m ? m[1] : null; }
@@ -380,7 +373,7 @@ async function loadMediaRecords(packageId) {
     const res = await fetch(`${API_BASE}/records?${authQS()}&package_id=${packageId}`);
     if (!res.ok) throw new Error('Failed to load records');
     const data = await res.json();
-    state.mediaRecords = data.records || [];
+    state.mediaRecords = Array.isArray(data) ? data : (data.records || []);
     logActivity('SUCCESS',`${state.mediaRecords.length} record(s) loaded.`);
     renderMediaGrid(state.mediaRecords);
     document.getElementById('mediaSection').style.display = 'block';
@@ -393,7 +386,7 @@ function renderMediaGrid(records) {
   grid.innerHTML = records.map(r => {
     const v = r.media_type === 'video';
     const q = state.queuedIds.has(r.id);
-    return `<div class="media-card ${q?'queued':''}" id="card-${r.id}"><div class="media-thumb">${r.thumbnail_url?`<img src="${r.thumbnail_url}" alt="" />`:`<span class="type-icon">${v?'VIDEO':'IMAGE'}</span>`}</div><div class="media-info"><div class="media-name" title="${r.creative_name||r.name||r.id}">${r.creative_name||r.name||r.id}</div><div class="media-actions"><label class="queue-toggle ${q?'active':''}"><input type="checkbox" ${q?'checked':''} onchange="toggleQueue('${r.id}', this)" /> Queue</label><span class="badge ${v?'badge-vid':'badge-img'}">${v?'VID':'IMG'}</span></div></div></div>`;
+    return `<div class="media-card ${q?'queued':''}" id="card-${r.id}"><div class="media-thumb">${r.thumbnail_url?`<img src="${r.thumbnail_url}" alt="" />`:`<span class="type-icon">${v?'VIDEO':'IMAGE'}</span>`}</div><div class="media-info"><div class="media-name" title="${r.file_name||r.creative_name||r.name||r.id}">${r.file_name||r.creative_name||r.name||r.id}</div><div class="media-actions"><label class="queue-toggle ${q?'active':''}"><input type="checkbox" ${q?'checked':''} onchange="toggleQueue('${r.id}', this)" /> Queue</label><span class="badge ${v?'badge-vid':'badge-img'}">${v?'VID':'IMG'}</span></div></div></div>`;
   }).join('');
   updateQueueUI();
 }
@@ -421,16 +414,16 @@ function updateQueueUI() {
 }
 
 async function loadCampaigns() {
-  if (!state.metaToken || !state.client?.ad_account_id) return;
   const sel = document.getElementById('campaignSelect');
   sel.innerHTML = '<option>Loading campaigns...</option>'; sel.disabled = true;
   try {
-    const url = `${META_GRAPH}/act_${state.client.ad_account_id}/campaigns?fields=id,name,status,objective&limit=100&access_token=${state.metaToken}`;
-    const res = await fetch(url); const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    const c = data.data || [];
+    const res = await fetch(`${API_BASE}/meta/campaigns?${authQS()}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || `Campaigns returned ${res.status}`);
+    const c = data.campaigns || data.data || (Array.isArray(data) ? data : []);
     sel.innerHTML = '<option value="">Select campaign...</option>' + c.map(x => `<option value="${x.id}">${x.name} (${x.status})</option>`).join('');
     sel.disabled = false;
+    state.metaConnected = true; renderHeader(state.client);
     logActivity('SUCCESS',`${c.length} campaign(s) loaded.`);
   } catch (e) { sel.innerHTML = '<option value="">Campaigns unavailable</option>'; sel.disabled = false; logActivity('ERROR',`Campaigns: ${e.message}`); }
 }
@@ -441,10 +434,10 @@ async function loadAdSets() {
   if (!cid) { sel.innerHTML = '<option value="">Select ad set...</option>'; sel.disabled = true; return; }
   sel.innerHTML = '<option>Loading ad sets...</option>'; sel.disabled = true;
   try {
-    const url = `${META_GRAPH}/act_${state.client.ad_account_id}/adsets?fields=id,name,status,daily_budget&filtering=[{"field":"campaign_id","operator":"EQUAL","value":"${cid}"}]&limit=100&access_token=${state.metaToken}`;
-    const res = await fetch(url); const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    const s = data.data || [];
+    const res = await fetch(`${API_BASE}/meta/adsets?${authQS()}&campaign_id=${encodeURIComponent(cid)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || `Ad sets returned ${res.status}`);
+    const s = data.adsets || data.data || (Array.isArray(data) ? data : []);
     sel.innerHTML = '<option value="">Select ad set...</option>' + s.map(x => { const b = x.daily_budget ? ` - $${(x.daily_budget/100).toFixed(0)}/day` : ''; return `<option value="${x.id}">${x.name} (${x.status}${b})</option>`; }).join('');
     sel.disabled = false;
   } catch (e) { sel.innerHTML = '<option value="">Ad sets unavailable</option>'; sel.disabled = false; logActivity('ERROR',`Ad sets: ${e.message}`); }
