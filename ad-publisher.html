@@ -6,35 +6,19 @@
 <title>Ad Publisher | Content Mogul</title>
 <style>
   :root {
-    --brand: #C0297A;
-    --brand-dark: #9a1f61;
-    --bg: #0f0f13;
-    --surface: #1a1a22;
-    --surface2: #22222e;
-    --border: #2e2e3e;
-    --text: #f0f0f5;
-    --text-muted: #888899;
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --error: #ef4444;
-    --info: #3b82f6;
+    --brand: #C0297A; --brand-dark: #9a1f61; --bg: #0f0f13; --surface: #1a1a22;
+    --surface2: #22222e; --border: #2e2e3e; --text: #f0f0f5; --text-muted: #888899;
+    --success: #22c55e; --warning: #f59e0b; --error: #ef4444; --info: #3b82f6;
     --font: 'Inter', system-ui, sans-serif;
   }
   @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #f4f4f8; --surface: #ffffff; --surface2: #f0f0f5;
-      --border: #e0e0ea; --text: #111118; --text-muted: #666677;
-    }
+    :root { --bg: #f4f4f8; --surface: #ffffff; --surface2: #f0f0f5; --border: #e0e0ea; --text: #111118; --text-muted: #666677; }
   }
-  :root.light {
-    --bg: #f4f4f8; --surface: #ffffff; --surface2: #f0f0f5;
-    --border: #e0e0ea; --text: #111118; --text-muted: #666677;
-  }
+  :root.light { --bg: #f4f4f8; --surface: #ffffff; --surface2: #f0f0f5; --border: #e0e0ea; --text: #111118; --text-muted: #666677; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
   input, select, textarea { color: var(--text); }
   select option { background: var(--surface2); }
-
   .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
   .header-logo { font-weight: 700; font-size: 15px; color: var(--brand); }
   .header-divider { width: 1px; height: 20px; background: var(--border); }
@@ -45,56 +29,57 @@
   .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
   .status-dot.warn { background: var(--warning); }
   .theme-toggle { background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; color: var(--text-muted); cursor: pointer; font-size: 12px; }
-  .theme-toggle:hover { background: var(--surface2); }
-
   .main { padding: 24px; max-width: 1100px; margin: 0 auto; padding-bottom: 140px; }
   .page-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
   .page-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 28px; }
-
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
   .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
   .card-title .step-badge { background: var(--brand); color: #fff; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700; }
-
   .form-row { display: grid; gap: 12px; margin-bottom: 12px; }
   .form-row.cols2 { grid-template-columns: 1fr 1fr; }
   .form-row.cols3 { grid-template-columns: 1fr 1fr 1fr; }
   label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; }
-  input, select, textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; font-size: 13px; font-family: var(--font); outline: none; transition: border-color 0.15s; }
+  input, select, textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; font-size: 13px; font-family: var(--font); outline: none; }
   input:focus, select:focus, textarea:focus { border-color: var(--brand); }
   textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
   .char-counter { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 3px; }
   .char-counter.warn { color: var(--warning); }
   .char-counter.over { color: var(--error); }
-
-  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
   .btn-primary { background: var(--brand); color: #fff; }
-  .btn-primary:hover { background: var(--brand-dark); }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
   .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
-
   .file-summary { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; margin-top: 10px; }
   .badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
   .badge-vid { background: #1e3a5f; color: #60a5fa; }
   .badge-img { background: #1a3a2a; color: #4ade80; }
   .badge-total { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
-
+  .result-block { margin-top: 14px; }
+  .result-summary { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .result-pill { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+  .result-pill.created { background: #1a3a2a; color: #4ade80; }
+  .result-pill.skipped { background: #2a2a1a; color: #d4d44a; }
+  .result-pill.failed { background: #3a1a1a; color: #f87171; }
+  .result-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; margin-bottom: 4px; background: var(--surface2); font-size: 12px; }
+  .result-item .ri-icon { flex-shrink: 0; font-weight: 700; }
+  .result-item.ok .ri-icon { color: var(--success); }
+  .result-item.skip .ri-icon { color: var(--warning); }
+  .result-item.err .ri-icon { color: var(--error); }
+  .result-item .ri-detail { color: var(--text-muted); margin-left: auto; font-size: 11px; }
   .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
   .media-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   .media-card.queued { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
   .media-thumb { height: 110px; background: var(--bg); display: flex; align-items: center; justify-content: center; }
   .media-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .media-thumb .type-icon { font-size: 28px; }
+  .media-thumb .type-icon { font-size: 14px; font-weight: 700; color: var(--text-muted); }
   .media-info { padding: 8px 10px; }
   .media-name { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
   .media-actions { display: flex; align-items: center; justify-content: space-between; }
   .queue-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text-muted); }
   .queue-toggle.active { color: var(--brand); }
   .queue-toggle input { accent-color: var(--brand); width: 14px; height: 14px; cursor: pointer; }
-
   .select-bar { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface2); border-radius: 7px; margin-bottom: 10px; }
   .select-bar label { margin: 0; font-size: 13px; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 8px; }
-
   .publish-footer { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 16px 24px; z-index: 200; transform: translateY(100%); transition: transform 0.2s ease; }
   .publish-footer.visible { transform: translateY(0); }
   .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
@@ -103,141 +88,101 @@
   .footer-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
   .queue-badge { background: var(--brand); color: #fff; border-radius: 5px; padding: 2px 8px; font-size: 12px; font-weight: 700; margin-left: 8px; }
   .publish-btn { background: var(--brand); color: #fff; border: none; border-radius: 8px; padding: 11px 24px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
-  .publish-btn:hover { background: var(--brand-dark); }
   .publish-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
   .toast-container { position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
   .toast { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 13px; max-width: 340px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
   .toast.success { border-left: 3px solid var(--success); }
   .toast.error { border-left: 3px solid var(--error); }
   .toast.info { border-left: 3px solid var(--info); }
-
-  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .status-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
   .auth-warning { background: #2a1a1a; border: 1px solid #5a2020; border-radius: 8px; padding: 14px 18px; color: #f87171; font-size: 13px; margin-bottom: 20px; }
   @media (prefers-color-scheme: light) { .auth-warning { background: #fef2f2; border-color: #fecaca; color: #b91c1c; } }
   select:disabled { opacity: 0.5; }
+  .activity-toggle { position: fixed; bottom: 16px; right: 16px; z-index: 150; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .activity-panel { position: fixed; bottom: 0; right: 0; width: 420px; max-width: 90vw; height: 320px; background: var(--surface); border: 1px solid var(--border); border-top-left-radius: 12px; z-index: 250; transform: translateY(100%); transition: transform 0.2s ease; display: flex; flex-direction: column; box-shadow: 0 -4px 24px rgba(0,0,0,0.3); }
+  .activity-panel.open { transform: translateY(0); }
+  .activity-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+  .activity-head button { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; }
+  .activity-feed { flex: 1; overflow-y: auto; padding: 10px 14px; font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.6; }
+  .log-line { display: flex; gap: 8px; padding: 2px 0; }
+  .log-time { color: var(--text-muted); flex-shrink: 0; }
+  .log-tag { font-weight: 700; flex-shrink: 0; width: 56px; }
+  .log-tag.fetch { color: #60a5fa; }
+  .log-tag.success { color: var(--success); }
+  .log-tag.error { color: var(--error); }
+  .log-tag.ingest { color: #c084fc; }
+  .log-tag.publish { color: #f59e0b; }
+  .log-msg { color: var(--text); word-break: break-word; }
 </style>
 </head>
 <body>
 
 <div class="toast-container" id="toastContainer"></div>
+<button class="activity-toggle" onclick="toggleActivity()">Activity Log</button>
+<div class="activity-panel" id="activityPanel">
+  <div class="activity-head"><span>Activity Log</span><button onclick="toggleActivity()">&times;</button></div>
+  <div class="activity-feed" id="activityFeed"></div>
+</div>
 
 <div class="header">
   <div class="header-logo">Content Mogul</div>
   <div class="header-divider"></div>
   <div class="header-client" id="headerClient">Loading...</div>
-  <div class="header-meta" id="headerMeta">
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">Light</button>
-  </div>
+  <div class="header-meta" id="headerMeta"><button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">Light</button></div>
 </div>
 
 <div class="main">
   <div class="page-title">Ad Publisher</div>
   <div class="page-sub">Ingest creatives from Google Drive and publish as paused ads to Meta.</div>
-
   <div id="authWarning" class="auth-warning" style="display:none"></div>
 
   <div class="card">
     <div class="card-title"><span class="step-badge">1</span> Select Creative Batch</div>
-    <div class="form-row">
-      <div>
-        <label>Top-Level Creative Folder URL</label>
-        <div style="display:flex;gap:8px;">
-          <input type="url" id="folderUrl" placeholder="https://drive.google.com/drive/folders/..." />
-          <button class="btn btn-ghost" onclick="loadTopFolder()" id="loadFolderBtn">Load</button>
-        </div>
-        <div class="status-row" id="folderStatus"></div>
+    <div class="form-row"><div>
+      <label>Top-Level Creative Folder URL</label>
+      <div style="display:flex;gap:8px;">
+        <input type="url" id="folderUrl" placeholder="https://drive.google.com/drive/folders/..." />
+        <button class="btn btn-ghost" onclick="loadTopFolder()" id="loadFolderBtn">Load</button>
       </div>
-    </div>
+      <div class="status-row" id="folderStatus"></div>
+    </div></div>
     <div class="form-row cols2" id="offerBatchRow" style="display:none">
-      <div>
-        <label>Offer</label>
-        <select id="offerSelect" onchange="loadBatchFolders()">
-          <option value="">Select an offer...</option>
-        </select>
-      </div>
-      <div>
-        <label>Batch</label>
-        <select id="batchSelect" onchange="onBatchSelected()" disabled>
-          <option value="">Select a batch...</option>
-        </select>
-      </div>
+      <div><label>Offer</label><select id="offerSelect" onchange="loadBatchFolders()"><option value="">Select an offer...</option></select></div>
+      <div><label>Batch</label><select id="batchSelect" onchange="onBatchSelected()" disabled><option value="">Select a batch...</option></select></div>
     </div>
     <div id="fileSummary" style="display:none"></div>
+    <div id="ingestDetail" class="result-block" style="display:none"></div>
   </div>
 
   <div class="card" id="copyCard" style="display:none">
     <div class="card-title"><span class="step-badge">2</span> Copy and Ad Settings</div>
-    <div class="form-row">
-      <div>
-        <label>Primary Text</label>
-        <textarea id="primaryText" placeholder="Main ad copy body..." maxlength="500" oninput="updateCounter('primaryText','primaryCounter',125)"></textarea>
-        <div class="char-counter" id="primaryCounter">0 / 125 recommended</div>
-      </div>
-    </div>
+    <div class="form-row"><div>
+      <label>Primary Text</label>
+      <textarea id="primaryText" maxlength="500" oninput="updateCounter('primaryText','primaryCounter',125)"></textarea>
+      <div class="char-counter" id="primaryCounter">0 / 125 recommended</div>
+    </div></div>
     <div class="form-row cols2">
-      <div>
-        <label>Headline</label>
-        <input type="text" id="headline" placeholder="Short headline..." maxlength="60" oninput="updateCounter('headline','headlineCounter',40)" />
-        <div class="char-counter" id="headlineCounter">0 / 40 recommended</div>
-      </div>
-      <div>
-        <label>Link Description (optional)</label>
-        <input type="text" id="linkDescription" placeholder="Supporting line..." maxlength="100" />
-      </div>
+      <div><label>Headline</label><input type="text" id="headline" maxlength="60" oninput="updateCounter('headline','headlineCounter',40)" /><div class="char-counter" id="headlineCounter">0 / 40 recommended</div></div>
+      <div><label>Link Description (optional)</label><input type="text" id="linkDescription" maxlength="100" /></div>
     </div>
     <div class="form-row cols3">
-      <div>
-        <label>Call to Action</label>
-        <select id="ctaType">
-          <option value="SHOP_NOW">Shop Now</option>
-          <option value="LEARN_MORE">Learn More</option>
-          <option value="SIGN_UP">Sign Up</option>
-          <option value="GET_OFFER">Get Offer</option>
-          <option value="SUBSCRIBE">Subscribe</option>
-          <option value="BOOK_TRAVEL">Book Travel</option>
-        </select>
-      </div>
-      <div>
-        <label>Landing Page URL</label>
-        <input type="url" id="landingUrl" placeholder="https://..." />
-      </div>
-      <div>
-        <label>Entity Type</label>
-        <select id="entityType">
-          <option value="product">Product (pid-)</option>
-          <option value="collection">Collection (cid-)</option>
-          <option value="variant">Variant (vid-)</option>
-          <option value="homepage">Homepage (hpid-)</option>
-        </select>
-      </div>
+      <div><label>Call to Action</label><select id="ctaType"><option value="SHOP_NOW">Shop Now</option><option value="LEARN_MORE">Learn More</option><option value="SIGN_UP">Sign Up</option><option value="GET_OFFER">Get Offer</option><option value="SUBSCRIBE">Subscribe</option></select></div>
+      <div><label>Landing Page URL</label><input type="url" id="landingUrl" placeholder="https://..." /></div>
+      <div><label>Entity Type</label><select id="entityType"><option value="product">Product (pid-)</option><option value="collection">Collection (cid-)</option><option value="variant">Variant (vid-)</option><option value="homepage">Homepage (hpid-)</option></select></div>
     </div>
     <div class="form-row cols2">
-      <div>
-        <label>Entity ID</label>
-        <input type="text" id="entityId" placeholder="e.g. pid-8874960879765 or custom-001" />
-      </div>
-      <div>
-        <label>URL Parameters</label>
-        <input type="text" id="utmParams" value="utm_source={{site_source_name}}&utm_medium={{placement}}&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}&cmc_adid=fb_{{ad.id}}&campaign_id={{campaign.id}}&adset_id={{adset.id}}&ad_id={{ad.id}}&chid=src_{{site_source_name}}_cid_{{campaign.id}}_aid_{{adset.id}}_adid_{{ad.id}}" />
-      </div>
+      <div><label>Entity ID</label><input type="text" id="entityId" placeholder="e.g. hpid-0001" /></div>
+      <div><label>URL Parameters</label><input type="text" id="utmParams" value="utm_source={{site_source_name}}&utm_medium={{placement}}&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}&cmc_adid=fb_{{ad.id}}&campaign_id={{campaign.id}}&adset_id={{adset.id}}&ad_id={{ad.id}}&chid=src_{{site_source_name}}_cid_{{campaign.id}}_aid_{{adset.id}}_adid_{{ad.id}}" /></div>
     </div>
-    <div style="margin-top:8px;">
-      <button class="btn btn-primary" onclick="runIngest()" id="ingestBtn" disabled>
-        <span id="ingestBtnText">Ingest Batch</span>
-      </button>
-    </div>
+    <div style="margin-top:8px;"><button class="btn btn-primary" onclick="runIngest()" id="ingestBtn" disabled><span id="ingestBtnText">Ingest Batch</span></button></div>
   </div>
 
   <div id="mediaSection" style="display:none">
     <div class="card">
       <div class="card-title"><span class="step-badge">3</span> Review and Queue</div>
-      <div class="select-bar">
-        <label><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)" /> Select all ingested creatives</label>
-        <span id="queueCount" style="font-size:12px;color:var(--text-muted);margin-left:auto;"></span>
-      </div>
+      <div class="select-bar"><label><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)" /> Select all ingested creatives</label><span id="queueCount" style="font-size:12px;color:var(--text-muted);margin-left:auto;"></span></div>
       <div class="media-grid" id="mediaGrid"></div>
     </div>
   </div>
@@ -245,164 +190,121 @@
 
 <div class="publish-footer" id="publishFooter">
   <div class="footer-inner">
-    <div class="footer-group grow">
-      <div class="footer-label">Campaign</div>
-      <select id="campaignSelect" onchange="loadAdSets()" style="min-width:220px;">
-        <option value="">Select campaign...</option>
-      </select>
-    </div>
-    <div class="footer-group grow">
-      <div class="footer-label">Ad Set</div>
-      <select id="adsetSelect" style="min-width:200px;" disabled>
-        <option value="">Select ad set...</option>
-      </select>
-    </div>
-    <button class="publish-btn" onclick="publishQueued()" id="publishBtn" disabled>
-      Publish Paused Ads <span class="queue-badge" id="footerQueueCount">0</span>
-    </button>
+    <div class="footer-group grow"><div class="footer-label">Campaign</div><select id="campaignSelect" onchange="loadAdSets()" style="min-width:220px;"><option value="">Select campaign...</option></select></div>
+    <div class="footer-group grow"><div class="footer-label">Ad Set</div><select id="adsetSelect" style="min-width:200px;" disabled><option value="">Select ad set...</option></select></div>
+    <button class="publish-btn" onclick="publishQueued()" id="publishBtn" disabled>Publish Paused Ads <span class="queue-badge" id="footerQueueCount">0</span></button>
   </div>
 </div>
 
 <script>
 const API_BASE = 'https://publish.getcontentmogul.com';
 const META_GRAPH = 'https://graph.facebook.com/v22.0';
+const state = { clientSlug:'', clientKey:'', client:null, metaToken:null, topFolderId:null, offerFolders:[], batchFolders:[], selectedBatchId:null, selectedBatchName:'', ingestedFiles:[], mediaRecords:[], queuedIds:new Set(), lastPackageId:null };
 
-const state = {
-  clientSlug: '', clientKey: '', client: null, metaToken: null,
-  topFolderId: null, offerFolders: [], batchFolders: [],
-  selectedBatchId: null, selectedBatchName: '',
-  ingestedFiles: [], mediaRecords: [], queuedIds: new Set(),
-};
-
-// Auth helper — every backend call uses these two query params, no custom headers
-function authQS() {
-  return `client=${encodeURIComponent(state.clientSlug)}&key=${encodeURIComponent(state.clientKey)}`;
-}
+function authQS() { return `client=${encodeURIComponent(state.clientSlug)}&key=${encodeURIComponent(state.clientKey)}`; }
 
 window.addEventListener('DOMContentLoaded', () => {
   initTheme();
-  const params = new URLSearchParams(window.location.search);
-  state.clientSlug = params.get('client') || '';
-  state.clientKey  = params.get('key') || '';
-  if (!state.clientSlug || !state.clientKey) {
-    showAuthWarning('Missing client or key parameter in URL.');
-    return;
-  }
+  const p = new URLSearchParams(window.location.search);
+  state.clientSlug = p.get('client') || '';
+  state.clientKey = p.get('key') || '';
+  if (!state.clientSlug || !state.clientKey) { showAuthWarning('Missing client or key parameter in URL.'); return; }
   loadClientConfig();
 });
 
-// ─── Theme ───
+function logActivity(tag, msg) {
+  const feed = document.getElementById('activityFeed');
+  const n = new Date();
+  const t = `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${t}</span><span class="log-tag ${tag.toLowerCase()}">${tag}</span><span class="log-msg">${msg}</span>`;
+  feed.appendChild(line); feed.scrollTop = feed.scrollHeight;
+}
+function toggleActivity() { document.getElementById('activityPanel').classList.toggle('open'); }
+
 function initTheme() {
   const saved = localStorage.getItem('cm_theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  applyTheme((saved ? saved === 'dark' : prefersDark) ? 'dark' : 'light');
+  const pd = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme((saved ? saved === 'dark' : pd) ? 'dark' : 'light');
 }
 function applyTheme(theme) {
   document.documentElement.classList.toggle('light', theme === 'light');
-  const btn = document.getElementById('themeBtn');
-  if (btn) btn.textContent = theme === 'light' ? 'Dark' : 'Light';
+  const b = document.getElementById('themeBtn');
+  if (b) b.textContent = theme === 'light' ? 'Dark' : 'Light';
   localStorage.setItem('cm_theme', theme);
 }
-function toggleTheme() {
-  applyTheme(document.documentElement.classList.contains('light') ? 'dark' : 'light');
-}
+function toggleTheme() { applyTheme(document.documentElement.classList.contains('light') ? 'dark' : 'light'); }
 
-// ─── Client config ───
 async function loadClientConfig() {
   try {
+    logActivity('FETCH', 'Loading client configuration...');
     const res = await fetch(`${API_BASE}/client-config?${authQS()}`);
-    if (res.status === 401) { showAuthWarning('Authentication failed. Check your key.'); return; }
-    if (res.status === 404) { showAuthWarning(`Client "${state.clientSlug}" not found.`); return; }
+    if (res.status === 401) { showAuthWarning('Authentication failed. Check your key.'); logActivity('ERROR','Auth failed (401).'); return; }
+    if (res.status === 404) { showAuthWarning(`Client "${state.clientSlug}" not found.`); logActivity('ERROR',`Client not found.`); return; }
     if (!res.ok) throw new Error(`/client-config returned ${res.status}`);
     const data = await res.json();
     const c = data.client;
-    state.client = {
-      client_name: c.client_name || state.clientSlug,
-      ad_account_id: c.meta_account_id || '',
-      fb_page_id: c.meta_page_id || '',
-      instagram_user_id: c.meta_instagram_id || null,
-    };
+    state.client = { client_name: c.client_name || state.clientSlug, ad_account_id: c.meta_account_id || '', fb_page_id: c.meta_page_id || '', instagram_user_id: c.meta_instagram_id || null };
     renderHeader(state.client);
-    resolveMetaToken();
-    loadCampaigns();
-  } catch (e) {
-    showAuthWarning(`Failed to load client config: ${e.message}`);
-  }
+    logActivity('SUCCESS', `Loaded config for ${state.client.client_name}.`);
+    resolveMetaToken(); loadCampaigns();
+  } catch (e) { showAuthWarning(`Failed to load client config: ${e.message}`); logActivity('ERROR', e.message); }
 }
 
 function renderHeader(c) {
   document.getElementById('headerClient').textContent = c.client_name;
   const dot = state.metaToken ? 'status-dot' : 'status-dot warn';
-  document.getElementById('headerMeta').innerHTML = `
-    <div class="meta-chip"><div class="${dot}"></div> Meta</div>
-    <div class="meta-chip">Act <span>${c.ad_account_id || 'N/A'}</span></div>
-    ${c.instagram_user_id ? `<div class="meta-chip">IG <span>${c.instagram_user_id}</span></div>` : ''}
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">${document.documentElement.classList.contains('light') ? 'Dark' : 'Light'}</button>
-  `;
+  document.getElementById('headerMeta').innerHTML = `<div class="meta-chip"><div class="${dot}"></div> Meta</div><div class="meta-chip">Act <span>${c.ad_account_id||'N/A'}</span></div>${c.instagram_user_id?`<div class="meta-chip">IG <span>${c.instagram_user_id}</span></div>`:''}<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">${document.documentElement.classList.contains('light')?'Dark':'Light'}</button>`;
 }
 
 async function resolveMetaToken() {
   try {
     const res = await fetch(`${API_BASE}/meta/token?${authQS()}`);
-    if (res.ok) {
-      const data = await res.json();
-      state.metaToken = data.token;
-      renderHeader(state.client);
-    }
+    if (res.ok) { const d = await res.json(); state.metaToken = d.token; renderHeader(state.client); logActivity('SUCCESS','Meta token resolved.'); }
   } catch (_) {}
 }
 
-// ─── Folder navigation ───
-function extractFolderId(url) {
-  const m = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
-  return m ? m[1] : null;
-}
+function extractFolderId(url) { const m = url.match(/\/folders\/([a-zA-Z0-9_-]+)/); return m ? m[1] : null; }
 
 async function loadTopFolder() {
   const url = document.getElementById('folderUrl').value.trim();
-  const folderId = extractFolderId(url);
-  if (!folderId) { toast('Invalid Google Drive folder URL.', 'error'); return; }
-  setStatus('folderStatus', 'spinner', 'Loading offer folders...');
+  const id = extractFolderId(url);
+  if (!id) { toast('Invalid Google Drive folder URL.', 'error'); return; }
+  setStatus('folderStatus','spinner','Loading offer folders...');
+  logActivity('FETCH','Loading top-level folder...');
   document.getElementById('loadFolderBtn').disabled = true;
   try {
-    const folders = await driveFolders(folderId);
-    state.topFolderId = folderId;
-    state.offerFolders = folders;
+    const folders = await driveFolders(id);
+    state.topFolderId = id; state.offerFolders = folders;
     const sel = document.getElementById('offerSelect');
-    sel.innerHTML = '<option value="">Select an offer...</option>' +
-      folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+    sel.innerHTML = '<option value="">Select an offer...</option>' + folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
     document.getElementById('offerBatchRow').style.display = 'grid';
-    setStatus('folderStatus', 'ok', `${folders.length} offer folder(s) found.`);
-  } catch (e) {
-    setStatus('folderStatus', 'err', `Error: ${e.message}`);
-  }
+    setStatus('folderStatus','ok',`${folders.length} offer folder(s) found.`);
+    logActivity('SUCCESS',`${folders.length} offer folder(s) found.`);
+  } catch (e) { setStatus('folderStatus','err',`Error: ${e.message}`); logActivity('ERROR', e.message); }
   document.getElementById('loadFolderBtn').disabled = false;
 }
 
 async function loadBatchFolders() {
   const offerId = document.getElementById('offerSelect').value;
   if (!offerId) return;
-  const batchSel = document.getElementById('batchSelect');
-  batchSel.disabled = true;
-  batchSel.innerHTML = '<option>Loading...</option>';
+  const bs = document.getElementById('batchSelect');
+  bs.disabled = true; bs.innerHTML = '<option>Loading...</option>';
   try {
     const folders = await driveFolders(offerId);
     state.batchFolders = folders;
-    batchSel.innerHTML = '<option value="">Select a batch...</option>' +
-      folders.map(f => `<option value="${f.id}" data-name="${f.name}">${f.name}</option>`).join('');
-    batchSel.disabled = false;
-  } catch (e) {
-    toast(`Failed to load batches: ${e.message}`, 'error');
-    batchSel.disabled = false;
-  }
+    bs.innerHTML = '<option value="">Select a batch...</option>' + folders.map(f => `<option value="${f.id}" data-name="${f.name}">${f.name}</option>`).join('');
+    bs.disabled = false;
+    logActivity('SUCCESS',`${folders.length} batch folder(s) found.`);
+  } catch (e) { toast(`Failed to load batches: ${e.message}`,'error'); bs.disabled = false; logActivity('ERROR', e.message); }
 }
 
 async function onBatchSelected() {
   const sel = document.getElementById('batchSelect');
   const opt = sel.options[sel.selectedIndex];
   if (!sel.value) return;
-  state.selectedBatchId = sel.value;
-  state.selectedBatchName = opt.dataset.name || opt.text;
+  state.selectedBatchId = sel.value; state.selectedBatchName = opt.dataset.name || opt.text;
   try {
     const files = await driveFiles(state.selectedBatchId);
     state.ingestedFiles = files;
@@ -410,137 +312,106 @@ async function onBatchSelected() {
     document.getElementById('fileSummary').style.display = 'flex';
     document.getElementById('copyCard').style.display = 'block';
     document.getElementById('ingestBtn').disabled = false;
-  } catch (e) {
-    toast(`Failed to read batch: ${e.message}`, 'error');
-  }
+    logActivity('FETCH',`Batch "${state.selectedBatchName}": ${files.length} files.`);
+  } catch (e) { toast(`Failed to read batch: ${e.message}`,'error'); logActivity('ERROR', e.message); }
 }
 
 function renderFileSummary(files) {
-  const vids = files.filter(f => f.mimeType && f.mimeType.startsWith('video/')).length;
-  const imgs = files.filter(f => f.mimeType && f.mimeType.startsWith('image/')).length;
-  const other = files.length - vids - imgs;
-  document.getElementById('fileSummary').innerHTML = `
-    <div class="file-summary">
-      <span class="badge badge-total">${files.length} files</span>
-      ${vids ? `<span class="badge badge-vid">${vids} video(s)</span>` : ''}
-      ${imgs ? `<span class="badge badge-img">${imgs} image(s)</span>` : ''}
-      ${other ? `<span class="badge badge-total">${other} other</span>` : ''}
-      <span style="color:var(--text-muted);font-size:12px;margin-left:4px;">${state.selectedBatchName}</span>
-    </div>`;
+  const v = files.filter(f => f.mimeType && f.mimeType.startsWith('video/')).length;
+  const i = files.filter(f => f.mimeType && f.mimeType.startsWith('image/')).length;
+  const o = files.length - v - i;
+  document.getElementById('fileSummary').innerHTML = `<div class="file-summary"><span class="badge badge-total">${files.length} files</span>${v?`<span class="badge badge-vid">${v} video(s)</span>`:''}${i?`<span class="badge badge-img">${i} image(s)</span>`:''}${o?`<span class="badge badge-total">${o} other</span>`:''}<span style="color:var(--text-muted);font-size:12px;margin-left:4px;">${state.selectedBatchName}</span></div>`;
 }
 
-// ─── Backend calls (query params only, no custom headers) ───
 async function driveFolders(parentId) {
   const res = await fetch(`${API_BASE}/drive/folders?parent_id=${parentId}&${authQS()}`);
   if (!res.ok) throw new Error(`Drive folder fetch failed: ${res.status}`);
-  const data = await res.json();
-  return data.folders || [];
+  const d = await res.json(); return d.folders || [];
 }
-
 async function driveFiles(folderId) {
   const res = await fetch(`${API_BASE}/drive/files?folder_id=${folderId}&${authQS()}`);
   if (!res.ok) throw new Error(`Drive file fetch failed: ${res.status}`);
-  const data = await res.json();
-  return data.files || [];
+  const d = await res.json(); return d.files || [];
 }
 
-// ─── Ingest ───
 async function runIngest() {
   const offerSel = document.getElementById('offerSelect');
   const offerName = offerSel.options[offerSel.selectedIndex]?.text || 'unknown-offer';
   const entityType = document.getElementById('entityType').value;
   const entityId = document.getElementById('entityId').value.trim();
-  if (!entityId) { toast('Entity ID is required before ingesting.', 'error'); return; }
-
+  if (!entityId) { toast('Entity ID is required.','error'); return; }
   const batchFolderUrl = `https://drive.google.com/drive/folders/${state.selectedBatchId}`;
   const packageId = `pkg-${Date.now()}`;
-  const payload = {
-    drive_folder_url: batchFolderUrl,
-    entity_id: entityId,
-    entity_type: entityType,
-    campaign_context: {
-      parent_business: state.clientSlug,
-      campaign_package_id: packageId,
-      master_category: offerName,
-    }
-  };
-
-  setBtnLoading('ingestBtn', 'ingestBtnText', true, 'Ingesting...');
+  state.lastPackageId = packageId;
+  const payload = { drive_folder_url: batchFolderUrl, entity_id: entityId, entity_type: entityType, campaign_context: { parent_business: state.clientSlug, campaign_package_id: packageId, master_category: offerName } };
+  setBtnLoading('ingestBtn','ingestBtnText',true,'Ingesting...');
+  logActivity('INGEST',`Ingesting "${state.selectedBatchName}" (${state.ingestedFiles.length} files)...`);
   try {
-    const res = await fetch(`${API_BASE}/ingest`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const res = await fetch(`${API_BASE}/ingest`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Ingest failed');
-    toast(`Ingest complete: ${data.uploaded} uploaded, ${data.skipped} skipped.`, 'success');
+    logActivity(data.failed>0?'ERROR':'SUCCESS',`Ingest done: ${data.uploaded} created, ${data.skipped} skipped, ${data.failed||0} failed.`);
+    renderIngestDetail(data);
+    if (data.details) {
+      (data.details.created||[]).forEach(f => logActivity('SUCCESS',`Created: ${f.creative_name||f.name}`));
+      (data.details.skipped||[]).forEach(f => logActivity('INGEST',`Skipped: ${f.name} (${f.reason})`));
+      (data.details.failed||[]).forEach(f => logActivity('ERROR',`Failed: ${f.name} - ${f.error}`));
+    }
+    toast(`Ingest: ${data.uploaded} uploaded, ${data.skipped} skipped${data.failed?`, ${data.failed} failed`:''}.`, data.failed>0?'error':'success');
     await loadMediaRecords(packageId);
-  } catch (e) {
-    toast(`Ingest error: ${e.message}`, 'error');
-  }
-  setBtnLoading('ingestBtn', 'ingestBtnText', false, 'Ingest Batch');
+  } catch (e) { logActivity('ERROR',`Ingest error: ${e.message}`); toast(`Ingest error: ${e.message}`,'error'); }
+  setBtnLoading('ingestBtn','ingestBtnText',false,'Ingest Batch');
+}
+
+function renderIngestDetail(data) {
+  const el = document.getElementById('ingestDetail');
+  const d = data.details || { created:[], skipped:[], failed:[] };
+  let h = `<div class="result-summary"><span class="result-pill created">${data.uploaded||0} created</span><span class="result-pill skipped">${data.skipped||0} skipped</span><span class="result-pill failed">${data.failed||0} failed</span></div><div class="result-list">`;
+  (d.created||[]).forEach(f => h += `<div class="result-item ok"><span class="ri-icon">OK</span><span>${f.creative_name||f.name}</span></div>`);
+  (d.skipped||[]).forEach(f => h += `<div class="result-item skip"><span class="ri-icon">--</span><span>${f.name}</span><span class="ri-detail">${f.reason||'skipped'}</span></div>`);
+  (d.failed||[]).forEach(f => h += `<div class="result-item err"><span class="ri-icon">X</span><span>${f.name}</span><span class="ri-detail">${f.error||'error'}</span></div>`);
+  h += '</div>';
+  el.innerHTML = h; el.style.display = 'block';
 }
 
 async function loadMediaRecords(packageId) {
   try {
+    logActivity('FETCH',`Loading media records for ${packageId}...`);
     const res = await fetch(`${API_BASE}/records?${authQS()}&package_id=${packageId}`);
     if (!res.ok) throw new Error('Failed to load records');
     const data = await res.json();
     state.mediaRecords = data.records || [];
+    logActivity('SUCCESS',`${state.mediaRecords.length} record(s) loaded.`);
     renderMediaGrid(state.mediaRecords);
     document.getElementById('mediaSection').style.display = 'block';
-  } catch (e) {
-    toast(`Could not load media records: ${e.message}`, 'error');
-  }
+  } catch (e) { toast(`Could not load records: ${e.message}`,'error'); logActivity('ERROR', e.message); }
 }
 
-// ─── Media grid ───
 function renderMediaGrid(records) {
   const grid = document.getElementById('mediaGrid');
   if (!records.length) { grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">No records found.</p>'; return; }
   grid.innerHTML = records.map(r => {
-    const isVid = r.media_type === 'video';
-    const isQueued = state.queuedIds.has(r.id);
-    return `
-      <div class="media-card ${isQueued ? 'queued' : ''}" id="card-${r.id}">
-        <div class="media-thumb">
-          ${r.thumbnail_url ? `<img src="${r.thumbnail_url}" alt="" />` : `<span class="type-icon">${isVid ? 'VID' : 'IMG'}</span>`}
-        </div>
-        <div class="media-info">
-          <div class="media-name" title="${r.name || r.id}">${r.name || r.id}</div>
-          <div class="media-actions">
-            <label class="queue-toggle ${isQueued ? 'active' : ''}">
-              <input type="checkbox" ${isQueued ? 'checked' : ''} onchange="toggleQueue('${r.id}', this)" /> Queue
-            </label>
-            <span class="badge ${isVid ? 'badge-vid' : 'badge-img'}">${isVid ? 'VID' : 'IMG'}</span>
-          </div>
-        </div>
-      </div>`;
+    const v = r.media_type === 'video';
+    const q = state.queuedIds.has(r.id);
+    return `<div class="media-card ${q?'queued':''}" id="card-${r.id}"><div class="media-thumb">${r.thumbnail_url?`<img src="${r.thumbnail_url}" alt="" />`:`<span class="type-icon">${v?'VIDEO':'IMAGE'}</span>`}</div><div class="media-info"><div class="media-name" title="${r.creative_name||r.name||r.id}">${r.creative_name||r.name||r.id}</div><div class="media-actions"><label class="queue-toggle ${q?'active':''}"><input type="checkbox" ${q?'checked':''} onchange="toggleQueue('${r.id}', this)" /> Queue</label><span class="badge ${v?'badge-vid':'badge-img'}">${v?'VID':'IMG'}</span></div></div></div>`;
   }).join('');
   updateQueueUI();
 }
 
 function toggleQueue(id, cb) {
   if (cb.checked) state.queuedIds.add(id); else state.queuedIds.delete(id);
-  const card = document.getElementById(`card-${id}`);
-  if (card) { card.classList.toggle('queued', cb.checked); cb.parentElement.classList.toggle('active', cb.checked); }
+  const c = document.getElementById(`card-${id}`);
+  if (c) { c.classList.toggle('queued', cb.checked); cb.parentElement.classList.toggle('active', cb.checked); }
   updateQueueUI();
 }
-
 function toggleSelectAll(checked) {
   state.mediaRecords.forEach(r => {
     if (checked) state.queuedIds.add(r.id); else state.queuedIds.delete(r.id);
-    const card = document.getElementById(`card-${r.id}`);
-    if (card) {
-      card.classList.toggle('queued', checked);
-      const cb = card.querySelector('input');
-      if (cb) { cb.checked = checked; cb.parentElement.classList.toggle('active', checked); }
-    }
+    const c = document.getElementById(`card-${r.id}`);
+    if (c) { c.classList.toggle('queued', checked); const cb = c.querySelector('input'); if (cb) { cb.checked = checked; cb.parentElement.classList.toggle('active', checked); } }
   });
   updateQueueUI();
 }
-
 function updateQueueUI() {
   const n = state.queuedIds.size;
   document.getElementById('queueCount').textContent = n ? `${n} queued` : '';
@@ -549,100 +420,69 @@ function updateQueueUI() {
   document.getElementById('publishBtn').disabled = n === 0;
 }
 
-// ─── Campaigns and ad sets ───
 async function loadCampaigns() {
   if (!state.metaToken || !state.client?.ad_account_id) return;
   const sel = document.getElementById('campaignSelect');
-  sel.innerHTML = '<option>Loading campaigns...</option>';
-  sel.disabled = true;
+  sel.innerHTML = '<option>Loading campaigns...</option>'; sel.disabled = true;
   try {
     const url = `${META_GRAPH}/act_${state.client.ad_account_id}/campaigns?fields=id,name,status,objective&limit=100&access_token=${state.metaToken}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const res = await fetch(url); const data = await res.json();
     if (data.error) throw new Error(data.error.message);
-    const camps = data.data || [];
-    sel.innerHTML = '<option value="">Select campaign...</option>' +
-      camps.map(c => `<option value="${c.id}">${c.name} (${c.status})</option>`).join('');
+    const c = data.data || [];
+    sel.innerHTML = '<option value="">Select campaign...</option>' + c.map(x => `<option value="${x.id}">${x.name} (${x.status})</option>`).join('');
     sel.disabled = false;
-  } catch (e) {
-    sel.innerHTML = '<option value="">Campaigns unavailable</option>';
-    sel.disabled = false;
-  }
+    logActivity('SUCCESS',`${c.length} campaign(s) loaded.`);
+  } catch (e) { sel.innerHTML = '<option value="">Campaigns unavailable</option>'; sel.disabled = false; logActivity('ERROR',`Campaigns: ${e.message}`); }
 }
 
 async function loadAdSets() {
-  const campId = document.getElementById('campaignSelect').value;
+  const cid = document.getElementById('campaignSelect').value;
   const sel = document.getElementById('adsetSelect');
-  if (!campId) { sel.innerHTML = '<option value="">Select ad set...</option>'; sel.disabled = true; return; }
-  sel.innerHTML = '<option>Loading ad sets...</option>';
-  sel.disabled = true;
+  if (!cid) { sel.innerHTML = '<option value="">Select ad set...</option>'; sel.disabled = true; return; }
+  sel.innerHTML = '<option>Loading ad sets...</option>'; sel.disabled = true;
   try {
-    const url = `${META_GRAPH}/act_${state.client.ad_account_id}/adsets?fields=id,name,status,daily_budget&filtering=[{"field":"campaign_id","operator":"EQUAL","value":"${campId}"}]&limit=100&access_token=${state.metaToken}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const url = `${META_GRAPH}/act_${state.client.ad_account_id}/adsets?fields=id,name,status,daily_budget&filtering=[{"field":"campaign_id","operator":"EQUAL","value":"${cid}"}]&limit=100&access_token=${state.metaToken}`;
+    const res = await fetch(url); const data = await res.json();
     if (data.error) throw new Error(data.error.message);
-    const sets = data.data || [];
-    sel.innerHTML = '<option value="">Select ad set...</option>' +
-      sets.map(s => {
-        const budget = s.daily_budget ? ` - $${(s.daily_budget/100).toFixed(0)}/day` : '';
-        return `<option value="${s.id}">${s.name} (${s.status}${budget})</option>`;
-      }).join('');
+    const s = data.data || [];
+    sel.innerHTML = '<option value="">Select ad set...</option>' + s.map(x => { const b = x.daily_budget ? ` - $${(x.daily_budget/100).toFixed(0)}/day` : ''; return `<option value="${x.id}">${x.name} (${x.status}${b})</option>`; }).join('');
     sel.disabled = false;
-  } catch (e) {
-    sel.innerHTML = '<option value="">Ad sets unavailable</option>';
-    sel.disabled = false;
-  }
+  } catch (e) { sel.innerHTML = '<option value="">Ad sets unavailable</option>'; sel.disabled = false; logActivity('ERROR',`Ad sets: ${e.message}`); }
 }
 
-// ─── Publish ───
 async function publishQueued() {
   const adsetId = document.getElementById('adsetSelect').value;
-  if (!adsetId) { toast('Please select an ad set.', 'error'); return; }
+  if (!adsetId) { toast('Please select an ad set.','error'); return; }
   const body = document.getElementById('primaryText').value.trim();
   const headline = document.getElementById('headline').value.trim();
-  if (!body || !headline) { toast('Primary text and headline are required.', 'error'); return; }
+  if (!body || !headline) { toast('Primary text and headline are required.','error'); return; }
   const landingUrl = document.getElementById('landingUrl').value.trim();
-  if (!landingUrl) { toast('Landing page URL is required.', 'error'); return; }
-
+  if (!landingUrl) { toast('Landing page URL is required.','error'); return; }
   const cta = document.getElementById('ctaType').value;
   const utm = document.getElementById('utmParams').value.trim();
-  const linkDesc = document.getElementById('linkDescription').value.trim();
-  const copyTemplate = `[BODY]${body}[HEADLINE]${headline}${linkDesc ? `[DESC]${linkDesc}` : ''}[CTA]${cta}`;
-
-  const payload = {
-    media_ids: Array.from(state.queuedIds),
-    adset_id: adsetId,
-    copy_template: copyTemplate,
-    utm_parameters: utm || undefined,
-    landing_page_url: landingUrl,
-  };
-
+  const ld = document.getElementById('linkDescription').value.trim();
+  const copyTemplate = `[BODY]${body}[HEADLINE]${headline}${ld?`[DESC]${ld}`:''}[CTA]${cta}`;
+  const payload = { media_ids: Array.from(state.queuedIds), adset_id: adsetId, copy_template: copyTemplate, utm_parameters: utm || undefined, landing_page_url: landingUrl };
   const btn = document.getElementById('publishBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Publishing...';
+  btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Publishing...';
+  logActivity('PUBLISH',`Publishing ${payload.media_ids.length} ad(s)...`);
   try {
-    const res = await fetch(`${API_BASE}/publish`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const res = await fetch(`${API_BASE}/publish`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Publish failed');
-    toast(`Published: ${data.created} created, ${data.skipped} skipped, ${data.failed} failed.`, data.failed > 0 ? 'error' : 'success');
-    if (data.created > 0) { state.queuedIds.clear(); updateQueueUI(); renderMediaGrid(state.mediaRecords); }
-  } catch (e) {
-    toast(`Publish error: ${e.message}`, 'error');
-  }
-  btn.disabled = false;
-  btn.innerHTML = `Publish Paused Ads <span class="queue-badge" id="footerQueueCount">${state.queuedIds.size}</span>`;
+    logActivity(data.failed>0?'ERROR':'SUCCESS',`Publish done: ${data.created} created, ${data.skipped} skipped, ${data.failed} failed.`);
+    (data.results||[]).forEach(r => { if (r.status==='success') logActivity('SUCCESS',`Ad created: ${r.ad_id}`); else logActivity('ERROR',`Ad failed: ${r.error||'unknown'}`); });
+    toast(`Published: ${data.created} created, ${data.skipped} skipped, ${data.failed} failed.`, data.failed>0?'error':'success');
+    if (data.created>0) { state.queuedIds.clear(); updateQueueUI(); renderMediaGrid(state.mediaRecords); }
+  } catch (e) { logActivity('ERROR',`Publish error: ${e.message}`); toast(`Publish error: ${e.message}`,'error'); }
+  btn.disabled = false; btn.innerHTML = `Publish Paused Ads <span class="queue-badge" id="footerQueueCount">${state.queuedIds.size}</span>`;
 }
 
-// ─── Helpers ───
-function updateCounter(inputId, counterId, soft) {
-  const val = document.getElementById(inputId).value.length;
-  const el = document.getElementById(counterId);
-  el.textContent = `${val} / ${soft} recommended`;
-  el.className = 'char-counter' + (val > soft * 1.5 ? ' over' : val > soft ? ' warn' : '');
+function updateCounter(i, c, soft) {
+  const v = document.getElementById(i).value.length;
+  const el = document.getElementById(c);
+  el.textContent = `${v} / ${soft} recommended`;
+  el.className = 'char-counter' + (v > soft*1.5 ? ' over' : v > soft ? ' warn' : '');
 }
 function setStatus(id, type, msg) {
   const el = document.getElementById(id);
@@ -650,23 +490,9 @@ function setStatus(id, type, msg) {
   el.innerHTML = `${icon} <span>${msg}</span>`;
   el.style.color = type === 'ok' ? 'var(--success)' : type === 'err' ? 'var(--error)' : 'var(--text-muted)';
 }
-function setBtnLoading(btnId, textId, loading, text) {
-  document.getElementById(btnId).disabled = loading;
-  document.getElementById(textId).textContent = text;
-}
-function showAuthWarning(msg) {
-  const el = document.getElementById('authWarning');
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-function toast(msg, type = 'info') {
-  const c = document.getElementById('toastContainer');
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.textContent = msg;
-  c.appendChild(t);
-  setTimeout(() => t.remove(), 4000);
-}
+function setBtnLoading(b, t, loading, text) { document.getElementById(b).disabled = loading; document.getElementById(t).textContent = text; }
+function showAuthWarning(msg) { const el = document.getElementById('authWarning'); el.textContent = msg; el.style.display = 'block'; }
+function toast(msg, type='info') { const c = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t); setTimeout(() => t.remove(), 4000); }
 </script>
 </body>
 </html>
