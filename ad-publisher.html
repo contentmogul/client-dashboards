@@ -747,21 +747,18 @@ function updateEnhWarning() {
 function updateFooter() {
   const btn = document.getElementById('primaryBtn');
   const note = document.getElementById('footerNote');
-  const cnt = document.getElementById('footerCount');
   document.getElementById('actionFooter').classList.add('visible');
   if (state.mode==='publish') {
     const n = state.selectedFileIds.size;
     const ingested = state.ingestedRecords.length;
-    cnt.textContent = ingested || n;
-    btn.firstChild.textContent = 'Publish paused ads ';
     const ready = ingested>0 && hasCopy('publish') && document.getElementById('pubAdsetSelect').value;
+    btn.innerHTML = `Publish paused ads <span class="queue-badge" id="footerCount">${ingested||n}</span>`;
     btn.disabled = !ready;
     note.textContent = ingested>0 ? `${ingested} ingested record(s) ready` : (n? `${n} creative(s) selected, ingest to continue` : 'select creatives to publish');
   } else {
     const n = state.selectedAdIds.size;
-    cnt.textContent = n;
-    btn.firstChild.textContent = 'Apply to ads ';
     const ready = n>0 && hasCopy('enhance');
+    btn.innerHTML = `Apply to ads <span class="queue-badge" id="footerCount">${n}</span>`;
     btn.disabled = !ready;
     note.textContent = n? `${n} ad(s) selected` : 'select ads to enhance';
   }
@@ -805,7 +802,15 @@ async function publishNew() {
     const created = data.created!=null ? data.created : (data.data||[]).filter(r=>r.status==='success').length;
     const failed = data.failed!=null ? data.failed : (data.data||[]).filter(r=>r.status==='failed').length;
     logActivity(failed>0?'ERROR':'SUCCESS',`Publish done: ${created} created, ${data.skipped||0} skipped, ${failed} failed.`);
-    (data.results||data.data||[]).forEach(r => { if (r.status==='success') logActivity('SUCCESS',`Ad created: ${r.ad_id}`); else logActivity('ERROR',`Ad failed: ${r.error||'unknown'}`); });
+    (data.results||data.data||[]).forEach(r => {
+      if (r.status==='success') {
+        const d = r.dropped, dup = r.duplicates_removed;
+        const parts = [];
+        if (d && (d.titles||d.bodies||d.descriptions)) parts.push(`dropped ${d.titles||0}h/${d.bodies||0}b/${d.descriptions||0}d past cap`);
+        if (dup && (dup.titles||dup.bodies||dup.descriptions)) parts.push(`removed ${dup.titles||0}h/${dup.bodies||0}b/${dup.descriptions||0}d duplicate(s)`);
+        logActivity('SUCCESS',`Ad created: ${r.ad_id}${parts.length?` (${parts.join(', ')})`:''}`);
+      } else logActivity('ERROR',`Ad failed: ${r.error||'unknown'}`);
+    });
     toast(`Published: ${created} created${failed?`, ${failed} failed`:''}.`, failed>0?'error':'success');
   } catch (e) { logActivity('ERROR',`Publish failed: ${e.message}`); toast(`Publish failed: ${e.message}`,'error'); }
   btn.innerHTML = saved; updateFooter();
@@ -842,8 +847,11 @@ async function applyEnhance() {
     const failed = results.filter(r=>r.status==='failed');
     results.forEach(r => {
       if (r.status==='success') {
-        const d = r.dropped; const dropMsg = d && (d.titles||d.bodies||d.descriptions) ? ` (dropped ${d.titles||0}h/${d.bodies||0}b past cap)` : '';
-        logActivity('SUCCESS',`Enhanced ${r.ad_id}${dropMsg}`);
+        const d = r.dropped, dup = r.duplicates_removed;
+        const parts = [];
+        if (d && (d.titles||d.bodies||d.descriptions)) parts.push(`dropped ${d.titles||0}h/${d.bodies||0}b/${d.descriptions||0}d past cap`);
+        if (dup && (dup.titles||dup.bodies||dup.descriptions)) parts.push(`removed ${dup.titles||0}h/${dup.bodies||0}b/${dup.descriptions||0}d duplicate(s)`);
+        logActivity('SUCCESS',`Enhanced ${r.ad_id}${parts.length?` (${parts.join(', ')})`:''}`);
       } else logActivity('ERROR',`Ad ${r.ad_id} failed: ${r.error||'unknown'}`);
     });
     toast(`Enhanced ${ok} ad(s)${failed.length?`, ${failed.length} failed`:''}.`, failed.length?'error':'success');
