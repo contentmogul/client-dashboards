@@ -260,7 +260,7 @@
 
   </div>
 
-  <div class="activity-card" id="activityCard">
+  <div class="activity-card open" id="activityCard">
     <button class="activity-toggle" onclick="toggleActivity()"><span>Activity Log</span><span class="chev">&#9662;</span></button>
     <div class="activity-panel"><div class="activity-feed" id="activityFeed"></div></div>
   </div>
@@ -443,17 +443,7 @@ function bindGrid(mode, wrap) {
       e.preventDefault();
       const text=(e.clipboardData||window.clipboardData).getData('text');
       const startI=+e.target.dataset.i, startCol=COPY_COLS.indexOf(e.target.dataset.col);
-      const rows=text.replace(/\r/g,'').split('\n').filter((r,idx,a)=>!(idx===a.length-1 && r===''));
-      rows.forEach((r,ri)=>{
-        const cells = r.includes('\t') ? r.split('\t') : [r];
-        cells.forEach((val,ci)=>{
-          const col=COPY_COLS[startCol+ci], row=startI+ri;
-          if (col && row<CAP) { while(state.copy[mode][col].length<=row) state.copy[mode][col].push(''); state.copy[mode][col][row]=val.trim(); }
-        });
-      });
-      COPY_COLS.forEach(col => { state.copy[mode][col]=state.copy[mode][col].slice(0,CAP); });
-      renderCopyTable(mode); updateFooter();
-      toast(`Pasted ${rows.length} row(s).`,'success');
+      applyPasteText(mode, text, startCol, startI);
     });
   });
 }
@@ -481,23 +471,49 @@ async function pasteFromClipboard(mode) {
   try {
     const text = await navigator.clipboard.readText();
     if (!text) { toast('Clipboard empty. Click a cell and press paste instead.','info'); return; }
-    applyPaste(mode, text, 0, 0);
+    applyPasteText(mode, text, 0, 0);
   } catch(e) {
     toast('Click the first cell and press Cmd/Ctrl+V to paste your block.','info');
   }
 }
-function applyPaste(mode, text, startCol, startI) {
-  const rows=text.replace(/\r/g,'').split('\n').filter((r,idx,a)=>!(idx===a.length-1 && r===''));
-  rows.forEach((r,ri)=>{
-    const cells = r.includes('\t') ? r.split('\t') : r.split(/\s*,\s*/);
+// Parse tab-delimited text with spreadsheet quote rules: quoted fields keep internal
+// newlines and tabs; unquoted newlines separate rows; tabs separate columns.
+function parseDelimited(text) {
+  const rows=[]; let row=[], field='', i=0, inQ=false;
+  while (i<text.length) {
+    const ch=text[i];
+    if (inQ) {
+      if (ch==='"') { if (text[i+1]==='"') { field+='"'; i+=2; continue; } inQ=false; i++; continue; }
+      field+=ch; i++; continue;
+    } else {
+      if (ch==='"') { inQ=true; i++; continue; }
+      if (ch==='\t') { row.push(field); field=''; i++; continue; }
+      if (ch==='\n') { row.push(field); rows.push(row); row=[]; field=''; i++; continue; }
+      if (ch==='\r') { i++; continue; }
+      field+=ch; i++; continue;
+    }
+  }
+  row.push(field); rows.push(row);
+  if (rows.length && rows[rows.length-1].length===1 && rows[rows.length-1][0]==='') rows.pop();
+  return rows;
+}
+function applyPasteText(mode, text, startCol, startI) {
+  let grid;
+  if (text.indexOf('\t')===-1 && text.indexOf('"')===-1) {
+    // plain text from a doc or a single cell: keep it as ONE cell, preserve paragraphs
+    grid = [[text.replace(/\r/g,'').replace(/\n+$/,'')]];
+  } else {
+    grid = parseDelimited(text);
+  }
+  grid.forEach((cells,ri)=>{
     cells.forEach((val,ci)=>{
       const col=COPY_COLS[startCol+ci], row=startI+ri;
-      if (col && row<CAP) { while(state.copy[mode][col].length<=row) state.copy[mode][col].push(''); state.copy[mode][col][row]=val.trim(); }
+      if (col && row<CAP) { while(state.copy[mode][col].length<=row) state.copy[mode][col].push(''); state.copy[mode][col][row]=(val||'').replace(/^\s+|\s+$/g,''); }
     });
   });
   COPY_COLS.forEach(col => { state.copy[mode][col]=state.copy[mode][col].slice(0,CAP); });
   renderCopyTable(mode); updateFooter();
-  toast(`Pasted ${rows.length} row(s).`,'success');
+  toast(`Pasted ${grid.length} row(s).`,'success');
 }
 function copyArrays(mode) {
   const c = state.copy[mode];
