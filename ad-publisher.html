@@ -121,16 +121,22 @@
   .mode-toggle { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 3px; gap: 3px; margin-bottom: 22px; }
   .mode-btn { font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 6px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; }
   .mode-btn.active { background: var(--brand); color: #fff; }
-  /* copy table */
-  .copy-table { width: 100%; }
-  .copy-table-head { display: grid; grid-template-columns: 1.7fr 1.1fr 1.1fr 28px; gap: 8px; margin-bottom: 6px; }
-  .copy-table-head label { margin: 0; }
-  .copy-row { display: grid; grid-template-columns: 1.7fr 1.1fr 1.1fr 28px; gap: 8px; margin-bottom: 8px; align-items: start; }
-  .copy-row textarea { min-height: 60px; font-size: 12px; }
-  .copy-row .row-del { background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 6px; cursor: pointer; height: 32px; font-size: 14px; }
-  .copy-meta { display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); margin: 4px 0 12px; }
+  /* copy paste-grid */
+  .cg { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface2); }
+  .cg-head, .cg-row { display: grid; grid-template-columns: 36px 1.7fr 1.1fr 1.1fr; }
+  .cg-head { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .cg-head > div { padding: 8px 10px; font-size: 11px; font-weight: 600; color: var(--text-muted); border-left: 1px solid var(--border); }
+  .cg-head > div:first-child { border-left: none; }
+  .cg-row { border-bottom: 1px solid var(--border); }
+  .cg-row:last-child { border-bottom: none; }
+  .cg-rownum { padding: 8px 6px; font-size: 11px; color: var(--text-muted); text-align: center; background: var(--surface); display: flex; align-items: center; justify-content: center; }
+  .cg-cell { padding: 8px 10px; font-size: 12px; line-height: 1.5; border-left: 1px solid var(--border); outline: none; min-height: 22px; color: var(--text); white-space: pre-wrap; word-break: break-word; cursor: text; }
+  .cg-cell:focus, .cg-cell.anchor { background: rgba(192,41,122,0.12); box-shadow: inset 0 0 0 2px var(--brand); }
+  .cg-cell:empty:before { content: attr(data-ph); color: var(--text-muted); opacity: 0.6; }
+  .copy-meta { display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); margin: 10px 0 4px; flex-wrap: wrap; }
   .copy-meta .cap-full { color: var(--warning); }
-  .copy-actions { display: flex; gap: 10px; margin-bottom: 12px; }
+  .copy-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+  .copy-actions { display: flex; gap: 10px; margin: 12px 0 4px; }
   .copy-actions button { font-size: 12px; }
   .warn-bar { background: #2a2310; border: 1px solid #5a4a1a; border-radius: 8px; padding: 9px 13px; font-size: 12px; color: var(--warning); margin-top: 12px; display: flex; align-items: center; gap: 8px; }
   @media (prefers-color-scheme: light) { .warn-bar { background: #fff7ed; border-color: #fed7aa; color: #b45309; } }
@@ -187,6 +193,7 @@
       <div id="creativeSelectWrap" style="display:none; margin-top:12px;">
         <div class="select-bar"><label><input type="checkbox" id="selectAllCreatives" checked onchange="toggleAllCreatives(this.checked)" /> <span id="creativeSelCount">creatives selected</span></label><div class="sb-actions"><button class="sb-link" onclick="toggleAllCreatives(true)">select all</button><button class="sb-link" onclick="toggleAllCreatives(false)">deselect all</button></div></div>
         <div class="ad-grid" id="creativeGrid"></div>
+        <div style="margin-top:14px;"><button class="btn btn-primary" onclick="runIngest()" id="ingestBtn"><span id="ingestBtnText">Ingest selected creatives</span></button> <span class="copy-hint" style="margin-left:8px;">Ingest first, then the copy table and publish appear.</span></div>
       </div>
       <div id="ingestDetail" class="result-block" style="display:none"></div>
     </div>
@@ -273,7 +280,7 @@ const CAP = 5;
 const state = {
   clientSlug:'', clientKey:'', client:null, metaConnected:false, mode:'publish',
   topFolderId:null, offerFolders:[], batchFolders:[], selectedBatchId:null, selectedBatchName:'',
-  driveFiles:[], selectedFileIds:new Set(),
+  driveFiles:[], selectedFileIds:new Set(), ingestedRecords:[], lastPackageId:null,
   enhAds:[], selectedAdIds:new Set(),
   copy:{ publish:{titles:[''],bodies:[''],descriptions:['']}, enhance:{titles:[''],bodies:[''],descriptions:['']} },
   campaignsCache:null, restored:false
@@ -390,51 +397,81 @@ function onEnhCampaignChange() { loadAdsetsInto(document.getElementById('enhCamp
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-/* ---------- copy table (shared component) ---------- */
-function renderCopyTable(mode) {
+/* ---------- copy paste-grid (shared component) ---------- */
+const COPY_COLS = ['bodies','titles','descriptions'];
+function gridRowCount(mode) {
   const c = state.copy[mode];
-  const maxLen = Math.max(c.titles.length, c.bodies.length, c.descriptions.length, 1);
+  return Math.min(CAP, Math.max(2, c.titles.length, c.bodies.length, c.descriptions.length));
+}
+function renderCopyTable(mode) {
   const wrap = document.getElementById(mode==='publish' ? 'copyTablePublish' : 'copyTableEnhance');
-  let h = `<div class="copy-table-head"><label>Primary text</label><label>Headline</label><label>Description</label><label></label></div>`;
-  for (let i=0; i<maxLen; i++) {
-    h += `<div class="copy-row">
-      <textarea data-m="${mode}" data-col="bodies" data-i="${i}" oninput="onCopyInput(this)" placeholder="${i===0?'Primary text':''}">${esc(c.bodies[i]||'')}</textarea>
-      <textarea data-m="${mode}" data-col="titles" data-i="${i}" oninput="onCopyInput(this)" placeholder="${i===0?'Headline':''}">${esc(c.titles[i]||'')}</textarea>
-      <textarea data-m="${mode}" data-col="descriptions" data-i="${i}" oninput="onCopyInput(this)" placeholder="${i===0?'Optional':''}">${esc(c.descriptions[i]||'')}</textarea>
-      <button class="row-del" onclick="delCopyRow('${mode}',${i})" title="Remove row">&times;</button>
-    </div>`;
+  const c = state.copy[mode];
+  const n = gridRowCount(mode);
+  let h = `<div class="cg"><div class="cg-head"><div></div><div>Primary text</div><div>Headline</div><div>Description</div></div>`;
+  for (let i=0;i<n;i++) {
+    h += `<div class="cg-row"><div class="cg-rownum">${i+1}</div>`;
+    COPY_COLS.forEach(col => {
+      const ph = i===0 ? (col==='bodies'?'Primary text':col==='titles'?'Headline':'Optional') : '';
+      h += `<div class="cg-cell" contenteditable="true" data-m="${mode}" data-col="${col}" data-i="${i}" data-ph="${ph}">${esc(c[col][i]||'')}</div>`;
+    });
+    h += `</div>`;
   }
-  const counts = ['bodies','titles','descriptions'].map(col => c[col].filter(x=>x&&x.trim()).length);
-  const addDisabled = maxLen >= CAP;
+  h += `</div>`;
+  const counts = COPY_COLS.map(col => c[col].filter(x=>x&&x.trim()).length);
   h += `<div class="copy-meta">
     <span class="${counts[0]>=CAP?'cap-full':''}">Primary texts ${counts[0]} of ${CAP}</span>
     <span class="${counts[1]>=CAP?'cap-full':''}">Headlines ${counts[1]} of ${CAP}</span>
     <span class="${counts[2]>=CAP?'cap-full':''}">Descriptions ${counts[2]} of ${CAP}</span>
-    ${addDisabled?'':`<button class="sb-link" onclick="addCopyRow('${mode}')">+ add row</button>`}
+    ${n<CAP?`<button class="sb-link" onclick="addCopyRow('${mode}')">+ add row</button>`:''}
   </div>`;
   wrap.innerHTML = h;
+  bindGrid(mode, wrap);
 }
-function onCopyInput(el) {
-  const m = el.dataset.m, col = el.dataset.col, i = +el.dataset.i;
-  while (state.copy[m][col].length <= i) state.copy[m][col].push('');
-  state.copy[m][col][i] = el.value;
-  updateFooter();
+function bindGrid(mode, wrap) {
+  wrap.querySelectorAll('.cg-cell').forEach(cell => {
+    cell.addEventListener('focus', () => {
+      wrap.querySelectorAll('.cg-cell.anchor').forEach(x=>x.classList.remove('anchor'));
+      cell.classList.add('anchor');
+    });
+    cell.addEventListener('input', e => {
+      const col=e.target.dataset.col, i=+e.target.dataset.i;
+      while (state.copy[mode][col].length<=i) state.copy[mode][col].push('');
+      state.copy[mode][col][i]=e.target.textContent;
+      updateCounts(mode); updateFooter();
+    });
+    cell.addEventListener('paste', e => {
+      e.preventDefault();
+      const text=(e.clipboardData||window.clipboardData).getData('text');
+      const startI=+e.target.dataset.i, startCol=COPY_COLS.indexOf(e.target.dataset.col);
+      const rows=text.replace(/\r/g,'').split('\n').filter((r,idx,a)=>!(idx===a.length-1 && r===''));
+      rows.forEach((r,ri)=>{
+        const cells = r.includes('\t') ? r.split('\t') : [r];
+        cells.forEach((val,ci)=>{
+          const col=COPY_COLS[startCol+ci], row=startI+ri;
+          if (col && row<CAP) { while(state.copy[mode][col].length<=row) state.copy[mode][col].push(''); state.copy[mode][col][row]=val.trim(); }
+        });
+      });
+      COPY_COLS.forEach(col => { state.copy[mode][col]=state.copy[mode][col].slice(0,CAP); });
+      renderCopyTable(mode); updateFooter();
+      toast(`Pasted ${rows.length} row(s).`,'success');
+    });
+  });
+}
+function updateCounts(mode) {
+  const c = state.copy[mode];
+  const wrap = document.getElementById(mode==='publish' ? 'copyTablePublish' : 'copyTableEnhance');
+  const spans = wrap.querySelectorAll('.copy-meta span');
+  const counts = COPY_COLS.map(col => c[col].filter(x=>x&&x.trim()).length);
+  if (spans[0]) { spans[0].textContent=`Primary texts ${counts[0]} of ${CAP}`; spans[0].className=counts[0]>=CAP?'cap-full':''; }
+  if (spans[1]) { spans[1].textContent=`Headlines ${counts[1]} of ${CAP}`; spans[1].className=counts[1]>=CAP?'cap-full':''; }
+  if (spans[2]) { spans[2].textContent=`Descriptions ${counts[2]} of ${CAP}`; spans[2].className=counts[2]>=CAP?'cap-full':''; }
 }
 function addCopyRow(mode) {
   const c = state.copy[mode];
-  const maxLen = Math.max(c.titles.length, c.bodies.length, c.descriptions.length);
-  if (maxLen >= CAP) return;
-  ['titles','bodies','descriptions'].forEach(col => { if (c[col].length <= maxLen) c[col].push(''); });
-  c.titles.push(''); c.bodies.push(''); c.descriptions.push('');
-  // normalise to maxLen+1
-  ['titles','bodies','descriptions'].forEach(col => { c[col] = c[col].slice(0, maxLen+1); while(c[col].length < maxLen+1) c[col].push(''); });
+  const n = Math.max(c.titles.length,c.bodies.length,c.descriptions.length);
+  if (n>=CAP) return;
+  COPY_COLS.forEach(col => { while(c[col].length<=n) c[col].push(''); });
   renderCopyTable(mode);
-}
-function delCopyRow(mode, i) {
-  const c = state.copy[mode];
-  ['titles','bodies','descriptions'].forEach(col => { if (c[col].length > i) c[col].splice(i,1); });
-  if (Math.max(c.titles.length,c.bodies.length,c.descriptions.length)===0) { c.titles=['']; c.bodies=['']; c.descriptions=['']; }
-  renderCopyTable(mode); updateFooter();
 }
 function clearCopyTable(mode) {
   state.copy[mode] = {titles:[''],bodies:[''],descriptions:['']};
@@ -443,24 +480,22 @@ function clearCopyTable(mode) {
 async function pasteFromClipboard(mode) {
   try {
     const text = await navigator.clipboard.readText();
-    if (!text) { toast('Clipboard is empty.','info'); return; }
-    applyPaste(mode, text);
+    if (!text) { toast('Clipboard empty. Click a cell and press paste instead.','info'); return; }
+    applyPaste(mode, text, 0, 0);
   } catch(e) {
-    const text = prompt('Paste your copy here (columns: primary text, headline, description, tab or comma separated):');
-    if (text) applyPaste(mode, text);
+    toast('Click the first cell and press Cmd/Ctrl+V to paste your block.','info');
   }
 }
-function applyPaste(mode, text) {
-  const rows = text.trim().split(/\r?\n/).filter(r=>r.trim());
-  const c = { titles:[], bodies:[], descriptions:[] };
-  rows.forEach(r => {
+function applyPaste(mode, text, startCol, startI) {
+  const rows=text.replace(/\r/g,'').split('\n').filter((r,idx,a)=>!(idx===a.length-1 && r===''));
+  rows.forEach((r,ri)=>{
     const cells = r.includes('\t') ? r.split('\t') : r.split(/\s*,\s*/);
-    c.bodies.push((cells[0]||'').trim());
-    c.titles.push((cells[1]||'').trim());
-    c.descriptions.push((cells[2]||'').trim());
+    cells.forEach((val,ci)=>{
+      const col=COPY_COLS[startCol+ci], row=startI+ri;
+      if (col && row<CAP) { while(state.copy[mode][col].length<=row) state.copy[mode][col].push(''); state.copy[mode][col][row]=val.trim(); }
+    });
   });
-  ['titles','bodies','descriptions'].forEach(col => { c[col] = c[col].slice(0,CAP); if(!c[col].length) c[col]=['']; });
-  state.copy[mode] = c;
+  COPY_COLS.forEach(col => { state.copy[mode][col]=state.copy[mode][col].slice(0,CAP); });
   renderCopyTable(mode); updateFooter();
   toast(`Pasted ${rows.length} row(s).`,'success');
 }
@@ -508,6 +543,7 @@ async function onBatchSelected() {
   const opt = sel.options[sel.selectedIndex];
   if (!sel.value) return;
   state.selectedBatchId = sel.value; state.selectedBatchName = opt.dataset.name || opt.text;
+  state.lastPackageId = null; state.ingestedRecords = [];
   try {
     const files = await driveFiles(state.selectedBatchId);
     state.driveFiles = files;
@@ -516,8 +552,8 @@ async function onBatchSelected() {
     renderCreativeGrid(files);
     document.getElementById('fileSummary').style.display = 'flex';
     document.getElementById('creativeSelectWrap').style.display = 'block';
-    document.getElementById('copyCardPublish').style.display = 'block';
-    document.getElementById('destCardPublish').style.display = 'block';
+    document.getElementById('copyCardPublish').style.display = 'none';
+    document.getElementById('destCardPublish').style.display = 'none';
     logActivity('FETCH',`Batch "${state.selectedBatchName}": ${files.length} files.`);
     updateFooter();
   } catch (e) { toast(`Failed to read batch: ${e.message}`,'error'); logActivity('ERROR', e.message); }
@@ -566,6 +602,65 @@ function checkDuplicateWarning() {
   const w = document.getElementById('dupWarn');
   if (adset.value) { w.style.display='none'; }
   updateFooter();
+}
+
+async function runIngest() {
+  const fileIds = Array.from(state.selectedFileIds);
+  if (!fileIds.length) { toast('Select at least one creative to ingest.','error'); return; }
+  const entityId = document.getElementById('entityId') ? document.getElementById('entityId').value.trim() : '';
+  // entity fields live in the destination card which is hidden pre-ingest; default sensibly and let user refine before publish
+  const offerSel = document.getElementById('offerSelect');
+  const offerName = offerSel.options[offerSel.selectedIndex]?.text || 'unknown-offer';
+  const packageId = `pkg-${Date.now()}`;
+  state.lastPackageId = packageId;
+  const batchFolderUrl = `https://drive.google.com/drive/folders/${state.selectedBatchId}`;
+  const payload = {
+    drive_folder_url: batchFolderUrl,
+    selected_file_ids: fileIds,
+    entity_id: 'hpid-0001',
+    entity_type: 'homepage',
+    campaign_context: { parent_business: state.clientSlug, campaign_package_id: packageId, master_category: offerName }
+  };
+  setBtnLoading('ingestBtn','ingestBtnText',true,'Ingesting...');
+  logActivity('INGEST',`Ingesting ${fileIds.length} selected creative(s)...`);
+  try {
+    const res = await fetch(`${API_BASE}/ingest`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Ingest failed');
+    logActivity(data.failed>0?'ERROR':'SUCCESS',`Ingest done: ${data.uploaded||0} created, ${data.skipped||0} skipped, ${data.failed||0} failed.`);
+    renderIngestDetail(data);
+    if (data.details) {
+      (data.details.created||[]).forEach(f => logActivity('SUCCESS',`Created: ${f.creative_name||f.name}`));
+      (data.details.skipped||[]).forEach(f => logActivity('INGEST',`Skipped: ${f.name} (${f.reason||'already ingested'})`));
+      (data.details.failed||[]).forEach(f => logActivity('ERROR',`Failed: ${f.name} - ${f.error||'error'}`));
+    }
+    toast(`Ingest: ${data.uploaded||0} uploaded, ${data.skipped||0} skipped${data.failed?`, ${data.failed} failed`:''}.`, data.failed>0?'error':'success');
+    await loadIngestedRecords(packageId);
+  } catch (e) { logActivity('ERROR',`Ingest error: ${e.message}`); toast(`Ingest error: ${e.message}`,'error'); }
+  setBtnLoading('ingestBtn','ingestBtnText',false,'Ingest selected creatives');
+}
+function renderIngestDetail(data) {
+  const el = document.getElementById('ingestDetail');
+  const d = data.details || { created:[], skipped:[], failed:[] };
+  let h = `<div class="result-summary"><span class="result-pill created">${data.uploaded||0} created</span><span class="result-pill skipped">${data.skipped||0} skipped</span><span class="result-pill failed">${data.failed||0} failed</span></div><div class="result-list">`;
+  (d.created||[]).forEach(f => h += `<div class="result-item ok"><span class="ri-icon">OK</span><span>${esc(f.creative_name||f.name)}</span></div>`);
+  (d.skipped||[]).forEach(f => h += `<div class="result-item skip"><span class="ri-icon">--</span><span>${esc(f.name)}</span><span class="ri-detail">${esc(f.reason||'already ingested')}</span></div>`);
+  (d.failed||[]).forEach(f => h += `<div class="result-item err"><span class="ri-icon">X</span><span>${esc(f.name)}</span><span class="ri-detail">${esc(f.error||'error')}</span></div>`);
+  h += '</div>';
+  el.innerHTML = h; el.style.display = 'block';
+}
+async function loadIngestedRecords(packageId) {
+  try {
+    const res = await fetch(`${API_BASE}/records?${authQS()}&package_id=${encodeURIComponent(packageId)}`);
+    if (!res.ok) throw new Error('Failed to load records');
+    const data = await res.json();
+    state.ingestedRecords = Array.isArray(data) ? data : (data.records || []);
+    logActivity('SUCCESS',`${state.ingestedRecords.length} record(s) ready to publish.`);
+    // reveal copy + destination now that we have ingested records
+    document.getElementById('copyCardPublish').style.display = 'block';
+    document.getElementById('destCardPublish').style.display = 'block';
+    updateFooter();
+  } catch (e) { toast(`Could not load ingested records: ${e.message}`,'error'); logActivity('ERROR', e.message); }
 }
 
 /* ---------- ENHANCE: load ads, selection ---------- */
@@ -639,11 +734,12 @@ function updateFooter() {
   document.getElementById('actionFooter').classList.add('visible');
   if (state.mode==='publish') {
     const n = state.selectedFileIds.size;
-    cnt.textContent = n;
+    const ingested = state.ingestedRecords.length;
+    cnt.textContent = ingested || n;
     btn.firstChild.textContent = 'Publish paused ads ';
-    const ready = n>0 && hasCopy('publish') && document.getElementById('pubAdsetSelect').value;
+    const ready = ingested>0 && hasCopy('publish') && document.getElementById('pubAdsetSelect').value;
     btn.disabled = !ready;
-    note.textContent = n? `${n} creative(s) selected` : 'select creatives to publish';
+    note.textContent = ingested>0 ? `${ingested} ingested record(s) ready` : (n? `${n} creative(s) selected, ingest to continue` : 'select creatives to publish');
   } else {
     const n = state.selectedAdIds.size;
     cnt.textContent = n;
@@ -662,40 +758,33 @@ function primaryAction() { if (state.mode==='publish') publishNew(); else applyE
 async function publishNew() {
   const adsetId = document.getElementById('pubAdsetSelect').value;
   if (!adsetId) { toast('Select a campaign and ad set.','error'); return; }
+  if (!state.ingestedRecords.length) { toast('Ingest creatives first.','error'); return; }
   const copy = copyArrays('publish');
   if (!copy.bodies.length || !copy.titles.length) { toast('At least one primary text and one headline are required.','error'); return; }
   const landingUrl = document.getElementById('landingUrl').value.trim();
   if (!landingUrl) { toast('Landing page URL is required.','error'); return; }
-  const entityId = document.getElementById('entityId').value.trim();
-  if (!entityId) { toast('Entity ID is required.','error'); return; }
-  const fileIds = Array.from(state.selectedFileIds);
-  if (!fileIds.length) { toast('Select at least one creative.','error'); return; }
-  const offerSel = document.getElementById('offerSelect');
-  const offerName = offerSel.options[offerSel.selectedIndex]?.text || 'unknown-offer';
   const cta = document.getElementById('ctaType').value;
   const utm = document.getElementById('utmParams').value.trim();
-  const entityType = document.getElementById('entityType').value;
-  const packageId = `pkg-${Date.now()}`;
-  const batchFolderUrl = `https://drive.google.com/drive/folders/${state.selectedBatchId}`;
+  const mediaIds = state.ingestedRecords.map(r => r.id).filter(Boolean);
+  if (!mediaIds.length) { toast('No ingested records found to publish.','error'); return; }
   const payload = {
-    drive_folder_url: batchFolderUrl,
-    selected_file_ids: fileIds,
-    entity_id: entityId, entity_type: entityType,
+    media_ids: mediaIds,
     adset_id: adsetId,
     titles: copy.titles, bodies: copy.bodies, descriptions: copy.descriptions,
-    cta_type: cta, website_url: landingUrl, url_tags: utm || undefined,
-    campaign_context: { parent_business: state.clientSlug, campaign_package_id: packageId, master_category: offerName }
+    website_url: landingUrl, cta_type: cta, url_tags: utm || undefined
   };
   const btn = document.getElementById('primaryBtn');
   btn.disabled = true; const saved = btn.innerHTML; btn.innerHTML = '<div class="spinner"></div> Publishing...';
-  logActivity('PUBLISH',`Publishing ${fileIds.length} creative(s)...`);
+  logActivity('PUBLISH',`Publishing ${mediaIds.length} ingested record(s)...`);
   try {
     const res = await fetch(`${API_BASE}/publish`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Publish failed');
-    logActivity(data.failed>0?'ERROR':'SUCCESS',`Publish done: ${data.created||data.uploaded||0} created, ${data.skipped||0} skipped, ${data.failed||0} failed.`);
+    const created = data.created!=null ? data.created : (data.data||[]).filter(r=>r.status==='success').length;
+    const failed = data.failed!=null ? data.failed : (data.data||[]).filter(r=>r.status==='failed').length;
+    logActivity(failed>0?'ERROR':'SUCCESS',`Publish done: ${created} created, ${data.skipped||0} skipped, ${failed} failed.`);
     (data.results||data.data||[]).forEach(r => { if (r.status==='success') logActivity('SUCCESS',`Ad created: ${r.ad_id}`); else logActivity('ERROR',`Ad failed: ${r.error||'unknown'}`); });
-    toast(`Published: ${data.created||data.uploaded||0} created, ${data.failed||0} failed.`, data.failed>0?'error':'success');
+    toast(`Published: ${created} created${failed?`, ${failed} failed`:''}.`, failed>0?'error':'success');
   } catch (e) { logActivity('ERROR',`Publish error: ${e.message}`); toast(`Publish error: ${e.message}`,'error'); }
   btn.innerHTML = saved; updateFooter();
 }
@@ -754,9 +843,10 @@ async function saveDraft(silent) {
     copy_draft: { titles: copy.titles, bodies: copy.bodies, descriptions: copy.descriptions }
   };
   try {
-    await fetch(`${API_BASE}/ui-state`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    if (!silent) toast('Draft saved.','success');
-  } catch(e) { if (!silent) toast(`Could not save draft: ${e.message}`,'error'); }
+    const res = await fetch(`${API_BASE}/ui-state`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if (!res.ok) { const d = await res.json().catch(()=>({})); throw new Error(d.message || `ui-state returned ${res.status}`); }
+    if (!silent) { toast('Draft saved.','success'); logActivity('SUCCESS',`Draft saved (${mode}${payload.last_campaign_id?', campaign + ad set':''}${copy.titles.length||copy.bodies.length?', copy':''}).`); }
+  } catch(e) { if (!silent) { toast(`Could not save draft: ${e.message}`,'error'); logActivity('ERROR',`Save draft: ${e.message}`); } }
 }
 async function restoreUiState() {
   if (state.restored) return; state.restored = true;
