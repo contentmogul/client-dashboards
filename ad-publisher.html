@@ -631,6 +631,7 @@ async function runIngest() {
   state.lastPackageId = packageId;
   const batchFolderUrl = `https://drive.google.com/drive/folders/${state.selectedBatchId}`;
   const payload = {
+    client_id: state.clientSlug, client_key: state.clientKey, client: state.clientSlug, key: state.clientKey,
     drive_folder_url: batchFolderUrl,
     selected_file_ids: fileIds,
     entity_id: 'hpid-0001',
@@ -779,11 +780,13 @@ async function publishNew() {
   if (!copy.bodies.length || !copy.titles.length) { toast('At least one primary text and one headline are required.','error'); return; }
   const landingUrl = document.getElementById('landingUrl').value.trim();
   if (!landingUrl) { toast('Landing page URL is required.','error'); return; }
+  if (!/^https?:\/\//i.test(landingUrl)) { toast('Landing page URL must start with http:// or https:// (it currently looks like copy text).','error'); logActivity('ERROR','Landing page URL is not a valid URL.'); return; }
   const cta = document.getElementById('ctaType').value;
   const utm = document.getElementById('utmParams').value.trim();
   const mediaIds = state.ingestedRecords.map(r => r.id).filter(Boolean);
   if (!mediaIds.length) { toast('No ingested records found to publish.','error'); return; }
   const payload = {
+    client_id: state.clientSlug, client_key: state.clientKey, client: state.clientSlug, key: state.clientKey,
     media_ids: mediaIds,
     adset_id: adsetId,
     titles: copy.titles, bodies: copy.bodies, descriptions: copy.descriptions,
@@ -794,14 +797,17 @@ async function publishNew() {
   logActivity('PUBLISH',`Publishing ${mediaIds.length} ingested record(s)...`);
   try {
     const res = await fetch(`${API_BASE}/publish`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Publish failed');
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) {
+      const detail = data.message || data.error || (data.errors ? JSON.stringify(data.errors) : '') || `HTTP ${res.status}`;
+      throw new Error(detail);
+    }
     const created = data.created!=null ? data.created : (data.data||[]).filter(r=>r.status==='success').length;
     const failed = data.failed!=null ? data.failed : (data.data||[]).filter(r=>r.status==='failed').length;
     logActivity(failed>0?'ERROR':'SUCCESS',`Publish done: ${created} created, ${data.skipped||0} skipped, ${failed} failed.`);
     (data.results||data.data||[]).forEach(r => { if (r.status==='success') logActivity('SUCCESS',`Ad created: ${r.ad_id}`); else logActivity('ERROR',`Ad failed: ${r.error||'unknown'}`); });
     toast(`Published: ${created} created${failed?`, ${failed} failed`:''}.`, failed>0?'error':'success');
-  } catch (e) { logActivity('ERROR',`Publish error: ${e.message}`); toast(`Publish error: ${e.message}`,'error'); }
+  } catch (e) { logActivity('ERROR',`Publish failed: ${e.message}`); toast(`Publish failed: ${e.message}`,'error'); }
   btn.innerHTML = saved; updateFooter();
 }
 
@@ -829,8 +835,8 @@ async function applyEnhance() {
   logActivity('ENHANCE',`Applying copy to ${adIds.length} ad(s)...`);
   try {
     const res = await fetch(`${API_BASE}/enhance-variations`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Enhance failed');
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) { const detail = data.message || data.error || (data.errors ? JSON.stringify(data.errors) : '') || `HTTP ${res.status}`; throw new Error(detail); }
     const results = data.data || [];
     const ok = results.filter(r=>r.status==='success').length;
     const failed = results.filter(r=>r.status==='failed');
