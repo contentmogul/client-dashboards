@@ -875,6 +875,7 @@ function setStatus(id, type, msg) {
   el.style.color = type === 'ok' ? 'var(--success)' : type === 'err' ? 'var(--error)' : 'var(--text-muted)';
 }
 function showAuthWarning(msg) { const el = document.getElementById('authWarning'); el.textContent = msg; el.style.display = 'block'; }
+function setBtnLoading(btnId, textId, loading, text) { const b=document.getElementById(btnId); if(b) b.disabled=loading; const t=document.getElementById(textId); if(t) t.textContent=text; }
 function toast(msg, type='info') { const c = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t); setTimeout(() => t.remove(), 4000); }
 </script>
 </body>
