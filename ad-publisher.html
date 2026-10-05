@@ -116,6 +116,7 @@
   .log-tag.ingest { color: #c084fc; }
   .log-tag.publish { color: #f59e0b; }
   .log-tag.enhance { color: #2dd4bf; }
+  .log-tag.skip { color: var(--warning); }
   .log-msg { color: var(--text); word-break: break-word; }
   /* mode toggle */
   .mode-toggle { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 3px; gap: 3px; margin-bottom: 22px; }
@@ -800,8 +801,16 @@ async function publishNew() {
       throw new Error(detail);
     }
     const created = data.created!=null ? data.created : (data.data||[]).filter(r=>r.status==='success').length;
+    const skipped = data.skipped!=null ? data.skipped : (data.data||[]).filter(r=>r.status==='skipped').length;
     const failed = data.failed!=null ? data.failed : (data.data||[]).filter(r=>r.status==='failed').length;
-    logActivity(failed>0?'ERROR':'SUCCESS',`Publish done: ${created} created, ${data.skipped||0} skipped, ${failed} failed.`);
+    // "Skipped" means already published to this exact ad set (see backend's idempotency check) -
+    // not a failure. Labelling the batch SUCCESS while tagging every skip ERROR read as
+    // self-contradictory (cm-coord#1168): a retry after a dropped response showed "SUCCESS"
+    // alongside 8 "Ad failed" lines for ads that were, in fact, already live.
+    const nothingNew = created===0 && skipped>0 && failed===0;
+    logActivity(failed>0?'ERROR':(nothingNew?'SKIP':'SUCCESS'), nothingNew
+      ? `Publish done: nothing new - all ${skipped} record(s) already live on this ad set.`
+      : `Publish done: ${created} created, ${skipped} skipped, ${failed} failed.`);
     (data.results||data.data||[]).forEach(r => {
       if (r.status==='success') {
         const d = r.dropped, dup = r.duplicates_removed;
@@ -809,9 +818,10 @@ async function publishNew() {
         if (d && (d.titles||d.bodies||d.descriptions)) parts.push(`dropped ${d.titles||0}h/${d.bodies||0}b/${d.descriptions||0}d past cap`);
         if (dup && (dup.titles||dup.bodies||dup.descriptions)) parts.push(`removed ${dup.titles||0}h/${dup.bodies||0}b/${dup.descriptions||0}d duplicate(s)`);
         logActivity('SUCCESS',`Ad created: ${r.ad_id}${parts.length?` (${parts.join(', ')})`:''}`);
-      } else logActivity('ERROR',`Ad failed: ${r.error||'unknown'}`);
+      } else if (r.status==='skipped') logActivity('SKIP',`Already live, skipped: ${r.error||'already published to this ad set'}`);
+      else logActivity('ERROR',`Ad failed: ${r.error||'unknown'}`);
     });
-    toast(`Published: ${created} created${failed?`, ${failed} failed`:''}.`, failed>0?'error':'success');
+    toast(nothingNew ? `Nothing new to publish - ${skipped} already live.` : `Published: ${created} created${failed?`, ${failed} failed`:''}.`, failed>0?'error':(nothingNew?'info':'success'));
   } catch (e) { logActivity('ERROR',`Publish failed: ${e.message}`); toast(`Publish failed: ${e.message}`,'error'); }
   btn.innerHTML = saved; updateFooter();
 }
